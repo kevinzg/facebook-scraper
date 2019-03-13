@@ -8,6 +8,7 @@ ipython = "*"
 flake8 = "*"
 twine = "*"
 pylint = "*"
+ipdb = "*"
 
 [packages]
 requests-html = "*"
