@@ -24,6 +24,8 @@ _image_regex = re.compile(r"background-image: url\('(.+)'\)")
 
 
 def get_posts(account, pages=10, timeout=5, sleep=0):
+    """Gets posts for a given account."""
+
     url = f'{_base_url}/{account}/posts/'
 
     session = HTMLSession()
