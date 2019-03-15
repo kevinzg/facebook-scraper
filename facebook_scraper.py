@@ -144,6 +144,6 @@ def _parse_int(value):
 
 
 def _decode_css_url(url):
-    url = re.sub(r'\\(..) ', r'\x\g<1>', url)
+    url = re.sub(r'\\(..) ', r'\\x\g<1>', url)
     url, _ = codecs.unicode_escape_decode(url)
     return url
