@@ -3,6 +3,7 @@ from datetime import datetime
 import json
 import re
 import time
+from urllib import parse as urlparse
 
 from requests import RequestException
 from requests_html import HTMLSession, HTML
@@ -21,6 +22,7 @@ _cursor_regex = re.compile(r'href:"(/page_content[_/?=&%\w]+)"')
 _cursor_regex_2 = re.compile(r'href":"(\\/page_content[^"]+)"')
 
 _image_regex = re.compile(r"background-image: url\('(.+)'\)")
+_post_url_regex = re.compile(r'/story.php\?story_fbid=')
 
 
 def get_posts(account, pages=10, timeout=5, sleep=0):
@@ -72,6 +74,7 @@ def _extract_post(article):
         'likes': _find_and_search(article, 'footer', _likes_regex, _parse_int) or 0,
         'comments': _find_and_search(article, 'footer', _comments_regex, _parse_int) or 0,
         'shares':  _find_and_search(article, 'footer', _shares_regex, _parse_int) or 0,
+        'post_url': _extract_post_url(article),
     }
 
 
@@ -121,6 +124,20 @@ def _extract_image(article):
     return None
 
 
+def _extract_post_url(article):
+    query_params = ('story_fbid', 'id')
+
+    elements = article.find('header a')
+    for element in elements:
+        href = element.attrs.get('href', '')
+        match = _post_url_regex.match(href)
+        if match:
+            path = _filter_query_params(href, whitelist=query_params)
+            return f'{_base_url}{path}'
+
+    return None
+
+
 def _find_and_search(article, selector, pattern, cast=str):
     container = article.find(selector, first=True)
     text = container and container.text
@@ -149,3 +166,20 @@ def _decode_css_url(url):
     url = re.sub(r'\\(..) ', r'\\x\g<1>', url)
     url, _ = codecs.unicode_escape_decode(url)
     return url
+
+
+def _filter_query_params(url, whitelist=None, blacklist=None):
+    def is_valid_param(param):
+        if whitelist is not None:
+            return param in whitelist
+        elif blacklist is not None:
+            return param not in blacklist
+        else:  # Do nothing
+            return True
+
+    parsed_url = urlparse.urlparse(url)
+    query_params = urlparse.parse_qsl(parsed_url.query)
+    query_string = urlparse.urlencode(
+        [(k, v) for k, v in query_params if is_valid_param(k)]
+    )
+    return urlparse.urlunparse(parsed_url._replace(query=query_string))
