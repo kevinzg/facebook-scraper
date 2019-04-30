@@ -172,10 +172,9 @@ def _filter_query_params(url, whitelist=None, blacklist=None):
     def is_valid_param(param):
         if whitelist is not None:
             return param in whitelist
-        elif blacklist is not None:
+        if blacklist is not None:
             return param not in blacklist
-        else:  # Do nothing
-            return True
+        return True  # Do nothing
 
     parsed_url = urlparse.urlparse(url)
     query_params = urlparse.parse_qsl(parsed_url.query)
