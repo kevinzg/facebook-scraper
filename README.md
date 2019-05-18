@@ -2,6 +2,12 @@
 
 Scrape Facebook public pages using the web API. Inspired by [twitter-scraper](https://github.com/kennethreitz/twitter-scraper).
 
+## Install
+
+```sh
+pip install facebook-scraper
+```
+
 ## Usage
 
 ```python
