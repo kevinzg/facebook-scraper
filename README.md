@@ -1,6 +1,6 @@
 # Facebook Scraper
 
-Scrape Facebook public pages using the web API. Inspired by [twitter-scraper](https://github.com/kennethreitz/twitter-scraper).
+Scrape Facebook public pages without an API key. Inspired by [twitter-scraper](https://github.com/kennethreitz/twitter-scraper).
 
 ## Install
 

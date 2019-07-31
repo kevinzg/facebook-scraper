@@ -13,7 +13,7 @@ from setuptools import setup, Command
 
 # Package meta-data.
 NAME = 'facebook-scraper'
-DESCRIPTION = 'Scrape Facebook public pages using the web API.'
+DESCRIPTION = 'Scrape Facebook public pages without an API key.'
 URL = 'https://github.com/kevinzg/facebook-scraper'
 EMAIL = 'kevin.zun@gmail.com'
 AUTHOR = 'Kevin Zúñiga'
