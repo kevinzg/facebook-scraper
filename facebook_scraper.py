@@ -87,8 +87,10 @@ def _extract_post_id(article):
 
 
 def _extract_text(article):
-    paragraph = article.find('p', first=True)
-    return paragraph and paragraph.text
+    paragraphs = article.find('p')
+    if paragraphs:
+        return '\n'.join(paragraph.text for paragraph in paragraphs)
+    return None
 
 
 def _extract_time(article):
