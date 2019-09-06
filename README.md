@@ -1,5 +1,7 @@
 # Facebook Scraper
 
+**IMPORTANT:** The scraper is only getting 2 post at this moment. See [#4](https://github.com/kevinzg/facebook-scraper/issues/4) for more info.
+
 Scrape Facebook public pages without an API key. Inspired by [twitter-scraper](https://github.com/kennethreitz/twitter-scraper).
 
 ## Install
