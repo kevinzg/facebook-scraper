@@ -13,13 +13,14 @@ __all__ = ['get_posts']
 
 
 _base_url = 'https://m.facebook.com'
+userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.87 Safari/537.36"
 
 _likes_regex = re.compile(r'([0-9,.]+)\s+Like')
 _comments_regex = re.compile(r'([0-9,.]+)\s+Comment')
 _shares_regex = re.compile(r'([0-9,.]+)\s+Shares')
 
-_cursor_regex = re.compile(r'href:"(/page_content[_/?=&%\w]+)"')
-_cursor_regex_2 = re.compile(r'href":"(\\/page_content[^"]+)"')
+_cursor_regex = re.compile(r'href:\"(\/page_content[_/?=&%\w]+)\"')
+_cursor_regex_2 = re.compile(r'href:\"(\/page_content[^"]+)"')
 
 _image_regex = re.compile(r"background-image: url\('(.+)'\)")
 _post_url_regex = re.compile(r'/story.php\?story_fbid=')
@@ -31,7 +32,7 @@ def get_posts(account, pages=10, timeout=5, sleep=0):
     url = f'{_base_url}/{account}/posts/'
 
     session = HTMLSession()
-    session.headers.update({'Accept-Language': 'en-US,en;q=0.5'})
+    session.headers.update({'User-Agent': userAgent, 'Accept-Language': 'en-US,en;q=0.5'})
 
     response = session.get(url, timeout=timeout)
     html = response.html
