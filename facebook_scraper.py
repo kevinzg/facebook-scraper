@@ -13,7 +13,11 @@ __all__ = ['get_posts']
 
 
 _base_url = 'https://m.facebook.com'
-userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.87 Safari/537.36"
+_user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.87 Safari/537.36"
+_headers = {'User-Agent': _user_agent, 'Accept-Language': 'en-US,en;q=0.5'}
+
+_session = None
+_timeout = None
 
 _likes_regex = re.compile(r'([0-9,.]+)\s+Like')
 _comments_regex = re.compile(r'([0-9,.]+)\s+Comment')
@@ -22,19 +26,23 @@ _shares_regex = re.compile(r'([0-9,.]+)\s+Shares')
 _cursor_regex = re.compile(r'href:\"(\/page_content[_/?=&%\w]+)\"')
 _cursor_regex_2 = re.compile(r'href:\"(\/page_content[^"]+)"')
 
-_image_regex = re.compile(r"background-image: url\('(.+)'\)")
+_photo_link = re.compile(r"<a href=\"(/[^\"]+/photos/[^\"]+)\"")
+_image_regex = re.compile(r"<a href=\"([^\"]+)\" target=\"_blank\" class=\"sec\">View Full Size<\/a>")
+_image_regex_lq = re.compile(r"background-image: url\('(.+)'\)")
 _post_url_regex = re.compile(r'/story.php\?story_fbid=')
 
 
 def get_posts(account, pages=10, timeout=5, sleep=0):
     """Gets posts for a given account."""
+    global _session, _timeout
 
     url = f'{_base_url}/{account}/posts/'
 
-    session = HTMLSession()
-    session.headers.update({'User-Agent': userAgent, 'Accept-Language': 'en-US,en;q=0.5'})
-
-    response = session.get(url, timeout=timeout)
+    _session = HTMLSession()
+    _session.headers.update(_headers)
+    
+    _timeout = timeout
+    response = _session.get(url, timeout=_timeout)
     html = response.html
     cursor_blob = html.html
 
@@ -53,7 +61,7 @@ def get_posts(account, pages=10, timeout=5, sleep=0):
             time.sleep(sleep)
 
         try:
-            response = session.get(next_url, timeout=timeout)
+            response = _session.get(next_url, timeout=timeout)
             response.raise_for_status()
             data = json.loads(response.text.replace('for (;;);', '', 1))
         except (RequestException, ValueError):
@@ -109,8 +117,29 @@ def _extract_time(article):
             continue
     return None
 
+def _extract_photo_link(article):
+    match = _photo_link.search(article.html)
+    if (not match):
+        return None
+
+    url = f"{_base_url}{match.groups()[0]}"
+
+    response = _session.get(url, timeout=_timeout)
+    html = response.html.html
+    match = _image_regex.search(html)
+    if (match):
+        return match.groups()[0].replace("&amp;", "&")
+    return None
+    
 
 def _extract_image(article):
+    image_link = _extract_photo_link(article)
+    if image_link != None:
+        return image_link
+    return _extract_image_lq(article)
+
+
+def _extract_image_lq(article):
     story_container = article.find('div.story_body_container', first=True)
     other_containers = story_container.xpath('div/div')
 
@@ -120,7 +149,7 @@ def _extract_image(article):
             continue
 
         style = image_container.attrs.get('style', '')
-        match = _image_regex.search(style)
+        match = _image_regex_lq.search(style)
         if match:
             return _decode_css_url(match.groups()[0])
 
