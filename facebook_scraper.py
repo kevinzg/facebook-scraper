@@ -4,6 +4,8 @@ import json
 import re
 import time
 from urllib import parse as urlparse
+from urllib.parse import unquote
+
 
 from requests import RequestException
 from requests_html import HTMLSession, HTML
@@ -22,6 +24,7 @@ _timeout = None
 _likes_regex = re.compile(r'([0-9,.]+)\s+Like')
 _comments_regex = re.compile(r'([0-9,.]+)\s+Comment')
 _shares_regex = re.compile(r'([0-9,.]+)\s+Shares')
+_link_regex = re.compile(r"href=\"https:\/\/lm\.facebook\.com\/l\.php\?u=(.+)\&amp;h=.+\" target=\"_blank\"")
 
 _cursor_regex = re.compile(r'href:\"(\/page_content[_/?=&%\w]+)\"')
 _cursor_regex_2 = re.compile(r'href:\"(\/page_content[^"]+)"')
@@ -84,6 +87,7 @@ def _extract_post(article):
         'comments': _find_and_search(article, 'footer', _comments_regex, _parse_int) or 0,
         'shares':  _find_and_search(article, 'footer', _shares_regex, _parse_int) or 0,
         'post_url': _extract_post_url(article),
+        'link': _extract_link(article)
     }
 
 
@@ -155,7 +159,13 @@ def _extract_image_lq(article):
 
     return None
 
-
+def _extract_link(article):
+    html = article.html
+    match = _link_regex.search(html)
+    if (match):
+        return unquote(match.groups()[0])
+    return None
+    
 def _extract_post_url(article):
     query_params = ('story_fbid', 'id')
 
