@@ -4,7 +4,6 @@ import json
 import re
 import time
 from urllib import parse as urlparse
-from urllib.parse import unquote
 
 
 from requests import RequestException
@@ -15,7 +14,9 @@ __all__ = ['get_posts']
 
 
 _base_url = 'https://m.facebook.com'
-_user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.87 Safari/537.36"
+_user_agent = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+               "AppleWebKit/537.36 (KHTML, like Gecko) "
+               "Chrome/76.0.3809.87 Safari/537.36")
 _headers = {'User-Agent': _user_agent, 'Accept-Language': 'en-US,en;q=0.5'}
 
 _session = None
@@ -30,7 +31,9 @@ _cursor_regex = re.compile(r'href:"(/page_content[^"]+)"')  # First request
 _cursor_regex_2 = re.compile(r'href":"(\\/page_content[^"]+)"')  # Other requests
 
 _photo_link = re.compile(r"<a href=\"(/[^\"]+/photos/[^\"]+?)\"")
-_image_regex = re.compile(r"<a href=\"([^\"]+?)\" target=\"_blank\" class=\"sec\">View Full Size<\/a>")
+_image_regex = re.compile(
+    r"<a href=\"([^\"]+?)\" target=\"_blank\" class=\"sec\">View Full Size<\/a>"
+)
 _image_regex_lq = re.compile(r"background-image: url\('(.+)'\)")
 _post_url_regex = re.compile(r'/story.php\?story_fbid=')
 
@@ -43,7 +46,7 @@ def get_posts(account, pages=10, timeout=5, sleep=0):
 
     _session = HTMLSession()
     _session.headers.update(_headers)
-    
+
     _timeout = timeout
     response = _session.get(url, timeout=_timeout)
     html = response.html
@@ -87,7 +90,7 @@ def _extract_post(article):
         'comments': _find_and_search(article, 'footer', _comments_regex, _parse_int) or 0,
         'shares':  _find_and_search(article, 'footer', _shares_regex, _parse_int) or 0,
         'post_url': _extract_post_url(article),
-        'link': _extract_link(article)
+        'link': _extract_link(article),
     }
 
 
@@ -121,9 +124,10 @@ def _extract_time(article):
             continue
     return None
 
+
 def _extract_photo_link(article):
     match = _photo_link.search(article.html)
-    if (not match):
+    if not match:
         return None
 
     url = f"{_base_url}{match.groups()[0]}"
@@ -131,14 +135,14 @@ def _extract_photo_link(article):
     response = _session.get(url, timeout=_timeout)
     html = response.html.html
     match = _image_regex.search(html)
-    if (match):
+    if match:
         return match.groups()[0].replace("&amp;", "&")
     return None
-    
+
 
 def _extract_image(article):
     image_link = _extract_photo_link(article)
-    if image_link != None:
+    if image_link is not None:
         return image_link
     return _extract_image_lq(article)
 
@@ -159,13 +163,15 @@ def _extract_image_lq(article):
 
     return None
 
+
 def _extract_link(article):
     html = article.html
     match = _link_regex.search(html)
-    if (match):
-        return unquote(match.groups()[0])
+    if match:
+        return urlparse.unquote(match.groups()[0])
     return None
-    
+
+
 def _extract_post_url(article):
     query_params = ('story_fbid', 'id')
 
