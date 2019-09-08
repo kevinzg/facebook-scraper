@@ -100,9 +100,10 @@ def _extract_post_id(article):
 
 
 def _extract_text(article):
-    paragraphs = article.find('p')
-    if paragraphs:
-        return '\n'.join(paragraph.text for paragraph in paragraphs)
+    nodes = article.find('p, header')
+    if nodes:
+        nodes = [node.text if node.tag is 'p' else '\nShared from:\n' + node.text for node in nodes[1:]]
+        return '\n'.join(nodes)
     return None
 
 
