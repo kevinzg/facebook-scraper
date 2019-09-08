@@ -81,9 +81,11 @@ def get_posts(account, pages=10, timeout=5, sleep=0):
 
 
 def _extract_post(article):
+    text, shared_text = _extract_text(article)
     return {
         'post_id': _extract_post_id(article),
-        'text': _extract_text(article),
+        'text': text,
+        'shared_text': shared_text,
         'time': _extract_time(article),
         'image': _extract_image(article),
         'likes': _find_and_search(article, 'footer', _likes_regex, _parse_int) or 0,
@@ -105,8 +107,18 @@ def _extract_post_id(article):
 def _extract_text(article):
     nodes = article.find('p, header')
     if nodes:
-        nodes = [node.text if node.tag is 'p' else '\nShared from:\n' + node.text for node in nodes[1:]]
-        return '\n'.join(nodes)
+        text = []
+        shared_text = []
+        ended = False
+        for node in nodes[1:]:
+            if node.tag == "header":
+                ended = True
+            if not ended:
+                text.append(node.text)
+            else:
+                shared_text.append(node.text)
+        return ('\n'.join(text), '\n'.join(shared_text))
+
     return None
 
 
