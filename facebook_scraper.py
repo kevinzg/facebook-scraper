@@ -26,8 +26,8 @@ _comments_regex = re.compile(r'([0-9,.]+)\s+Comment')
 _shares_regex = re.compile(r'([0-9,.]+)\s+Shares')
 _link_regex = re.compile(r"href=\"https:\/\/lm\.facebook\.com\/l\.php\?u=(.+?)\&amp;h=")
 
-_cursor_regex = re.compile(r'href:\"(\/page_content[_/?=&%\w]+)\"')
-_cursor_regex_2 = re.compile(r'href:\"(\/page_content[^"]+)"')
+_cursor_regex = re.compile(r'href:"(/page_content[^"]+)"')  # First request
+_cursor_regex_2 = re.compile(r'href":"(\\/page_content[^"]+)"')  # Other requests
 
 _photo_link = re.compile(r"<a href=\"(/[^\"]+/photos/[^\"]+?)\"")
 _image_regex = re.compile(r"<a href=\"([^\"]+?)\" target=\"_blank\" class=\"sec\">View Full Size<\/a>")
