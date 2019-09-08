@@ -37,7 +37,8 @@ We’re headed to PAX East 3/28-3/31 with new games
  'comments': 214,
  'shares': 0,
  'post_url': 'https://m.facebook.com/story.php'
-             '?story_fbid=2257188721032235&id=119240841493711'}
+             '?story_fbid=2257188721032235&id=119240841493711',
+ 'link': 'https://bit.ly/something'}
 ```
 
 ### Notes
