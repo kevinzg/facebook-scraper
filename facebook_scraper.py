@@ -1,14 +1,13 @@
 import codecs
-from datetime import datetime
+import itertools
 import json
 import re
 import time
+from datetime import datetime
 from urllib import parse as urlparse
 
-
 from requests import RequestException
-from requests_html import HTMLSession, HTML
-
+from requests_html import HTML, HTMLSession
 
 __all__ = ['get_posts']
 
