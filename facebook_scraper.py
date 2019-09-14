@@ -80,10 +80,11 @@ def get_posts(account, pages=10, timeout=5, sleep=0):
 
 
 def _extract_post(article):
-    text, shared_text = _extract_text(article)
+    text, post_text, shared_text = _extract_text(article)
     return {
         'post_id': _extract_post_id(article),
         'text': text,
+        'post_text': post_text,
         'shared_text': shared_text,
         'time': _extract_time(article),
         'image': _extract_image(article),
@@ -106,17 +107,22 @@ def _extract_post_id(article):
 def _extract_text(article):
     nodes = article.find('p, header')
     if nodes:
-        text = []
+        post_text = []
         shared_text = []
         ended = False
         for node in nodes[1:]:
             if node.tag == "header":
                 ended = True
             if not ended:
-                text.append(node.text)
+                post_text.append(node.text)
             else:
                 shared_text.append(node.text)
-        return ('\n'.join(text), '\n'.join(shared_text))
+
+        text = '\n'.join(itertools.chain(post_text, shared_text))
+        post_text = '\n'.join(post_text)
+        shared_text = '\n'.join(shared_text)
+
+        return text, post_text, shared_text
 
     return None
 
