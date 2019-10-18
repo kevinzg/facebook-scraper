@@ -21,8 +21,8 @@ _headers = {'User-Agent': _user_agent, 'Accept-Language': 'en-US,en;q=0.5'}
 _session = None
 _timeout = None
 
-_likes_regex = re.compile(r'([0-9,.]+)\s+Like')
-_comments_regex = re.compile(r'([0-9,.]+)\s+Comment')
+_likes_regex = re.compile(r'like_def[^>]*>([0-9,.]+)')
+_comments_regex = re.compile(r'cmt_def[^>]*>([0-9,.]+)')
 _shares_regex = re.compile(r'([0-9,.]+)\s+Shares')
 _link_regex = re.compile(r"href=\"https:\/\/lm\.facebook\.com\/l\.php\?u=(.+?)\&amp;h=")
 
@@ -206,8 +206,7 @@ def _extract_post_url(article):
 
 def _find_and_search(article, selector, pattern, cast=str):
     container = article.find(selector, first=True)
-    text = container and container.text
-    match = text and pattern.search(text)
+    match = pattern.search(container.html)
     return match and cast(match.groups()[0])
 
 
