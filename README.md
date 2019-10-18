@@ -20,7 +20,7 @@ The final step on the road to the Super Smash Bros
 We’re headed to PAX East 3/28-3/31 with new games
 ```
 
-### Optional Parameters
+### Optional parameters
 
 - **pages**: how many pages of posts to request, usually the first page has 2 posts and the rest 4. Default is 10.
 - **timeout**: how many seconds to wait before timing out. Default is 5.
