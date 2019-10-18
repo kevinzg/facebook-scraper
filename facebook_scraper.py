@@ -3,6 +3,7 @@ import itertools
 import json
 import re
 import time
+import warnings
 from datetime import datetime
 from urllib import parse as urlparse
 
@@ -37,7 +38,7 @@ _image_regex_lq = re.compile(r"background-image: url\('(.+)'\)")
 _post_url_regex = re.compile(r'/story.php\?story_fbid=')
 
 
-def get_posts(account, pages=10, timeout=5, sleep=0):
+def get_posts(account, pages=10, timeout=5, sleep=0, credentials=None):
     """Gets posts for a given account."""
     global _session, _timeout
 
@@ -45,6 +46,9 @@ def get_posts(account, pages=10, timeout=5, sleep=0):
 
     _session = HTMLSession()
     _session.headers.update(_headers)
+
+    if credentials:
+        _login_user(*credentials)
 
     _timeout = timeout
     response = _session.get(url, timeout=_timeout)
@@ -247,3 +251,11 @@ def _filter_query_params(url, whitelist=None, blacklist=None):
         [(k, v) for k, v in query_params if is_valid_param(k)]
     )
     return urlparse.urlunparse(parsed_url._replace(query=query_string))
+
+
+def _login_user(email, password):
+    login_page = _session.get(_base_url)
+    login_action = login_page.html.find('#login_form', first=True).attrs.get('action')
+    _session.post(_base_url + login_action, data={'email': email, 'pass': password})
+    if 'c_user' not in _session.cookies:
+        warnings.warn('login unsuccessful')
