@@ -2,11 +2,13 @@
 
 Scrape Facebook public pages without an API key. Inspired by [twitter-scraper](https://github.com/kennethreitz/twitter-scraper).
 
+
 ## Install
 
 ```sh
 pip install facebook-scraper
 ```
+
 
 ## Usage
 
@@ -30,6 +32,7 @@ We’re headed to PAX East 3/28-3/31 with new games
 - **sleep**: how many seconds to sleep between each request. Default is 0.
 - **credentials**: tuple of user and password to login before requesting the posts. Default is `None`.
 
+
 ## Post example
 
 ```python
@@ -50,6 +53,7 @@ We’re headed to PAX East 3/28-3/31 with new games
              '?story_fbid=2257188721032235&id=119240841493711',
  'link': 'https://bit.ly/something'}
 ```
+
 
 ### Notes
 
