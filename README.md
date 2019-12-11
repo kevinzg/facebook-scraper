@@ -2,13 +2,17 @@
 
 Scrape Facebook public pages without an API key. Inspired by [twitter-scraper](https://github.com/kennethreitz/twitter-scraper).
 
+
 ## Install
 
 ```sh
 pip install facebook-scraper
 ```
 
+
 ## Usage
+
+Send the unique **page name** as the first parameter and you're good to go:
 
 ```python
 >>> from facebook_scraper import get_posts
@@ -20,12 +24,15 @@ The final step on the road to the Super Smash Bros
 We’re headed to PAX East 3/28-3/31 with new games
 ```
 
+
 ### Optional parameters
 
+- **group**: group id, to scrape groups instead of pages. Default is `None`.
 - **pages**: how many pages of posts to request, usually the first page has 2 posts and the rest 4. Default is 10.
 - **timeout**: how many seconds to wait before timing out. Default is 5.
 - **sleep**: how many seconds to sleep between each request. Default is 0.
 - **credentials**: tuple of user and password to login before requesting the posts. Default is `None`.
+
 
 ## Post example
 
@@ -47,6 +54,7 @@ We’re headed to PAX East 3/28-3/31 with new games
              '?story_fbid=2257188721032235&id=119240841493711',
  'link': 'https://bit.ly/something'}
 ```
+
 
 ### Notes
 
