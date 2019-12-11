@@ -10,6 +10,8 @@ pip install facebook-scraper
 
 ## Usage
 
+Send the unique **page name** as the first parameter and you're good to go:
+
 ```python
 >>> from facebook_scraper import get_posts
 
@@ -19,6 +21,7 @@ pip install facebook-scraper
 The final step on the road to the Super Smash Bros
 We’re headed to PAX East 3/28-3/31 with new games
 ```
+
 
 ### Optional parameters
 
