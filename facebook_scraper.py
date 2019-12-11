@@ -210,7 +210,7 @@ def _extract_post_url(article):
 
 def _find_and_search(article, selector, pattern, cast=str):
     container = article.find(selector, first=True)
-    match = pattern.search(container.html)
+    match = container and pattern.search(container.html)
     return match and cast(match.groups()[0])
 
 
