@@ -38,11 +38,24 @@ _image_regex_lq = re.compile(r"background-image: url\('(.+)'\)")
 _post_url_regex = re.compile(r'/story.php\?story_fbid=')
 
 
-def get_posts(account, pages=10, timeout=5, sleep=0, credentials=None):
+def get_posts(account=None, group=None, **kwargs):
+    valid_args = sum(arg is not None for arg in (account, group))
+    if valid_args != 1:
+        raise ValueError("You need to specify either account or group")
+
+    if account is not None:
+        path = f'{account}/posts/'
+    elif group is not None:
+        path = f'groups/{group}/'
+
+    return _get_posts(path, **kwargs)
+
+
+def _get_posts(path, pages=10, timeout=5, sleep=0, credentials=None):
     """Gets posts for a given account."""
     global _session, _timeout
 
-    url = f'{_base_url}/{account}/posts/'
+    url = f'{_base_url}/{path}'
 
     _session = HTMLSession()
     _session.headers.update(_headers)
