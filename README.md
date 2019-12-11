@@ -27,6 +27,7 @@ We’re headed to PAX East 3/28-3/31 with new games
 
 ### Optional parameters
 
+- **group**: group id, to scrape groups instead of pages. Default is `None`.
 - **pages**: how many pages of posts to request, usually the first page has 2 posts and the rest 4. Default is 10.
 - **timeout**: how many seconds to wait before timing out. Default is 5.
 - **sleep**: how many seconds to sleep between each request. Default is 0.
