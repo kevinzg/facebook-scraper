@@ -60,3 +60,4 @@ We’re headed to PAX East 3/28-3/31 with new games
 
 - There is no guarantee that every field will be extracted (they might be `None`).
 - Shares doesn't seem to work at the moment.
+- Group posts are only from one page.
