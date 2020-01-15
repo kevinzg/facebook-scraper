@@ -184,6 +184,8 @@ def _extract_image(article):
 
 def _extract_image_lq(article):
     story_container = article.find('div.story_body_container', first=True)
+    if story_container is None:
+        return None
     other_containers = story_container.xpath('div/div')
 
     for container in other_containers:
