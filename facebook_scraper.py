@@ -24,7 +24,7 @@ _timeout = None
 
 _likes_regex = re.compile(r'like_def[^>]*>([0-9,.]+)')
 _comments_regex = re.compile(r'cmt_def[^>]*>([0-9,.]+)')
-_shares_regex = re.compile(r'([0-9,.]+)\s+Shares')
+_shares_regex = re.compile(r'([0-9,.]+)\s+Shares', re.IGNORECASE)
 _link_regex = re.compile(r"href=\"https:\/\/lm\.facebook\.com\/l\.php\?u=(.+?)\&amp;h=")
 
 _cursor_regex = re.compile(r'href:"(/page_content[^"]+)"')  # First request
