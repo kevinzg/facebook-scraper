@@ -65,7 +65,7 @@ def _get_posts(path, pages=10, timeout=5, sleep=0, credentials=None):
 
     _timeout = timeout
     response = _session.get(url, timeout=_timeout)
-    html = response.html
+    html = HTML(html=response.html.html.replace('<!--','').replace('-->',''))
     cursor_blob = html.html
 
     while True:
@@ -184,6 +184,8 @@ def _extract_image(article):
 
 def _extract_image_lq(article):
     story_container = article.find('div.story_body_container', first=True)
+    if story_container is None:
+        return None
     other_containers = story_container.xpath('div/div')
 
     for container in other_containers:
