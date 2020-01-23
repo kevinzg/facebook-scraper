@@ -17,7 +17,8 @@ _base_url = 'https://m.facebook.com'
 _user_agent = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                "AppleWebKit/537.36 (KHTML, like Gecko) "
                "Chrome/76.0.3809.87 Safari/537.36")
-_headers = {'User-Agent': _user_agent, 'Accept-Language': 'en-US,en;q=0.5'}
+_cookie = ('locale=en_US;')
+_headers = {'User-Agent': _user_agent, 'Accept-Language': 'en-US,en;q=0.5', 'cookie': _cookie}
 
 _session = None
 _timeout = None
@@ -31,9 +32,7 @@ _cursor_regex = re.compile(r'href:"(/page_content[^"]+)"')  # First request
 _cursor_regex_2 = re.compile(r'href":"(\\/page_content[^"]+)"')  # Other requests
 
 _photo_link = re.compile(r"href=\"(/[^\"]+/photos/[^\"]+?)\"")
-_image_regex = re.compile(
-    r"<a href=\"([^\"]+?)\" target=\"_blank\" class=\"sec\">View Full Size<\/a>"
-)
+_image_regex = re.compile(r"<a href=\"([^\"]+?)\" target=\"_blank\" class=\"sec\">View Full Size<\/a>", re.IGNORECASE)
 _image_regex_lq = re.compile(r"background-image: url\('(.+)'\)")
 _post_url_regex = re.compile(r'/story.php\?story_fbid=')
 
