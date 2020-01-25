@@ -261,21 +261,22 @@ def _login_user(email, password):
     if 'c_user' not in _session.cookies:
         warnings.warn('login unsuccessful')
 
+
 def get_posts_as_csv(account, pages=10, timeout=5, sleep=0, credentials=None):
     """
-
-    :param pages:
-    :param timeout:
-    :param sleep:
-    :param credentials:
-    :return:
+    :param account:     Facebook account name e.g. "nike", string
+    :param pages:       Number of pages to scan, integer
+    :param timeout:     Session response timeout in seconds, integer
+    :param sleep:       Sleep time in s before every call, integer
+    :param credentials: Credentials for login, dictionary
+    :return:            CSV written in the same location with <<account_name>>_posts.csv
     """
     list_of_posts = []
     for current_post in get_posts(account, pages, timeout, sleep, credentials):
         list_of_posts.append(current_post)
     keys = list_of_posts[0].keys()
     filename = account + "_posts.csv"
-    list_of_posts = [{k: str(v).encode("utf-8") for k,v in x.items()} for x in list_of_posts]
+    list_of_posts = [{k: str(v).encode("utf-8") for k, v in x.items()} for x in list_of_posts]
     with open(filename, 'w') as output_file:
         dict_writer = csv.DictWriter(output_file, keys)
         dict_writer.writeheader()
