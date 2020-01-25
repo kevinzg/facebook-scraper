@@ -1,4 +1,5 @@
 import codecs
+import csv
 import itertools
 import json
 import re
@@ -10,7 +11,7 @@ from urllib import parse as urlparse
 from requests import RequestException
 from requests_html import HTML, HTMLSession
 
-__all__ = ['get_posts']
+__all__ = ['get_posts', 'get_posts_as_csv']
 
 
 _base_url = 'https://m.facebook.com'
@@ -259,3 +260,23 @@ def _login_user(email, password):
     _session.post(_base_url + login_action, data={'email': email, 'pass': password})
     if 'c_user' not in _session.cookies:
         warnings.warn('login unsuccessful')
+
+def get_posts_as_csv(account, pages=10, timeout=5, sleep=0, credentials=None):
+    """
+
+    :param pages:
+    :param timeout:
+    :param sleep:
+    :param credentials:
+    :return:
+    """
+    list_of_posts = []
+    for current_post in get_posts(account, pages, timeout, sleep, credentials):
+        list_of_posts.append(current_post)
+    keys = list_of_posts[0].keys()
+    filename = account + "_posts.csv"
+    list_of_posts = [{k: str(v).encode("utf-8") for k,v in x.items()} for x in list_of_posts]
+    with open(filename, 'w') as output_file:
+        dict_writer = csv.DictWriter(output_file, keys)
+        dict_writer.writeheader()
+        dict_writer.writerows(list_of_posts)
