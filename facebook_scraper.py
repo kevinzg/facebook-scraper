@@ -36,6 +36,9 @@ _image_regex = re.compile(r"<a href=\"([^\"]+?)\" target=\"_blank\" class=\"sec\
 _image_regex_lq = re.compile(r"background-image: url\('(.+)'\)")
 _post_url_regex = re.compile(r'/story.php\?story_fbid=')
 
+_more_url_regex = re.compile(r'(?<=…\s)<a href="([^"]+)')
+_post_story_regex = re.compile(r'href="(\/story[^"]+)" aria')
+
 
 def get_posts(account=None, group=None, **kwargs):
     valid_args = sum(arg is not None for arg in (account, group))
@@ -121,6 +124,16 @@ def _extract_post_id(article):
 
 
 def _extract_text(article):
+    # Open this article individually because not all content is fully loaded when skimming through pages
+    # This ensures the full content can be read
+    hasMore = _more_url_regex.search(article.html)
+    if hasMore:
+        match = _post_story_regex.search(article.html)
+        if match:
+            url = f'{_base_url}{match.groups()[0].replace("&amp;", "&")}'
+            response = _session.get(url, timeout=_timeout)
+            article = response.html.find('.story_body_container', first=True)
+            
     nodes = article.find('p, header')
     if nodes:
         post_text = []
@@ -129,6 +142,13 @@ def _extract_text(article):
         for node in nodes[1:]:
             if node.tag == "header":
                 ended = True
+                
+            # Remove '... More'
+            # This button is meant to display the hidden text that is already loaded
+            # Not to be confused with the 'More' that opens the article in a new page
+            if node.tag == "p":
+                node = HTML(html=node.html.replace('>… <', '><', 1).replace('>More<', '', 1))
+                
             if not ended:
                 post_text.append(node.text)
             else:
