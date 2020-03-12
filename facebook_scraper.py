@@ -133,7 +133,7 @@ def _extract_text(article):
             url = f'{_base_url}{match.groups()[0].replace("&amp;", "&")}'
             response = _session.get(url, timeout=_timeout)
             article = response.html.find('.story_body_container', first=True)
-            
+
     nodes = article.find('p, header')
     if nodes:
         post_text = []
@@ -142,13 +142,13 @@ def _extract_text(article):
         for node in nodes[1:]:
             if node.tag == "header":
                 ended = True
-                
+
             # Remove '... More'
             # This button is meant to display the hidden text that is already loaded
             # Not to be confused with the 'More' that opens the article in a new page
             if node.tag == "p":
                 node = HTML(html=node.html.replace('>… <', '><', 1).replace('>More<', '', 1))
-                
+
             if not ended:
                 post_text.append(node.text)
             else:
