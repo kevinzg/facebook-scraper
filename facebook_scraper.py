@@ -39,6 +39,10 @@ _post_url_regex = re.compile(r'/story.php\?story_fbid=')
 _more_url_regex = re.compile(r'(?<=…\s)<a href="([^"]+)')
 _post_story_regex = re.compile(r'href="(\/story[^"]+)" aria')
 
+_shares_and_reactions_regex = re.compile(
+    r'<script>.*bigPipe.onPageletArrive\((?P<data>\{.*RelayPrefetchedStreamCache.*\})\);.*</script>')
+_bad_json_key_regex = re.compile(r'(?P<prefix>[{,])(?P<key>\w+):')
+
 
 def get_posts(account=None, group=None, **kwargs):
     valid_args = sum(arg is not None for arg in (account, group))
@@ -293,3 +297,48 @@ def _login_user(email, password):
     _session.post(_base_url + login_action, data={'email': email, 'pass': password})
     if 'c_user' not in _session.cookies:
         warnings.warn('login unsuccessful')
+
+
+def fetch_share_and_reactions(post: dict):
+    """Fetch share and reactions information with a existing post obtained by `get_posts`.
+    Return a merged post that has some new fields including `reactions`, `w3_fb_url`, `fetched_time`,
+        and reactions fields `LIKE`, `ANGER`, `SORRY`, `WOW`, `LOVE`, `HAHA` if exist.
+
+    Note that this method will raise one http request per post, use it when you want some more information.
+
+    Example:
+    ```
+    for post in get_posts('fanpage'):
+        more_info_post = fetch_share_and_reactions(post)
+        print(more_info_post)
+    ```
+    """
+    url = post.get('post_url')
+    if url:
+        w3_fb_url = urlparse.urlparse(url)._replace(netloc='www.facebook.com').geturl()
+        resp = _session.get(w3_fb_url, timeout=_timeout)
+        for item in _parse_share_and_reactions(resp.text):
+            data = (item['jsmods']['pre_display_requires'][0][3][1]['__bbox']['result']
+                    ['data']['feedback'])
+            if data['subscription_target_id'] == post['post_id']:
+                return {
+                    **post,
+                    'shares': data['share_count']['count'],
+                    'likes': data['reactors']['count'],
+                    'reactions': data['reactors']['count'],
+                    'comments': data['comment_count']['total_count'],
+                    'w3_fb_url': data['url'],
+                    'fetched_time': datetime.now(),
+                    **{
+                        reactions['node']['reaction_type']: reactions['reaction_count']
+                        for reactions in data['top_reactions']['edges']
+                    }
+                }
+    return post
+
+
+def _parse_share_and_reactions(html: str):
+    bad_jsons = _shares_and_reactions_regex.findall(html)
+    for bad_json in bad_jsons:
+        good_json = _bad_json_key_regex.sub(r'\g<prefix>"\g<key>":', bad_json)
+        yield json.loads(good_json)
