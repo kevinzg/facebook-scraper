@@ -71,7 +71,7 @@ def _get_posts(path, pages=10, timeout=5, sleep=0, credentials=None, extra_info=
 
     _timeout = timeout
     response = _session.get(url, timeout=_timeout)
-    html = HTML(html=response.html.html.replace('<!--','').replace('-->',''))
+    html = HTML(html=response.html.html.replace('<!--', '').replace('-->', ''))
     cursor_blob = html.html
 
     while True:
