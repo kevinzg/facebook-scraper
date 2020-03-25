@@ -32,6 +32,7 @@ We’re headed to PAX East 3/28-3/31 with new games
 - **timeout**: how many seconds to wait before timing out. Default is 5.
 - **sleep**: how many seconds to sleep between each request. Default is 0.
 - **credentials**: tuple of user and password to login before requesting the posts. Default is `None`.
+- **extra_info**: bool, if true the function will try to do an extra request to get the post reactions. Default is False.
 
 
 ## Post example
@@ -50,6 +51,7 @@ We’re headed to PAX East 3/28-3/31 with new games
  'likes': 2036,
  'comments': 214,
  'shares': 0,
+ 'reactions': {'like': 135, 'love': 64, 'haha': 10, 'wow': 4, 'anger': 1},  # if `extra_info` was set
  'post_url': 'https://m.facebook.com/story.php'
              '?story_fbid=2257188721032235&id=119240841493711',
  'link': 'https://bit.ly/something'}
