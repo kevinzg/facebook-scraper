@@ -57,7 +57,7 @@ def get_posts(account=None, group=None, **kwargs):
     return _get_posts(path, **kwargs)
 
 
-def _get_posts(path, pages=10, timeout=5, sleep=0, credentials=None):
+def _get_posts(path, pages=10, timeout=5, sleep=0, credentials=None, extra_info=False):
     """Gets posts for a given account."""
     global _session, _timeout
 
@@ -76,7 +76,10 @@ def _get_posts(path, pages=10, timeout=5, sleep=0, credentials=None):
 
     while True:
         for article in html.find('article'):
-            yield _extract_post(article)
+            post = _extract_post(article)
+            if extra_info:
+                post = fetch_share_and_reactions(post)
+            yield post
 
         pages -= 1
         if pages == 0:
@@ -325,14 +328,13 @@ def fetch_share_and_reactions(post: dict):
                     **post,
                     'shares': data['share_count']['count'],
                     'likes': data['reactors']['count'],
-                    'reactions': data['reactors']['count'],
+                    'reactions': {
+                        reaction['node']['reaction_type'].lower(): reaction['reaction_count']
+                        for reaction in data['top_reactions']['edges']
+                    },
                     'comments': data['comment_count']['total_count'],
                     'w3_fb_url': data['url'],
                     'fetched_time': datetime.now(),
-                    **{
-                        reactions['node']['reaction_type']: reactions['reaction_count']
-                        for reactions in data['top_reactions']['edges']
-                    }
                 }
     return post
 
