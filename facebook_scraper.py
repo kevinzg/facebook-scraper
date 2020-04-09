@@ -83,7 +83,7 @@ def _get_posts(path, pages=10, timeout=5, sleep=0, credentials=None, extra_info=
             yield post
 
         pages -= 1
-        if pages == 0:
+        if pages <= 0:
             return
 
         cursor = _find_cursor(cursor_blob)
