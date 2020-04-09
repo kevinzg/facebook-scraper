@@ -1,4 +1,5 @@
 import codecs
+import csv
 import itertools
 import json
 import re
@@ -10,7 +11,7 @@ from urllib import parse as urlparse
 from requests import RequestException
 from requests_html import HTML, HTMLSession
 
-__all__ = ['get_posts']
+__all__ = ['get_posts', 'write_posts_to_csv']
 
 
 _base_url = 'https://m.facebook.com'
@@ -344,3 +345,25 @@ def _parse_share_and_reactions(html: str):
     for bad_json in bad_jsons:
         good_json = _bad_json_key_regex.sub(r'\g<prefix>"\g<key>":', bad_json)
         yield json.loads(good_json)
+
+
+def write_posts_to_csv(account, pages=10, timeout=5, sleep=0, credentials=None):
+    """
+    :param account:     Facebook account name e.g. "nike", string
+    :param pages:       Number of pages to scan, integer
+    :param timeout:     Session response timeout in seconds, integer
+    :param sleep:       Sleep time in s before every call, integer
+    :param credentials: Credentials for login - username and password, tuple
+    :return:            CSV written in the same location with <<account_name>>_posts.csv
+    """
+    list_of_posts = []
+    for current_post in get_posts(account, pages, timeout, sleep, credentials):
+        list_of_posts.append(current_post)
+    if len(list_of_posts) > 0:
+        keys = list_of_posts[0].keys()
+        filename = account + "_posts.csv"
+        list_of_posts = [{k: str(v).encode("utf-8") for k, v in x.items()} for x in list_of_posts]
+        with open(filename, 'w') as output_file:
+            dict_writer = csv.DictWriter(output_file, keys)
+            dict_writer.writeheader()
+            dict_writer.writerows(list_of_posts)
