@@ -2,13 +2,17 @@
 
 Scrape Facebook public pages without an API key. Inspired by [twitter-scraper](https://github.com/kennethreitz/twitter-scraper).
 
+
 ## Install
 
 ```sh
 pip install facebook-scraper
 ```
 
+
 ## Usage
+
+Send the unique **page name** as the first parameter and you're good to go:
 
 ```python
 >>> from facebook_scraper import get_posts
@@ -20,12 +24,16 @@ The final step on the road to the Super Smash Bros
 We’re headed to PAX East 3/28-3/31 with new games
 ```
 
+
 ### Optional parameters
 
+- **group**: group id, to scrape groups instead of pages. Default is `None`.
 - **pages**: how many pages of posts to request, usually the first page has 2 posts and the rest 4. Default is 10.
 - **timeout**: how many seconds to wait before timing out. Default is 5.
 - **sleep**: how many seconds to sleep between each request. Default is 0.
 - **credentials**: tuple of user and password to login before requesting the posts. Default is `None`.
+- **extra_info**: bool, if true the function will try to do an extra request to get the post reactions. Default is False.
+
 
 ## Post example
 
@@ -43,12 +51,15 @@ We’re headed to PAX East 3/28-3/31 with new games
  'likes': 2036,
  'comments': 214,
  'shares': 0,
+ 'reactions': {'like': 135, 'love': 64, 'haha': 10, 'wow': 4, 'anger': 1},  # if `extra_info` was set
  'post_url': 'https://m.facebook.com/story.php'
              '?story_fbid=2257188721032235&id=119240841493711',
  'link': 'https://bit.ly/something'}
 ```
 
+
 ### Notes
 
 - There is no guarantee that every field will be extracted (they might be `None`).
 - Shares doesn't seem to work at the moment.
+- Group posts are only from one page.

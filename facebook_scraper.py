@@ -18,32 +18,51 @@ _base_url = 'https://m.facebook.com'
 _user_agent = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                "AppleWebKit/537.36 (KHTML, like Gecko) "
                "Chrome/76.0.3809.87 Safari/537.36")
-_headers = {'User-Agent': _user_agent, 'Accept-Language': 'en-US,en;q=0.5'}
+_cookie = ('locale=en_US;')
+_headers = {'User-Agent': _user_agent, 'Accept-Language': 'en-US,en;q=0.5', 'cookie': _cookie}
 
 _session = None
 _timeout = None
 
 _likes_regex = re.compile(r'like_def[^>]*>([0-9,.]+)')
 _comments_regex = re.compile(r'cmt_def[^>]*>([0-9,.]+)')
-_shares_regex = re.compile(r'([0-9,.]+)\s+Shares')
+_shares_regex = re.compile(r'([0-9,.]+)\s+Shares', re.IGNORECASE)
 _link_regex = re.compile(r"href=\"https:\/\/lm\.facebook\.com\/l\.php\?u=(.+?)\&amp;h=")
 
 _cursor_regex = re.compile(r'href:"(/page_content[^"]+)"')  # First request
 _cursor_regex_2 = re.compile(r'href":"(\\/page_content[^"]+)"')  # Other requests
 
 _photo_link = re.compile(r"href=\"(/[^\"]+/photos/[^\"]+?)\"")
-_image_regex = re.compile(
-    r"<a href=\"([^\"]+?)\" target=\"_blank\" class=\"sec\">View Full Size<\/a>"
-)
+_image_regex = re.compile(r"<a href=\"([^\"]+?)\" target=\"_blank\" class=\"sec\">View Full Size<\/a>", re.IGNORECASE)
 _image_regex_lq = re.compile(r"background-image: url\('(.+)'\)")
 _post_url_regex = re.compile(r'/story.php\?story_fbid=')
 
+_more_url_regex = re.compile(r'(?<=…\s)<a href="([^"]+)')
+_post_story_regex = re.compile(r'href="(\/story[^"]+)" aria')
 
-def get_posts(account, pages=10, timeout=5, sleep=0, credentials=None):
+_shares_and_reactions_regex = re.compile(
+    r'<script>.*bigPipe.onPageletArrive\((?P<data>\{.*RelayPrefetchedStreamCache.*\})\);.*</script>')
+_bad_json_key_regex = re.compile(r'(?P<prefix>[{,])(?P<key>\w+):')
+
+
+def get_posts(account=None, group=None, **kwargs):
+    valid_args = sum(arg is not None for arg in (account, group))
+    if valid_args != 1:
+        raise ValueError("You need to specify either account or group")
+
+    if account is not None:
+        path = f'{account}/posts/'
+    elif group is not None:
+        path = f'groups/{group}/'
+
+    return _get_posts(path, **kwargs)
+
+
+def _get_posts(path, pages=10, timeout=5, sleep=0, credentials=None, extra_info=False):
     """Gets posts for a given account."""
     global _session, _timeout
 
-    url = f'{_base_url}/{account}/posts/'
+    url = f'{_base_url}/{path}'
 
     _session = HTMLSession()
     _session.headers.update(_headers)
@@ -53,12 +72,15 @@ def get_posts(account, pages=10, timeout=5, sleep=0, credentials=None):
 
     _timeout = timeout
     response = _session.get(url, timeout=_timeout)
-    html = response.html
+    html = HTML(html=response.html.html.replace('<!--', '').replace('-->', ''))
     cursor_blob = html.html
 
     while True:
         for article in html.find('article'):
-            yield _extract_post(article)
+            post = _extract_post(article)
+            if extra_info:
+                post = fetch_share_and_reactions(post)
+            yield post
 
         pages -= 1
         if pages == 0:
@@ -110,6 +132,16 @@ def _extract_post_id(article):
 
 
 def _extract_text(article):
+    # Open this article individually because not all content is fully loaded when skimming through pages
+    # This ensures the full content can be read
+    hasMore = _more_url_regex.search(article.html)
+    if hasMore:
+        match = _post_story_regex.search(article.html)
+        if match:
+            url = f'{_base_url}{match.groups()[0].replace("&amp;", "&")}'
+            response = _session.get(url, timeout=_timeout)
+            article = response.html.find('.story_body_container', first=True)
+
     nodes = article.find('p, header')
     if nodes:
         post_text = []
@@ -118,6 +150,13 @@ def _extract_text(article):
         for node in nodes[1:]:
             if node.tag == "header":
                 ended = True
+
+            # Remove '... More'
+            # This button is meant to display the hidden text that is already loaded
+            # Not to be confused with the 'More' that opens the article in a new page
+            if node.tag == "p":
+                node = HTML(html=node.html.replace('>… <', '><', 1).replace('>More<', '', 1))
+
             if not ended:
                 post_text.append(node.text)
             else:
@@ -172,6 +211,8 @@ def _extract_image(article):
 
 def _extract_image_lq(article):
     story_container = article.find('div.story_body_container', first=True)
+    if story_container is None:
+        return None
     other_containers = story_container.xpath('div/div')
 
     for container in other_containers:
@@ -211,7 +252,7 @@ def _extract_post_url(article):
 
 def _find_and_search(article, selector, pattern, cast=str):
     container = article.find(selector, first=True)
-    match = pattern.search(container.html)
+    match = container and pattern.search(container.html)
     return match and cast(match.groups()[0])
 
 
@@ -260,6 +301,50 @@ def _login_user(email, password):
     _session.post(_base_url + login_action, data={'email': email, 'pass': password})
     if 'c_user' not in _session.cookies:
         warnings.warn('login unsuccessful')
+
+
+def fetch_share_and_reactions(post: dict):
+    """Fetch share and reactions information with a existing post obtained by `get_posts`.
+    Return a merged post that has some new fields including `reactions`, `w3_fb_url`, `fetched_time`,
+        and reactions fields `LIKE`, `ANGER`, `SORRY`, `WOW`, `LOVE`, `HAHA` if exist.
+
+    Note that this method will raise one http request per post, use it when you want some more information.
+
+    Example:
+    ```
+    for post in get_posts('fanpage'):
+        more_info_post = fetch_share_and_reactions(post)
+        print(more_info_post)
+    ```
+    """
+    url = post.get('post_url')
+    if url:
+        w3_fb_url = urlparse.urlparse(url)._replace(netloc='www.facebook.com').geturl()
+        resp = _session.get(w3_fb_url, timeout=_timeout)
+        for item in _parse_share_and_reactions(resp.text):
+            data = (item['jsmods']['pre_display_requires'][0][3][1]['__bbox']['result']
+                    ['data']['feedback'])
+            if data['subscription_target_id'] == post['post_id']:
+                return {
+                    **post,
+                    'shares': data['share_count']['count'],
+                    'likes': data['reactors']['count'],
+                    'reactions': {
+                        reaction['node']['reaction_type'].lower(): reaction['reaction_count']
+                        for reaction in data['top_reactions']['edges']
+                    },
+                    'comments': data['comment_count']['total_count'],
+                    'w3_fb_url': data['url'],
+                    'fetched_time': datetime.now(),
+                }
+    return post
+
+
+def _parse_share_and_reactions(html: str):
+    bad_jsons = _shares_and_reactions_regex.findall(html)
+    for bad_json in bad_jsons:
+        good_json = _bad_json_key_regex.sub(r'\g<prefix>"\g<key>":', bad_json)
+        yield json.loads(good_json)
 
 
 def write_posts_to_csv(account, pages=10, timeout=5, sleep=0, credentials=None):
