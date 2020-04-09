@@ -89,9 +89,11 @@ setup(
     # If your package is a single module, use this instead of 'packages':
     py_modules=['facebook_scraper'],
 
-    # entry_points={
-    #     'console_scripts': ['mycli=mymodule:cli'],
-    # },
+    entry_points={
+        'console_scripts': [
+            'facebook-scraper=facebook_scraper:_main',
+        ],
+    },
     install_requires=REQUIRED,
     include_package_data=True,
     license='MIT',
