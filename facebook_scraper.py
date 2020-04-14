@@ -32,6 +32,7 @@ _link_regex = re.compile(r"href=\"https:\/\/lm\.facebook\.com\/l\.php\?u=(.+?)\&
 
 _cursor_regex = re.compile(r'href:"(/page_content[^"]+)"')  # First request
 _cursor_regex_2 = re.compile(r'href":"(\\/page_content[^"]+)"')  # Other requests
+_cursor_regex_3 = re.compile(r'\shref="(\/groups\/[^"]+bac=[^"]+)"')  # for Group requests
 
 _photo_link = re.compile(r"href=\"(/[^\"]+/photos/[^\"]+?)\"")
 _image_regex = re.compile(r"<a href=\"([^\"]+?)\" target=\"_blank\" class=\"sec\">View Full Size<\/a>", re.IGNORECASE)
@@ -48,18 +49,21 @@ _bad_json_key_regex = re.compile(r'(?P<prefix>[{,])(?P<key>\w+):')
 
 def get_posts(account=None, group=None, **kwargs):
     valid_args = sum(arg is not None for arg in (account, group))
+
     if valid_args != 1:
         raise ValueError("You need to specify either account or group")
 
     if account is not None:
         path = f'{account}/posts/'
+        return _get_page_posts(path, **kwargs)
+
     elif group is not None:
         path = f'groups/{group}/'
+        return _get_group_posts(path, **kwargs)
 
-    return _get_posts(path, **kwargs)
 
 
-def _get_posts(path, pages=10, timeout=5, sleep=0, credentials=None, extra_info=False):
+def _get_page_posts(path, pages=10, timeout=5, sleep=0, credentials=None, extra_info=False):
     """Gets posts for a given account."""
     global _session, _timeout
 
@@ -72,6 +76,8 @@ def _get_posts(path, pages=10, timeout=5, sleep=0, credentials=None, extra_info=
         _login_user(*credentials)
 
     _timeout = timeout
+    
+    
     response = _session.get(url, timeout=_timeout)
     html = HTML(html=response.html.html.replace('<!--', '').replace('-->', ''))
     cursor_blob = html.html
@@ -105,6 +111,45 @@ def _get_posts(path, pages=10, timeout=5, sleep=0, credentials=None, extra_info=
                 html = HTML(html=action['html'], url=_base_url)
             elif action['cmd'] == 'script':
                 cursor_blob = action['code']
+
+
+def _get_group_posts(path, pages=10, timeout=5, sleep=0, credentials=None, extra_info=False):
+    """Gets posts for a given account."""
+    global _session, _timeout
+
+    url = f'{_base_url}/{path}'
+
+    _session = HTMLSession()
+    _session.headers.update(_headers)
+
+    if credentials:
+        _login_user(*credentials)
+
+    _timeout = timeout
+    
+    while True:
+        response = _session.get(url, timeout=_timeout)
+        response.raise_for_status()
+        html = HTML(html=response.html.html.replace('<!--', '').replace('-->', ''))
+        cursor_blob = html.html
+
+        for article in html.find('article'):
+            post = _extract_post(article)
+            if extra_info:
+                post = fetch_share_and_reactions(post)
+            yield post
+
+        pages -= 1
+        if pages <= 0:
+            return
+
+        cursor = _find_cursor(cursor_blob)
+
+        if cursor != None:
+            url = f'{_base_url}{cursor}'
+
+        if sleep:
+            time.sleep(sleep)
 
 
 def _extract_post(article):
@@ -263,6 +308,11 @@ def _find_cursor(text):
         return match.groups()[0]
 
     match = _cursor_regex_2.search(text)
+    if match:
+        value = match.groups()[0]
+        return value.encode('utf-8').decode('unicode_escape').replace('\\/', '/')
+
+    match = _cursor_regex_3.search(text)
     if match:
         value = match.groups()[0]
         return value.encode('utf-8').decode('unicode_escape').replace('\\/', '/')
