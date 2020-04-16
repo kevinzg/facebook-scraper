@@ -62,7 +62,6 @@ def get_posts(account=None, group=None, **kwargs):
         return _get_group_posts(path, **kwargs)
 
 
-
 def _get_page_posts(path, pages=10, timeout=5, sleep=0, credentials=None, extra_info=False):
     """Gets posts for a given account."""
     global _session, _timeout
@@ -76,8 +75,7 @@ def _get_page_posts(path, pages=10, timeout=5, sleep=0, credentials=None, extra_
         _login_user(*credentials)
 
     _timeout = timeout
-    
-    
+
     response = _session.get(url, timeout=_timeout)
     html = HTML(html=response.html.html.replace('<!--', '').replace('-->', ''))
     cursor_blob = html.html
@@ -126,7 +124,7 @@ def _get_group_posts(path, pages=10, timeout=5, sleep=0, credentials=None, extra
         _login_user(*credentials)
 
     _timeout = timeout
-    
+
     while True:
         response = _session.get(url, timeout=_timeout)
         response.raise_for_status()
@@ -145,7 +143,7 @@ def _get_group_posts(path, pages=10, timeout=5, sleep=0, credentials=None, extra
 
         cursor = _find_cursor(cursor_blob)
 
-        if cursor != None:
+        if cursor is not None:
             url = f'{_base_url}{cursor}'
 
         if sleep:
