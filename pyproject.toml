@@ -13,6 +13,7 @@ requests-html = "^0.10.0"
 
 [tool.poetry.dev-dependencies]
 ipython = "^7.14.0"
+pytest = "^5.4.1"
 
 [tool.poetry.scripts]
 poetry = 'facebook_scraper:_main'
