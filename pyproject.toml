@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "facebook-scraper"
+version = "0.2.0-alpha.1"
+description = "Scrape Facebook public pages without an API key"
+authors = ["Kevin Zúñiga <kevin.zun@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/kevinzg/facebook-scraper"
+
+[tool.poetry.dependencies]
+python = "^3.6"
+requests-html = "^0.10.0"
+
+[tool.poetry.dev-dependencies]
+ipython = "^7.14.0"
+
+[tool.poetry.scripts]
+poetry = 'facebook_scraper:_main'
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
