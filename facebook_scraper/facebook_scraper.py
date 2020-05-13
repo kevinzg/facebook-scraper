@@ -294,12 +294,6 @@ def _extract_post_url(article):
     return None
 
 
-def _find_and_search(article, selector, pattern, cast=str):
-    container = article.find(selector, first=True)
-    match = container and pattern.search(container.html)
-    return match and cast(match.groups()[0])
-
-
 def _find_cursor(text):
     match = _cursor_regex.search(text)
     if match:
@@ -316,32 +310,6 @@ def _find_cursor(text):
         return value.encode('utf-8').decode('unicode_escape').replace('\\/', '/')
 
     return None
-
-
-def _parse_int(value):
-    return int(''.join(filter(lambda c: c.isdigit(), value)))
-
-
-def _decode_css_url(url):
-    url = re.sub(r'\\(..) ', r'\\x\g<1>', url)
-    url, _ = codecs.unicode_escape_decode(url)
-    return url
-
-
-def _filter_query_params(url, whitelist=None, blacklist=None):
-    def is_valid_param(param):
-        if whitelist is not None:
-            return param in whitelist
-        if blacklist is not None:
-            return param not in blacklist
-        return True  # Do nothing
-
-    parsed_url = urlparse.urlparse(url)
-    query_params = urlparse.parse_qsl(parsed_url.query)
-    query_string = urlparse.urlencode(
-        [(k, v) for k, v in query_params if is_valid_param(k)]
-    )
-    return urlparse.urlunparse(parsed_url._replace(query=query_string))
 
 
 def _login_user(email, password):
