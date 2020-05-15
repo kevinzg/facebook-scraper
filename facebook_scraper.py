@@ -218,6 +218,13 @@ def _extract_text(article):
 
 
 def _extract_time(article):
+    ## Handle post time on group post
+    try:
+        time = article.find('abbr', first=True).text
+        return time
+    except (KeyError, ValueError):
+        pass
+
     try:
         data_ft = json.loads(article.attrs['data-ft'])
         page_insights = data_ft['page_insights']
@@ -230,6 +237,7 @@ def _extract_time(article):
             return datetime.fromtimestamp(timestamp)
         except (KeyError, ValueError):
             continue
+        
     return None
 
 
