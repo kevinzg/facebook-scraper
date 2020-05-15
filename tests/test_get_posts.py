@@ -102,3 +102,39 @@ class TestGetPosts:
             assert 'comments' in post
             assert 'w3_fb_url' in post
             assert 'fetched_time' in post
+
+
+@pytest.mark.vcr()
+class TestGetGroupPosts:
+    def test_get_group_posts(self):
+        text = (
+            'Hola!, This group is aimed to create opportunities for South '
+            'American students in Computer Science and related fields.\n'
+            'Hope this will help us to know what we are doing in our work, '
+            'achievements to be recognized, increase fairness in our area, and '
+            'maybe conferences where we might meet.\n'
+            'Professors and professionals are also welcomed to share their '
+            'experiences and to collaborate among us and learn together.\n'
+            'Some short rules for a happy co-existence:\n'
+            '1. No business advertisement or spam.\n'
+            '2. Topics relevant to Computing, Computer Science, Software '
+            'Engineering, and Education.\n'
+            '3. Political and religious advertisement are not allowed.'
+        )
+        expected_post = {
+            'comments': 1,
+            'image': None,
+            'likes': 26,
+            'link': None,
+            'post_id': None,
+            'post_text': text,
+            'post_url': None,
+            'shared_text': '',
+            'shares': 0,
+            'text': text,
+            'time': None,
+        }
+
+        post = next(get_posts(group=117507531664134))
+
+        assert post == expected_post
