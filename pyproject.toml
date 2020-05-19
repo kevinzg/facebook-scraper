@@ -22,3 +22,8 @@ poetry = 'facebook_scraper:_main'
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
+
+[tool.black]
+line-length = 98
+target-version = ["py36"]
+skip-string-normalization = true
