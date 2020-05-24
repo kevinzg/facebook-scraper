@@ -160,6 +160,7 @@ class PostExtractor:
 
         return None
 
+    # TODO: Add the correct timezone
     def extract_time(self) -> PartialPost:
         page_insights = self.data_ft['page_insights']
 
@@ -321,6 +322,7 @@ class PostExtractor:
 
 
 class GroupPostExtractor(PostExtractor):
+    # TODO: This might need to be aware of the timezone and locale (?)
     def extract_time(self) -> PartialPost:
         # This is a string with this format 'April 3, 2018 at 8:02 PM'
         time = self.element.find('abbr', first=True).text
