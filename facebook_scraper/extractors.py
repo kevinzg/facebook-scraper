@@ -66,21 +66,22 @@ class PostExtractor:
             self.extract_link,
         ]
 
+        # TODO: create method to make a new post object
         post = {}
 
+        # TODO: this is just used by `extract_reactions`, probably should not be acceded from self
         self.post = post
 
         for method in methods:
             try:
                 partial_post = method()
                 if partial_post is None:
-                    logger.warning("Extract method %s didn't return anythign", method.__name__)
+                    logger.warning("Extract method %s didn't return anything", method.__name__)
                     continue
 
                 post.update(partial_post)
             except Exception as ex:
-                logger.exception("Exception while running %s: %s", method.__name__, ex)
-                raise
+                logger.warning("Exception while running %s: %s", method.__name__, ex)
 
         if 'reactions' in self.options:
             reactions = self.extract_reactions()
@@ -273,7 +274,7 @@ class PostExtractor:
                         'w3_fb_url': data['url'],
                         'fetched_time': datetime.now(),
                     }
-        return {}
+        return None
 
     def parse_share_and_reactions(self, html: str):
         bad_jsons = self.shares_and_reactions_regex.findall(html)
@@ -290,8 +291,8 @@ class PostExtractor:
         try:
             data_ft_json = self.element.attrs['data-ft']
             self._data_ft = json.loads(data_ft_json)
-        except JSONDecodeError:
-            logger.error("Error parsing data-ft JSON")
+        except JSONDecodeError as ex:
+            logger.error("Error parsing data-ft JSON: %s", ex)
         except KeyError:
             logger.error("data-ft attribute not found")
 
