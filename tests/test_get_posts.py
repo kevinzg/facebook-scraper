@@ -1,6 +1,7 @@
 import datetime
 
 import pytest
+
 from facebook_scraper import get_posts
 
 
@@ -132,7 +133,7 @@ class TestGetGroupPosts:
             'shared_text': '',
             'shares': 0,
             'text': text,
-            'time': None,
+            'time': datetime.datetime(2018, 4, 3, 20, 2, 0),
         }
 
         post = next(get_posts(group=117507531664134))

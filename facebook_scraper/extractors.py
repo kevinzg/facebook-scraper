@@ -21,6 +21,10 @@ def extract_post(element: Element, options: Options, request_fn: RequestFunction
     return PostExtractor(element, options, request_fn).extract_post()
 
 
+def extract_group_post(element: Element, options: Options, request_fn: RequestFunction) -> Post:
+    return GroupPostExtractor(element, options, request_fn).extract_post()
+
+
 class PostExtractor:
     likes_regex = re.compile(r'like_def[^>]*>([0-9,.]+)')
     comments_regex = re.compile(r'cmt_def[^>]*>([0-9,.]+)')
@@ -314,3 +318,13 @@ class PostExtractor:
             logger.error("data-ft attribute not found")
 
         return self._data_ft
+
+
+class GroupPostExtractor(PostExtractor):
+    def extract_time(self) -> PartialPost:
+        # This is a string with this format 'April 3, 2018 at 8:02 PM'
+        time = self.element.find('abbr', first=True).text
+        time = datetime.strptime(time, '%B %d, %Y at %I:%M %p')
+        return {
+            'time': time,
+        }

@@ -9,7 +9,7 @@ from requests_html import HTMLSession
 
 from . import utils
 from .constants import DEFAULT_PAGE_LIMIT, FB_MOBILE_BASE_URL
-from .extractors import extract_post
+from .extractors import extract_group_post, extract_post
 from .page_iterators import iter_group_pages, iter_pages
 from .typing import Post
 
@@ -48,7 +48,7 @@ class FacebookScraper:
 
     def get_group_posts(self, group: str, **kwargs) -> Iterator[Post]:
         iter_pages_fn = partial(iter_group_pages, group=group, request_fn=self.get)
-        return self._generic_get_posts(extract_post, iter_pages_fn, **kwargs)
+        return self._generic_get_posts(extract_group_post, iter_pages_fn, **kwargs)
 
     def get(self, url, **kwargs):
         try:
