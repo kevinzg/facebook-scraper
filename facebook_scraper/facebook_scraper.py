@@ -1,8 +1,10 @@
 import itertools
+import logging
 import warnings
 from functools import partial
 from typing import Iterator
 
+from requests import RequestException
 from requests_html import HTMLSession
 
 from . import utils
@@ -10,6 +12,9 @@ from .constants import DEFAULT_PAGE_LIMIT, FB_MOBILE_BASE_URL
 from .extractors import extract_post
 from .page_iterators import iter_group_pages, iter_pages
 from .typing import Post
+
+
+logger = logging.getLogger(__name__)
 
 
 class FacebookScraper:
@@ -46,7 +51,13 @@ class FacebookScraper:
         return self._generic_get_posts(extract_post, iter_pages_fn, **kwargs)
 
     def get(self, url, **kwargs):
-        return self.session.get(url=url, **self.requests_kwargs, **kwargs)
+        try:
+            response = self.session.get(url=url, **self.requests_kwargs, **kwargs)
+            response.raise_for_status()
+            return response
+        except RequestException:
+            logger.exception("Exception while requesting URL: %s", url)
+            raise
 
     def login(self, email, password):
         login_page = self.get(self.base_url)
@@ -66,6 +77,8 @@ class FacebookScraper:
         if options is None:
             options = set()
 
-        for _, page in zip(counter, iter_pages_fn()):
+        logger.debug("Starting to iterate pages")
+        for i, page in zip(counter, iter_pages_fn()):
+            logger.debug("Extracting posts from page %s", i)
             for post_element in page:
                 yield extract_post_fn(post_element, options=options, request_fn=self.get)
