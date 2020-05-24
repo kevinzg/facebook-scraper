@@ -23,9 +23,16 @@ def get_posts(
 
     _scraper.requests_kwargs['timeout'] = kwargs.pop('timeout', DEFAULT_REQUESTS_TIMEOUT)
 
+    options = kwargs.setdefault('options', set())
+
     # TODO: Deprecate `pages` in favor of `page_limit` since it is less confusing
     if 'pages' in kwargs:
         kwargs['page_limit'] = kwargs.pop('pages')
+
+    # TODO: Deprecate `extra_info` in favor of `options`
+    if 'extra_info' in kwargs:
+        kwargs.pop('extra_info')
+        options.add('reactions')
 
     if credentials is not None:
         _scraper.login(*credentials)

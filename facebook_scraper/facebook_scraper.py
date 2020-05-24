@@ -59,13 +59,12 @@ class FacebookScraper:
             warnings.warn('login unsuccessful')
 
     def _generic_get_posts(
-        self, extract_post_fn, iter_pages_fn, page_limit=DEFAULT_PAGE_LIMIT, extra_info=False
+        self, extract_post_fn, iter_pages_fn, page_limit=DEFAULT_PAGE_LIMIT, options=None
     ):
         counter = itertools.count(0) if page_limit is None else range(page_limit)
 
-        options = set()
-        if extra_info:
-            options.add('reactions')
+        if options is None:
+            options = set()
 
         for _, page in zip(counter, iter_pages_fn()):
             for post_element in page:
