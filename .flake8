@@ -1,2 +1,4 @@
 [flake8]
 max-line-length = 98
+per-file-ignores =
+    utils.py:F401
