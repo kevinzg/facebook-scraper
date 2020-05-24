@@ -168,6 +168,8 @@ class PostExtractor:
             except (KeyError, ValueError):
                 continue
 
+        return None
+
     def extract_image(self) -> PartialPost:
         image_link = self.extract_photo_link()
         if image_link is not None:
@@ -177,7 +179,7 @@ class PostExtractor:
     def extract_image_lq(self) -> PartialPost:
         story_container = self.element.find('div.story_body_container', first=True)
         if story_container is None:
-            return {'image': None}
+            return None
         other_containers = story_container.xpath('div/div')
 
         for container in other_containers:
@@ -190,14 +192,13 @@ class PostExtractor:
             if match:
                 return {'image': utils.decode_css_url(match.groups()[0])}
 
-        return {'image': None}
+        return None
 
     def extract_link(self) -> PartialPost:
         match = self.link_regex.search(self.element.html)
-        link = None
         if match:
-            link = utils.unquote(match.groups()[0])
-        return {'link': link}
+            return {'link': utils.unquote(match.groups()[0])}
+        return None
 
     def extract_post_url(self) -> PartialPost:
         query_params = ('story_fbid', 'id')
@@ -210,6 +211,7 @@ class PostExtractor:
                 path = utils.filter_query_params(href, whitelist=query_params)
                 url = utils.urljoin(FB_MOBILE_BASE_URL, path)
                 return {'post_url': url}
+        return None
 
     # TODO: Remove `or 0` from this methods
     def extract_likes(self) -> PartialPost:
@@ -236,7 +238,7 @@ class PostExtractor:
             or 0,
         }
 
-    def extract_photo_link(self) -> str:
+    def extract_photo_link(self) -> PartialPost:
         match = self.photo_link.search(self.element.html)
         if not match:
             return None
@@ -250,6 +252,7 @@ class PostExtractor:
             return {
                 'image': match.groups()[0].replace("&amp;", "&"),
             }
+        return None
 
     def extract_reactions(self) -> PartialPost:
         """Fetch share and reactions information with a existing post obtained by `get_posts`.
