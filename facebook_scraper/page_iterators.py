@@ -1,10 +1,14 @@
 import json
+import logging
 import re
 from typing import Iterator, Optional
 
 from . import utils
 from .constants import FB_MOBILE_BASE_URL
 from .typing import URL, Element, Page, RequestFunction, Response
+
+
+logger = logging.getLogger(__name__)
 
 
 def iter_pages(account: str, request_fn: RequestFunction) -> Iterator[Page]:
@@ -20,20 +24,29 @@ def iter_group_pages(group: str, request_fn: RequestFunction) -> Iterator[Page]:
 def generic_iter_pages(start_url, page_parser_cls, request_fn: RequestFunction) -> Iterator[Page]:
     next_url = start_url
 
-    def get_page(html: Element) -> Iterator[Page]:
+    def get_page(html: Element) -> Page:
         return html.find('article')
 
     while next_url:
+        logger.debug("Requesting page from: %s", next_url)
         response = request_fn(next_url)
+
+        logger.debug("Parsing page response")
         parser = page_parser_cls(response)
 
         html = parser.get_html()
-        yield get_page(html)
 
-        next_url = None
+        page = get_page(html)
+        logger.debug("Got %s <article> elements from page", len(page))
+        yield page
+
+        logger.debug("Looking for next page URL")
         next_page = parser.get_next_page()
         if next_page:
             next_url = utils.urljoin(FB_MOBILE_BASE_URL, next_page)
+        else:
+            logger.info("Page parser did not find next page URL")
+            next_url = None
 
 
 class PageParser:
@@ -79,13 +92,16 @@ class PageParser:
 
     def _parse_json(self):
         prefix_length = len(self.json_prefix)
-        data = json.loads(self.response.text[prefix_length:])  # Remove 'for (;;);'
+        data = json.loads(self.response.text[prefix_length:])  # Strip 'for (;;);'
 
         for action in data['payload']['actions']:
             if action['cmd'] == 'replace':
                 self.html = utils.make_html_element(action['html'], url=FB_MOBILE_BASE_URL)
             elif action['cmd'] == 'script':
                 self.cursor_blob = action['code']
+
+        assert self.html is not None
+        assert self.cursor_blob is not None
 
 
 class GroupPageParser(PageParser):
