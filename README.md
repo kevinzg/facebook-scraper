@@ -63,3 +63,16 @@ We’re headed to PAX East 3/28-3/31 with new games
 - There is no guarantee that every field will be extracted (they might be `None`).
 - Shares doesn't seem to work at the moment.
 - Group posts are only from one page.
+
+
+## Alternatives and related projects
+
+- [facebook-post-scraper](https://github.com/brutalsavage/facebook-post-scraper). Has comments. Uses Selenium.
+- [facebook-scraper-selenium](https://github.com/apurvmishra99/facebook-scraper-selenium). "Scrape posts from any group or user into a .csv file without needing to register for any API access".
+- [Ultimate Facebook Scraper](https://github.com/harismuneer/Ultimate-Facebook-Scraper).  "Scrapes almost everything about a Facebook user's profile". Uses Selenium.
+- [Unofficial APIs](https://github.com/Rolstenhouse/unofficial-apis). List of unoffical APIs for various services, none for Facebook for now, but might be worth to check in the future.
+- [major-scrapy-spiders](https://github.com/talhashraf/major-scrapy-spiders). Has a profile spider for Scrapy.
+- [facebook-page-post-scraper](https://github.com/minimaxir/facebook-page-post-scraper). Seems abandoned.
+    - [FBLYZE](https://github.com/isaacmg/fb_scraper). Fork (?).
+- [RSSHub](https://github.com/DIYgod/RSSHub/blob/master/lib/routes/facebook/page.js). Generates an RSS feed from Facebook pages.
+- [RSS-Bridge](https://github.com/RSS-Bridge/rss-bridge/blob/master/bridges/FacebookBridge.php). Also generates RSS feeds from Facebook pages.
