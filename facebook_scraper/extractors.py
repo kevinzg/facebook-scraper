@@ -51,6 +51,21 @@ class PostExtractor:
 
         self._data_ft = None
 
+    def make_new_post(self) -> Post:
+        return {
+            'post_id': None,
+            'text': None,
+            'post_text': None,
+            'shared_text': None,
+            'time': None,
+            'image': None,
+            'likes': None,
+            'comments': None,
+            'shares': None,
+            'post_url': None,
+            'link': None,
+        }
+
     def extract_post(self) -> Post:
         """Parses the element into self.item"""
 
@@ -66,8 +81,7 @@ class PostExtractor:
             self.extract_link,
         ]
 
-        # TODO: create method to make a new post object
-        post = {}
+        post = self.make_new_post()
 
         # TODO: this is just used by `extract_reactions`, probably should not be acceded from self
         self.post = post
