@@ -95,7 +95,7 @@ class PostExtractor:
 
                 post.update(partial_post)
             except Exception as ex:
-                logger.warning("Exception while running %s: %s", method.__name__, ex)
+                logger.warning("Exception while running %s: %r", method.__name__, ex)
 
         if 'reactions' in self.options:
             reactions = self.extract_reactions()
@@ -309,7 +309,7 @@ class PostExtractor:
             data_ft_json = self.element.attrs['data-ft']
             self._data_ft = json.loads(data_ft_json)
         except JSONDecodeError as ex:
-            logger.error("Error parsing data-ft JSON: %s", ex)
+            logger.error("Error parsing data-ft JSON: %r", ex)
         except KeyError:
             logger.error("data-ft attribute not found")
 

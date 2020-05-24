@@ -55,8 +55,8 @@ class FacebookScraper:
             response = self.session.get(url=url, **self.requests_kwargs, **kwargs)
             response.raise_for_status()
             return response
-        except RequestException:
-            logger.exception("Exception while requesting URL: %s", url)
+        except RequestException as ex:
+            logger.exception("Exception while requesting URL: %s\nException: %r", url, ex)
             raise
 
     def login(self, email, password):
