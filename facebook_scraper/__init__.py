@@ -1,4 +1,5 @@
 import csv
+import logging
 import sys
 from typing import Iterator, Tuple, Union
 
@@ -90,3 +91,8 @@ def _main():
 
 if __name__ == '__main__':
     _main()
+
+
+# Disable logging by default
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
