@@ -68,11 +68,14 @@ class PageParser:
         if self.response.text.startswith(self.json_prefix):
             self._parse_json()
         else:
-            # TODO: Why are we uncommenting HTML?
-            self.html = utils.make_html_element(
-                self.response.text.replace('<!--', '').replace('-->', ''), url=self.response.url,
-            )
-            self.cursor_blob = self.response.text
+            self._parse_html()
+
+    def _parse_html(self):
+        # TODO: Why are we uncommenting HTML?
+        self.html = utils.make_html_element(
+            self.response.text.replace('<!--', '').replace('-->', ''), url=self.response.url,
+        )
+        self.cursor_blob = self.response.text
 
     def _parse_json(self):
         prefix_length = len(self.json_prefix)
@@ -104,7 +107,4 @@ class GroupPageParser(PageParser):
         return None
 
     def _parse(self):
-        self.html = utils.make_html_element(
-            self.response.text.replace('<!--', '').replace('-->', ''), url=self.response.url,
-        )
-        self.cursor_blob = self.response.text
+        self._parse_html()
