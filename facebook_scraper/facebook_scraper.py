@@ -67,6 +67,6 @@ class FacebookScraper:
         if extra_info:
             options.add('reactions')
 
-        for page, _ in zip(iter_pages_fn(), counter):
+        for _, page in zip(counter, iter_pages_fn()):
             for post_element in page:
                 yield extract_post_fn(post_element, options=options, request_fn=self.get)
