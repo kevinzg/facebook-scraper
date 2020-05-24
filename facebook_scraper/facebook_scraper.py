@@ -1,156 +1,75 @@
-import json
-import re
-import time
+import itertools
 import warnings
+from functools import partial
+from typing import Iterator
 
-from requests import RequestException
-from requests_html import HTML, HTMLSession
+from requests_html import HTMLSession
 
-__all__ = ['get_posts', 'write_posts_to_csv']
-
-
-_base_url = 'https://m.facebook.com'
-_user_agent = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-               "AppleWebKit/537.36 (KHTML, like Gecko) "
-               "Chrome/76.0.3809.87 Safari/537.36")
-_cookie = ('locale=en_US;')
-_headers = {'User-Agent': _user_agent, 'Accept-Language': 'en-US,en;q=0.5', 'cookie': _cookie}
-
-_session = None
-_timeout = None
-
-_cursor_regex = re.compile(r'href:"(/page_content[^"]+)"')  # First request
-_cursor_regex_2 = re.compile(r'href":"(\\/page_content[^"]+)"')  # Other requests
-_cursor_regex_3 = re.compile(r'\shref="(\/groups\/[^"]+bac=[^"]+)"')  # for Group requests
+from . import utils
+from .constants import DEFAULT_PAGE_LIMIT, FB_MOBILE_BASE_URL
+from .extractors import extract_post
+from .page_iterators import iter_group_pages, iter_pages
+from .typing import Post
 
 
-def get_posts(account=None, group=None, **kwargs):
-    valid_args = sum(arg is not None for arg in (account, group))
+class FacebookScraper:
+    base_url = FB_MOBILE_BASE_URL
+    user_agent = (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/76.0.3809.87 Safari/537.36"
+    )
+    cookie = 'locale=en_US;'
+    default_headers = {
+        'User-Agent': user_agent,
+        'Accept-Language': 'en-US,en;q=0.5',
+        'cookie': cookie,
+    }
 
-    if valid_args != 1:
-        raise ValueError("You need to specify either account or group")
+    def __init__(self, session=None, requests_kwargs=None):
+        if session is None:
+            session = HTMLSession()
+            session.headers.update(self.default_headers)
 
-    if account is not None:
-        path = f'{account}/posts/'
-        return _get_page_posts(path, **kwargs)
+        if requests_kwargs is None:
+            requests_kwargs = {}
 
-    elif group is not None:
-        path = f'groups/{group}/'
-        return _get_group_posts(path, **kwargs)
+        self.session = session
+        self.requests_kwargs = requests_kwargs
 
+    def get_posts(self, account: str, **kwargs) -> Iterator[Post]:
+        iter_pages_fn = partial(iter_pages, account=account, request_fn=self.get)
+        return self._generic_get_posts(extract_post, iter_pages_fn, **kwargs)
 
-def _get_page_posts(path, pages=10, timeout=5, sleep=0, credentials=None, extra_info=False):
-    """Gets posts for a given account."""
-    global _session, _timeout
+    def get_group_posts(self, group: str, **kwargs) -> Iterator[Post]:
+        iter_pages_fn = partial(iter_group_pages, group=group, request_fn=self.get)
+        return self._generic_get_posts(extract_post, iter_pages_fn, **kwargs)
 
-    url = f'{_base_url}/{path}'
+    def get(self, url, **kwargs):
+        return self.session.get(url=url, **self.requests_kwargs, **kwargs)
 
-    _session = HTMLSession()
-    _session.headers.update(_headers)
+    def login(self, email, password):
+        login_page = self.get(self.base_url)
+        login_action = login_page.html.find('#login_form', first=True).attrs.get('action')
+        self.session.post(
+            utils.urljoin(self.base_url, login_action), data={'email': email, 'pass': password}
+        )
 
-    if credentials:
-        _login_user(*credentials)
+        if 'c_user' not in self.session.cookies:
+            warnings.warn('login unsuccessful')
 
-    _timeout = timeout
+    def _generic_get_posts(
+        self, extract_post_fn, iter_pages_fn, page_limit=DEFAULT_PAGE_LIMIT, extra_info=False
+    ):
+        counter = itertools.count(0) if page_limit is None else range(page_limit)
 
-    response = _session.get(url, timeout=_timeout)
-    html = HTML(html=response.html.html.replace('<!--', '').replace('-->', ''))
-    cursor_blob = html.html
+        options = set()
+        if extra_info:
+            options.add('reactions')
 
-    while True:
-        for article in html.find('article'):
-            post = _extract_post(article)
-            if extra_info:
-                post = fetch_share_and_reactions(post)
-            yield post
-
-        pages -= 1
-        if pages <= 0:
-            return
-
-        cursor = _find_cursor(cursor_blob)
-        next_url = f'{_base_url}{cursor}'
-
-        if sleep:
-            time.sleep(sleep)
-
-        try:
-            response = _session.get(next_url, timeout=timeout)
-            response.raise_for_status()
-            data = json.loads(response.text.replace('for (;;);', '', 1))
-        except (RequestException, ValueError):
-            return
-
-        for action in data['payload']['actions']:
-            if action['cmd'] == 'replace':
-                html = HTML(html=action['html'], url=_base_url)
-            elif action['cmd'] == 'script':
-                cursor_blob = action['code']
-
-
-def _get_group_posts(path, pages=10, timeout=5, sleep=0, credentials=None, extra_info=False):
-    """Gets posts for a given account."""
-    global _session, _timeout
-
-    url = f'{_base_url}/{path}'
-
-    _session = HTMLSession()
-    _session.headers.update(_headers)
-
-    if credentials:
-        _login_user(*credentials)
-
-    _timeout = timeout
-
-    while True:
-        response = _session.get(url, timeout=_timeout)
-        response.raise_for_status()
-        html = HTML(html=response.html.html.replace('<!--', '').replace('-->', ''))
-        cursor_blob = html.html
-
-        for article in html.find('article'):
-            post = _extract_post(article)
-            if extra_info:
-                post = fetch_share_and_reactions(post)
-            yield post
-
-        pages -= 1
-        if pages <= 0:
-            return
-
-        cursor = _find_cursor(cursor_blob)
-
-        if cursor is not None:
-            url = f'{_base_url}{cursor}'
-
-        if sleep:
-            time.sleep(sleep)
-
-
-def _find_cursor(text):
-    match = _cursor_regex.search(text)
-    if match:
-        return match.groups()[0]
-
-    match = _cursor_regex_2.search(text)
-    if match:
-        value = match.groups()[0]
-        return value.encode('utf-8').decode('unicode_escape').replace('\\/', '/')
-
-    match = _cursor_regex_3.search(text)
-    if match:
-        value = match.groups()[0]
-        return value.encode('utf-8').decode('unicode_escape').replace('\\/', '/')
-
-    return None
-
-
-def _login_user(email, password):
-    login_page = _session.get(_base_url)
-    login_action = login_page.html.find('#login_form', first=True).attrs.get('action')
-    _session.post(_base_url + login_action, data={'email': email, 'pass': password})
-    if 'c_user' not in _session.cookies:
-        warnings.warn('login unsuccessful')
+        for page, _ in zip(iter_pages_fn(), counter):
+            for post_element in page:
+                yield extract_post_fn(post_element, options=options, request_fn=self.get)
 
 
 def write_posts_to_csv(account=None, group=None, filename=None, **kwargs):
