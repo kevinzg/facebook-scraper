@@ -1,7 +1,7 @@
 from . import write_posts_to_csv
 
 
-def _main():
+def run():
     """facebook-scraper entry point when used as a script"""
     import argparse
 
@@ -16,4 +16,4 @@ def _main():
 
 
 if __name__ == '__main__':
-    _main()
+    run()
