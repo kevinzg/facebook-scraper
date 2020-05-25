@@ -65,6 +65,15 @@ We’re headed to PAX East 3/28-3/31 with new games
 - Group posts are only from one page.
 
 
+## To-Do
+
+- Async support
+- Image galleries
+- Videos
+- Profiles or post authors
+- Comments
+
+
 ## Alternatives and related projects
 
 - [facebook-post-scraper](https://github.com/brutalsavage/facebook-post-scraper). Has comments. Uses Selenium.
