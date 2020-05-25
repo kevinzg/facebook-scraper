@@ -17,7 +17,7 @@ pytest = "^5.4.1"
 pytest-vcr = "^1.0.2"
 
 [tool.poetry.scripts]
-poetry = 'facebook_scraper:_main'
+facebook-scraper = 'facebook_scraper.__main__:run'
 
 [tool.black]
 line-length = 98
