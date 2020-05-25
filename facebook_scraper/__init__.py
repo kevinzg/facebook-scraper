@@ -1,7 +1,7 @@
 import csv
 import logging
 import sys
-from typing import Iterator, Tuple, Union
+from typing import Iterator, Optional, Tuple, Union
 
 from .constants import DEFAULT_REQUESTS_TIMEOUT
 from .facebook_scraper import FacebookScraper
@@ -12,11 +12,25 @@ _scraper = FacebookScraper()
 
 
 def get_posts(
-    account: str = None,
-    group: Union[str, int] = None,
-    credentials: Tuple[str, str] = None,
+    account: Optional[str] = None,
+    group: Union[str, int, None] = None,
+    credentials: Optional[Tuple[str, str]] = None,
     **kwargs,
 ) -> Iterator[Post]:
+    """Get posts from a Facebook page or group.
+
+    Args:
+        account: The account of the page.
+        group: The group id.
+        credentials: Tuple of email and password to login before scraping.
+        timeout (int): Timeout for requests.
+        page_limit (int): How many pages of posts to go through.
+            Use None to try to get all of them.
+        extra_info (bool): Set to True to try to get reactions.
+
+    Yields:
+        dict: The post representation in a dictionary.
+    """
     valid_args = sum(arg is not None for arg in (account, group))
 
     if valid_args != 1:
@@ -46,17 +60,22 @@ def get_posts(
 
 
 def write_posts_to_csv(
-    account: str = None, group: Union[str, int] = None, filename=None, **kwargs
+    account: Optional[str] = None,
+    group: Union[str, int, None] = None,
+    filename: str = None,
+    **kwargs,
 ):
-    """
-    :param account:     Facebook account name e.g. "nike", string
-    :param group:       Facebook group id
-    :param filename:    File name, defaults to <<account_posts.csv>>
-    :param pages:       Number of pages to scan, integer
-    :param timeout:     Session response timeout in seconds, integer
-    :param sleep:       Sleep time in s before every call, integer
-    :param credentials: Credentials for login - username and password, tuple
-    :return:            CSV written in the same location with <<account_name>>_posts.csv
+    """Write posts from an account or group to a CSV file
+
+    Args:
+        account: Facebook account name e.g. "nike"
+        group: Facebook group id.
+        filename: Filename, defaults to <account or group>_posts.csv
+        credentials: Tuple of email and password to login before scraping.
+        timeout (int): Timeout for requests.
+        page_limit (int): How many pages of posts to go through.
+            Use None to try to get all of them.
+        extra_info (bool): Set to True to try to get reactions.
     """
     list_of_posts = list(get_posts(account=account, group=group, **kwargs))
 
