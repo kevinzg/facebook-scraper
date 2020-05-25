@@ -31,8 +31,8 @@ def get_posts(
         kwargs['page_limit'] = kwargs.pop('pages')
 
     # TODO: Deprecate `extra_info` in favor of `options`
-    if 'extra_info' in kwargs:
-        kwargs.pop('extra_info')
+    extra_info = kwargs.pop('extra_info', False)
+    if extra_info:
         options.add('reactions')
 
     if credentials is not None:
