@@ -5,7 +5,7 @@ from typing import Iterator, Optional, Tuple, Union
 
 from .constants import DEFAULT_REQUESTS_TIMEOUT
 from .facebook_scraper import FacebookScraper
-from .typing import Post
+from .fb_types import Post
 
 
 _scraper = FacebookScraper()

@@ -5,7 +5,7 @@ from typing import Iterator, Optional
 
 from . import utils
 from .constants import FB_MOBILE_BASE_URL
-from .typing import URL, Element, Page, RequestFunction, Response
+from .fb_types import URL, Element, Page, RequestFunction, Response
 
 
 logger = logging.getLogger(__name__)

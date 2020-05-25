@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional
 
 from . import utils
 from .constants import FB_MOBILE_BASE_URL
-from .typing import Element, Options, Post, RequestFunction
+from .fb_types import Element, Options, Post, RequestFunction
 
 
 logger = logging.getLogger(__name__)
