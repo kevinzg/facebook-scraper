@@ -115,7 +115,7 @@ class GroupPageParser(PageParser):
         if next_page:
             return next_page
 
-        match = self.cursor_regex_3.search(self.response)
+        match = self.cursor_regex_3.search(self.cursor_blob)
         if match:
             value = match.groups()[0]
             return value.encode('utf-8').decode('unicode_escape').replace('\\/', '/')
