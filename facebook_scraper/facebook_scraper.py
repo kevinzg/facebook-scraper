@@ -62,12 +62,24 @@ class FacebookScraper:
     def login(self, email, password):
         login_page = self.get(self.base_url)
         login_action = login_page.html.find('#login_form', first=True).attrs.get('action')
-        self.session.post(
+
+        response = self.session.post(
             utils.urljoin(self.base_url, login_action), data={'email': email, 'pass': password}
         )
+        response_text = response.html.find('#viewport', first=True).text
+
+        logger.debug("Login response text: %s", response_text)
+
+        login_error = response.html.find('#login_error', first=True)
+        if login_error:
+            logger.error("Login error: %s", login_error.text)
 
         if 'c_user' not in self.session.cookies:
             warnings.warn('login unsuccessful')
+
+    def is_logged_in(self) -> bool:
+        response = self.get('https://m.facebook.com/settings')
+        return not response.url.startswith('https://m.facebook.com/login.php')
 
     def _generic_get_posts(
         self, extract_post_fn, iter_pages_fn, page_limit=DEFAULT_PAGE_LIMIT, options=None
