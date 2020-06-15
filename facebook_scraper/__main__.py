@@ -1,11 +1,12 @@
 from . import write_posts_to_csv
+import argparse
 
 
 def run():
     """facebook-scraper entry point when used as a script"""
-    import argparse
-
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        prog='facebook-scraper', description="Scrape Facebook public pages without an API key",
+    )
     parser.add_argument('account', type=str, help="Facebook account")
     parser.add_argument('-f', '--filename', type=str, help="Output filename")
     parser.add_argument('-p', '--pages', type=int, help="Number of pages to download", default=10)
