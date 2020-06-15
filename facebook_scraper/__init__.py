@@ -94,6 +94,14 @@ def write_posts_to_csv(
         dict_writer.writerows(list_of_posts)
 
 
+def enable_logging(level=logging.INFO):
+    handler = logging.StreamHandler()
+    handler.setLevel(level)
+
+    logger.addHandler(handler)
+    logger.setLevel(level)
+
+
 # Disable logging by default
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
