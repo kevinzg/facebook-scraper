@@ -116,9 +116,6 @@ class PageParser:
 class GroupPageParser(PageParser):
     cursor_regex_3 = re.compile(r'\shref="(\/groups\/[^"]+bac=[^"]+)"')  # for Group requests
 
-    def get_raw_page(self) -> RawPage:
-        return self.html
-
     def get_next_page(self) -> Optional[URL]:
         next_page = super().get_next_page()
         if next_page:
