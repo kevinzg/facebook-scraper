@@ -5,7 +5,7 @@ from typing import Iterator, Optional
 
 from . import utils
 from .constants import FB_MOBILE_BASE_URL
-from .fb_types import URL, Element, Page, RequestFunction, Response
+from .fb_types import URL, RawPage, Page, RequestFunction, Response
 
 
 logger = logging.getLogger(__name__)
@@ -24,14 +24,14 @@ def iter_group_pages(group: str, request_fn: RequestFunction) -> Iterator[Page]:
 def generic_iter_pages(start_url, page_parser_cls, request_fn: RequestFunction) -> Iterator[Page]:
     next_url = start_url
 
-    def get_page(html: Element) -> Page:
-        articles = html.find('article')
-        if not articles:
+    def get_page(raw_page: RawPage) -> Page:
+        raw_posts = raw_page.find('article')
+        if not raw_posts:
             logger.warning("No raw posts (<article> elements) were found in this page.")
             if logger.isEnabledFor(logging.DEBUG):
-                content = utils.html2text(html.html)
+                content = utils.html2text(raw_page.html)
                 logger.debug("The page content is:\n---\n%s\n---\n", content)
-        return articles
+        return raw_posts
 
     while next_url:
         logger.debug("Requesting page from: %s", next_url)
@@ -40,10 +40,11 @@ def generic_iter_pages(start_url, page_parser_cls, request_fn: RequestFunction) 
         logger.debug("Parsing page response")
         parser = page_parser_cls(response)
 
-        html = parser.get_html()
+        raw_page = parser.get_raw_page()
+        page = get_page(raw_page)
 
-        page = get_page(html)
-        logger.debug("Got %s <article> elements from page", len(page))
+        # TODO: If page is actually an iterable calling len(page) might consume it
+        logger.debug("Got %s raw posts from page", len(page))
         yield page
 
         logger.debug("Looking for next page URL")
@@ -68,7 +69,7 @@ class PageParser:
 
         self._parse()
 
-    def get_html(self) -> Element:
+    def get_raw_page(self) -> RawPage:
         return self.html
 
     def get_next_page(self) -> Optional[URL]:
@@ -113,7 +114,7 @@ class PageParser:
 class GroupPageParser(PageParser):
     cursor_regex_3 = re.compile(r'\shref="(\/groups\/[^"]+bac=[^"]+)"')  # for Group requests
 
-    def get_html(self) -> Element:
+    def get_raw_page(self) -> RawPage:
         return self.html
 
     def get_next_page(self) -> Optional[URL]:

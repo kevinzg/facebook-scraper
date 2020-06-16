@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional
 
 from . import utils
 from .constants import FB_MOBILE_BASE_URL
-from .fb_types import Element, Options, Post, RequestFunction
+from .fb_types import RawPost, Options, Post, RequestFunction
 
 
 logger = logging.getLogger(__name__)
@@ -17,12 +17,12 @@ logger = logging.getLogger(__name__)
 PartialPost = Optional[Dict[str, Any]]
 
 
-def extract_post(element: Element, options: Options, request_fn: RequestFunction) -> Post:
-    return PostExtractor(element, options, request_fn).extract_post()
+def extract_post(raw_post: RawPost, options: Options, request_fn: RequestFunction) -> Post:
+    return PostExtractor(raw_post, options, request_fn).extract_post()
 
 
-def extract_group_post(element: Element, options: Options, request_fn: RequestFunction) -> Post:
-    return GroupPostExtractor(element, options, request_fn).extract_post()
+def extract_group_post(raw_post: RawPost, options: Options, request_fn: RequestFunction) -> Post:
+    return GroupPostExtractor(raw_post, options, request_fn).extract_post()
 
 
 class PostExtractor:
