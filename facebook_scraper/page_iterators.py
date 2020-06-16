@@ -29,9 +29,8 @@ def generic_iter_pages(start_url, page_parser_cls, request_fn: RequestFunction) 
         if not articles:
             logger.warning("No raw posts (<article> elements) were found in this page.")
             if logger.isEnabledFor(logging.DEBUG):
-                import html2text
-                content = html2text.html2text(html.html)
-                logger.debug("The page content is:\n %s\n", content)
+                content = utils.html2text(html.html)
+                logger.debug("The page content is:\n---\n%s\n---\n", content)
         return articles
 
     while next_url:

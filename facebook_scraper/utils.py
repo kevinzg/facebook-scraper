@@ -2,6 +2,7 @@ import codecs
 import re
 from urllib.parse import parse_qsl, unquote, urlencode, urljoin, urlparse, urlunparse
 
+from html2text import html2text as _html2text
 from requests_html import DEFAULT_URL, Element, PyQuery
 
 
@@ -38,3 +39,7 @@ def filter_query_params(url, whitelist=None, blacklist=None) -> str:
 def make_html_element(html: str, url=DEFAULT_URL) -> Element:
     pq_element = PyQuery(html)[0]  # PyQuery is a list, so we take the first element
     return Element(element=pq_element, url=url)
+
+
+def html2text(html: str) -> str:
+    return _html2text(html)
