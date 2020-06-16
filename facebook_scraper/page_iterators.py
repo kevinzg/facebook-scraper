@@ -24,15 +24,6 @@ def iter_group_pages(group: str, request_fn: RequestFunction) -> Iterator[Page]:
 def generic_iter_pages(start_url, page_parser_cls, request_fn: RequestFunction) -> Iterator[Page]:
     next_url = start_url
 
-    def get_page(raw_page: RawPage) -> Page:
-        raw_posts = raw_page.find('article')
-        if not raw_posts:
-            logger.warning("No raw posts (<article> elements) were found in this page.")
-            if logger.isEnabledFor(logging.DEBUG):
-                content = utils.html2text(raw_page.html)
-                logger.debug("The page content is:\n---\n%s\n---\n", content)
-        return raw_posts
-
     while next_url:
         logger.debug("Requesting page from: %s", next_url)
         response = request_fn(next_url)
@@ -40,8 +31,7 @@ def generic_iter_pages(start_url, page_parser_cls, request_fn: RequestFunction) 
         logger.debug("Parsing page response")
         parser = page_parser_cls(response)
 
-        raw_page = parser.get_raw_page()
-        page = get_page(raw_page)
+        page = parser.get_page()
 
         # TODO: If page is actually an iterable calling len(page) might consume it
         logger.debug("Got %s raw posts from page", len(page))
@@ -68,6 +58,18 @@ class PageParser:
         self.cursor_blob = None
 
         self._parse()
+
+    def get_page(self) -> Page:
+        raw_page = self.get_raw_page()
+        raw_posts = raw_page.find('article')
+
+        if not raw_posts:
+            logger.warning("No raw posts (<article> elements) were found in this page.")
+            if logger.isEnabledFor(logging.DEBUG):
+                content = utils.html2text(raw_page.html)
+                logger.debug("The page content is:\n---\n%s\n---\n", content)
+
+        return raw_posts
 
     def get_raw_page(self) -> RawPage:
         return self.html
