@@ -24,7 +24,7 @@ def run():
     # Enable logging
     if args.verbose > 0:
         args.verbose = min(args.verbose, 3)
-        level = {1: logging.WARNING, 2: logging.INFO, 3: logging.DEBUG,}[args.verbose]
+        level = {1: logging.WARNING, 2: logging.INFO, 3: logging.DEBUG}[args.verbose]
         enable_logging(level)
 
     write_posts_to_csv(**kwargs, filename=args.filename, pages=args.pages)
