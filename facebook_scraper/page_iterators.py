@@ -1,6 +1,7 @@
 import json
 import logging
 import re
+import textwrap
 from typing import Iterator, Optional
 
 from . import utils
@@ -66,8 +67,14 @@ class PageParser:
         if not raw_posts:
             logger.warning("No raw posts (<article> elements) were found in this page.")
             if logger.isEnabledFor(logging.DEBUG):
-                content = utils.html2text(raw_page.html)
-                logger.debug("The page content is:\n---\n%s\n---\n", content)
+                content = textwrap.indent(
+                    utils.html2text(raw_page.html),
+                    prefix='| ',
+                    predicate=lambda _: True,
+                )
+                sep = '+' + '-' * 60
+                logger.debug("The page url is: %s", self.response.url)
+                logger.debug("The page content is:\n%s\n%s%s\n", sep, content, sep)
 
         return raw_posts
 
