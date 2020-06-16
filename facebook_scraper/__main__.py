@@ -13,7 +13,7 @@ def run():
     parser.add_argument('-f', '--filename', type=str, help="Output filename")
     parser.add_argument('-p', '--pages', type=int, help="Number of pages to download", default=10)
     parser.add_argument('-g', '--group', action='store_true', help="Use group scraper")
-    parser.add_argument('-v', '--verbose', action='count', default=0)
+    parser.add_argument('-v', '--verbose', action='count', help="Enable logging", default=0)
 
     args = parser.parse_args()
 
