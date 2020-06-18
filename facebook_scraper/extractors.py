@@ -63,6 +63,7 @@ class PostExtractor:
             'shared_text': None,
             'time': None,
             'image': None,
+            'video': None,
             'likes': None,
             'comments': None,
             'shares': None,
@@ -83,10 +84,10 @@ class PostExtractor:
             self.extract_shares,
             self.extract_post_url,
             self.extract_link,
+            self.extract_video,
         ]
 
         post = self.make_new_post()
-
         # TODO: this is just used by `extract_reactions`, probably should not be acceded from self
         self.post = post
 
@@ -297,6 +298,20 @@ class PostExtractor:
                         'fetched_time': datetime.now(),
                     }
         return None
+    def extract_video(self):
+        img_element = self.element.find('[data-sigil="inlineVideo"]', first=True)
+        if img_element is None:
+            return None
+        try:
+            data = json.loads(img_element.attrs['data-store'])
+            return {'video': data['src']}
+        except JSONDecodeError as ex:
+            logger.error("Error parsing data-store JSON: %r", ex)
+        except KeyError:
+            logger.error("data-store attribute not found")
+
+        return None
+
 
     def parse_share_and_reactions(self, html: str):
         bad_jsons = self.shares_and_reactions_regex.findall(html)
