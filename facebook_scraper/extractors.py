@@ -10,6 +10,12 @@ from . import utils
 from .constants import FB_MOBILE_BASE_URL
 from .fb_types import Element, Options, Post, RequestFunction
 
+try:
+    from youtube_dl import YoutubeDL
+    from youtube_dl.utils import ExtractorError
+except ImportError:
+    YoutubeDL = None
+
 
 logger = logging.getLogger(__name__)
 
@@ -298,18 +304,44 @@ class PostExtractor:
                         'fetched_time': datetime.now(),
                     }
         return None
+
     def extract_video(self):
-        img_element = self.element.find('[data-sigil="inlineVideo"]', first=True)
-        if img_element is None:
+        data_element = self.element.find('[data-sigil="inlineVideo"]', first=True)
+        if data_element is None:
             return None
         try:
-            data = json.loads(img_element.attrs['data-store'])
-            return {'video': data['src']}
+            data = json.loads(data_element.attrs['data-store'])
+            if 'youtube-dl' in self.options:
+                video = self.extract_video_highres(data)
+            else:
+                video = data.get('src')
+            return {'video': video}
         except JSONDecodeError as ex:
             logger.error("Error parsing data-store JSON: %r", ex)
         except KeyError:
             logger.error("data-store attribute not found")
+        return None
 
+    def extract_video_highres(self, data):
+        if not YoutubeDL:
+            raise ModuleNotFoundError("youtube-dl must be installed to download videos in high resolution.")
+        ydl_opts = {
+            'format': 'best',
+            'quiet': True,
+        }
+        videoID = data.get('videoID')
+        if not videoID:
+            return None
+        try:
+            # HACK:
+            # `videoID`s are unique but they have to be accessed through a url with a page name.
+            # The name of the page doesn't seem to matter as long as it is either the original poster or a nonexistent page name.
+            # Ideally we want to make realistic requests with the right page in the url.
+            video_page = 'https://www.facebook.com/nonexistentpage123/videos/'+videoID
+            with YoutubeDL(ydl_opts) as ydl:
+                return ydl.extract_info(video_page, download=False)['url']
+        except ExtractorError as e:
+            print(e)
         return None
 
 

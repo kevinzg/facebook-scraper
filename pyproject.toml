@@ -11,11 +11,15 @@ repository = "https://github.com/kevinzg/facebook-scraper"
 python = "^3.6"
 requests-html = "^0.10.0"
 html2text = "^2020.1.16"
+youtube_dl = {version = "^2020.6.16", optional=true}
 
 [tool.poetry.dev-dependencies]
 ipython = "^7.14.0"
 pytest = "^5.4.1"
 pytest-vcr = "^1.0.2"
+
+[tool.poetry.extras]
+youtube-dl = ["youtube_dl"]
 
 [tool.poetry.scripts]
 facebook-scraper = 'facebook_scraper.__main__:run'
