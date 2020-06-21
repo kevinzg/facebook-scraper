@@ -311,7 +311,7 @@ class PostExtractor:
             return None
         try:
             data = json.loads(data_element.attrs['data-store'])
-            if 'youtube-dl' in self.options:
+            if 'youtube_dl' in self.options:
                 video = self.extract_video_highres(data)
             else:
                 video = data.get('src')

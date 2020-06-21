@@ -48,6 +48,8 @@ def get_posts(
     extra_info = kwargs.pop('extra_info', False)
     if extra_info:
         options.add('reactions')
+    if kwargs.pop('youtube_dl', False):
+        options.add('youtube_dl')
 
     if credentials is not None:
         _scraper.login(*credentials)
