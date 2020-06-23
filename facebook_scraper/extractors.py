@@ -94,6 +94,7 @@ class PostExtractor:
         ]
 
         post = self.make_new_post()
+
         # TODO: this is just used by `extract_reactions`, probably should not be acceded from self
         self.post = post
 
