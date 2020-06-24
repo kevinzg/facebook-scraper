@@ -11,6 +11,7 @@ class TestGetPosts:
         expected_post = {
             'comments': 73,
             'image': 'https://scontent.faqp2-3.fna.fbcdn.net/v/t1.0-9/fr/cp0/e15/q65/96724875_3065146506903115_4237164853036318720_o.jpg?_nc_cat=103&_nc_sid=8024bb&_nc_oc=AQmzJTxqWcBz-Q2u7AX_Aj_6bwv6V86hZS-v9BY-3w0h7jy9_LGi-LXss6UJuQn9xhk&_nc_ht=scontent.faqp2-3.fna&_nc_tp=14&oh=a057d46d536592575cce1605eac62dc4&oe=5EE011FB',
+            'video': None,
             'likes': 1334,
             'link': 'https://www.nintendo.com/wallpapers/',
             'post_id': '3065154550235644',
@@ -35,6 +36,7 @@ class TestGetPosts:
             'comments': 111,
             'fetched_time': datetime.datetime(2020, 5, 13, 16, 14, 4, 993758),
             'image': 'https://scontent.faqp2-3.fna.fbcdn.net/v/t1.0-9/fr/cp0/e15/q65/96724875_3065146506903115_4237164853036318720_o.jpg?_nc_cat=103&_nc_sid=8024bb&_nc_oc=AQmzJTxqWcBz-Q2u7AX_Aj_6bwv6V86hZS-v9BY-3w0h7jy9_LGi-LXss6UJuQn9xhk&_nc_ht=scontent.faqp2-3.fna&_nc_tp=14&oh=a057d46d536592575cce1605eac62dc4&oe=5EE011FB',
+            'video': None,
             'likes': 1754,
             'link': 'https://www.nintendo.com/wallpapers/',
             'post_id': '3065154550235644',
@@ -76,6 +78,7 @@ class TestGetPosts:
             assert 'text' in post
             assert 'time' in post
             assert 'image' in post
+            assert 'video' in post
             assert 'likes' in post
             assert 'comments' in post
             assert 'shares' in post
@@ -91,6 +94,7 @@ class TestGetPosts:
             assert 'post_id' in post
             assert 'text' in post
             assert 'time' in post
+            assert 'video' in post
             assert 'image' in post
             assert 'likes' in post
             assert 'comments' in post
@@ -125,6 +129,7 @@ class TestGetGroupPosts:
         expected_post = {
             'comments': 1,
             'image': None,
+            'video': None,
             'likes': 26,
             'link': None,
             'post_id': None,
