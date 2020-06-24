@@ -68,9 +68,7 @@ class PageParser:
             logger.warning("No raw posts (<article> elements) were found in this page.")
             if logger.isEnabledFor(logging.DEBUG):
                 content = textwrap.indent(
-                    utils.html2text(raw_page.html),
-                    prefix='| ',
-                    predicate=lambda _: True,
+                    utils.html2text(raw_page.html), prefix='| ', predicate=lambda _: True,
                 )
                 sep = '+' + '-' * 60
                 logger.debug("The page url is: %s", self.response.url)

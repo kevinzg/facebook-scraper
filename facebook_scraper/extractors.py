@@ -325,23 +325,25 @@ class PostExtractor:
         except KeyError:
             logger.error("data-store attribute not found")
         return None
+
     def extract_video_highres(self):
         if not YoutubeDL:
-            raise ModuleNotFoundError("youtube-dl must be installed to download videos in high resolution.")
+            raise ModuleNotFoundError(
+                "youtube-dl must be installed to download videos in high resolution."
+            )
         ydl_opts = {
             'format': 'best',
             'quiet': True,
         }
         try:
             post_id = self.post.get('post_id')
-            video_page = 'https://www.facebook.com/'+post_id
+            video_page = 'https://www.facebook.com/' + post_id
             with YoutubeDL(ydl_opts) as ydl:
                 url = ydl.extract_info(video_page, download=False)['url']
                 return {'video': url}
         except ExtractorError as ex:
             logger.error("Error extracting video with youtube-dl: %r", ex)
         return None
-
 
     def parse_share_and_reactions(self, html: str):
         bad_jsons = self.shares_and_reactions_regex.findall(html)
