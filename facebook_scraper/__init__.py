@@ -27,6 +27,7 @@ def get_posts(
         page_limit (int): How many pages of posts to go through.
             Use None to try to get all of them.
         extra_info (bool): Set to True to try to get reactions.
+        youtube_dl (bool): Use Youtube-DL for video extraction.
 
     Yields:
         dict: The post representation in a dictionary.

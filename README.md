@@ -42,6 +42,7 @@ for more details on CLI usage
 - **sleep**: how many seconds to sleep between each request. Default is 0.
 - **credentials**: tuple of user and password to login before requesting the posts. Default is `None`.
 - **extra_info**: bool, if true the function will try to do an extra request to get the post reactions. Default is False.
+- **youtube_dl**: bool, use Youtube-DL for (high-quality) video extraction. You need to have youtube-dl installed on your environment. Default is False.
 
 
 ## Post example
@@ -72,6 +73,7 @@ for more details on CLI usage
 - There is no guarantee that every field will be extracted (they might be `None`).
 - Shares doesn't seem to work at the moment.
 - Group posts may be missing some fields like `time` and `post_url`.
+- Group scraping may return only one page and not work on private groups.
 
 
 ## To-Do
