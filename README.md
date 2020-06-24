@@ -24,6 +24,15 @@ The final step on the road to the Super Smash Bros
 We’re headed to PAX East 3/28-3/31 with new games
 ```
 
+### CLI usage
+```sh
+$ facebook-scraper --filename nintendo_page_posts.csv --pages 1 nintendo
+```
+Use
+```sh
+$ facebook-scraper --help
+```
+for more details on CLI usage
 
 ### Optional parameters
 
