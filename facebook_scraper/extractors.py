@@ -10,6 +10,12 @@ from . import utils
 from .constants import FB_MOBILE_BASE_URL
 from .fb_types import RawPost, Options, Post, RequestFunction
 
+try:
+    from youtube_dl import YoutubeDL
+    from youtube_dl.utils import ExtractorError
+except ImportError:
+    YoutubeDL = None
+
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +69,7 @@ class PostExtractor:
             'shared_text': None,
             'time': None,
             'image': None,
+            'video': None,
             'likes': None,
             'comments': None,
             'shares': None,
@@ -83,6 +90,7 @@ class PostExtractor:
             self.extract_shares,
             self.extract_post_url,
             self.extract_link,
+            self.extract_video,
         ]
 
         post = self.make_new_post()
@@ -297,6 +305,43 @@ class PostExtractor:
                         'fetched_time': datetime.now(),
                     }
         return None
+
+    def extract_video(self):
+        video_data_element = self.element.find('[data-sigil="inlineVideo"]', first=True)
+        if video_data_element is None:
+            return None
+        if 'youtube_dl' in self.options:
+            vid = self.extract_video_highres()
+            if vid:
+                return vid
+        return self.extract_video_lowres(video_data_element)
+
+    def extract_video_lowres(self, video_data_element):
+        try:
+            data = json.loads(video_data_element.attrs['data-store'])
+            return {'video': data.get('src')}
+        except JSONDecodeError as ex:
+            logger.error("Error parsing data-store JSON: %r", ex)
+        except KeyError:
+            logger.error("data-store attribute not found")
+        return None
+    def extract_video_highres(self):
+        if not YoutubeDL:
+            raise ModuleNotFoundError("youtube-dl must be installed to download videos in high resolution.")
+        ydl_opts = {
+            'format': 'best',
+            'quiet': True,
+        }
+        try:
+            post_id = self.post.get('post_id')
+            video_page = 'https://www.facebook.com/'+post_id
+            with YoutubeDL(ydl_opts) as ydl:
+                url = ydl.extract_info(video_page, download=False)['url']
+                return {'video': url}
+        except ExtractorError as ex:
+            logger.error("Error extracting video with youtube-dl: %r", ex)
+        return None
+
 
     def parse_share_and_reactions(self, html: str):
         bad_jsons = self.shares_and_reactions_regex.findall(html)
