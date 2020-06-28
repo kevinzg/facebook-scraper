@@ -5,7 +5,7 @@ from typing import Iterator, Optional, Tuple, Union
 
 from .constants import DEFAULT_REQUESTS_TIMEOUT
 from .facebook_scraper import FacebookScraper
-from .fb_types import Post
+from .fb_types import Post, Credentials
 
 
 _scraper = FacebookScraper()
@@ -14,15 +14,15 @@ _scraper = FacebookScraper()
 def get_posts(
     account: Optional[str] = None,
     group: Union[str, int, None] = None,
-    credentials: Optional[Tuple[str, str]] = None,
+    credentials: Optional[Credentials] = None,
     **kwargs,
 ) -> Iterator[Post]:
     """Get posts from a Facebook page or group.
 
     Args:
-        account: The account of the page.
-        group: The group id.
-        credentials: Tuple of email and password to login before scraping.
+        account (str): The account of the page.
+        group (int): The group id.
+        credentials (Optional[Tuple[str, str]]): Tuple of email and password to login before scraping.
         timeout (int): Timeout for requests.
         page_limit (int): How many pages of posts to go through.
             Use None to try to get all of them.
@@ -71,14 +71,14 @@ def write_posts_to_csv(
     """Write posts from an account or group to a CSV file
 
     Args:
-        account: Facebook account name e.g. "nike"
-        group: Facebook group id.
-        filename: Filename, defaults to <account or group>_posts.csv
-        credentials: Tuple of email and password to login before scraping.
-        timeout (int): Timeout for requests.
-        page_limit (int): How many pages of posts to go through.
+        account (str): Facebook account name e.g. "nike" or "nintendo"
+        group (Union[str, int, None]): Facebook group id e.g. 676845025728409 
+        filename (str): Filename, defaults to <account or group>_posts.csv
+        credentials (Optional[Tuple[str, str]]): Tuple of email and password to login before scraping. Defaults to scrape anonymously
+        timeout (Optional[int]): Timeout for requests.
+        page_limit (Optional[int]): How many pages of posts to go through.
             Use None to try to get all of them.
-        extra_info (bool): Set to True to try to get reactions.
+        extra_info (Optional[bool]): Set to True to try to get reactions.
     """
     list_of_posts = list(get_posts(account=account, group=group, **kwargs))
 

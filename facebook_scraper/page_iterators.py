@@ -48,6 +48,7 @@ def generic_iter_pages(start_url, page_parser_cls, request_fn: RequestFunction) 
 
 
 class PageParser:
+    """Class for Parsing a single page on a Page"""
     json_prefix = 'for (;;);'
 
     cursor_regex = re.compile(r'href:"(/page_content[^"]+)"')  # First request
@@ -119,6 +120,7 @@ class PageParser:
 
 
 class GroupPageParser(PageParser):
+    """Class for parsing a single page of a group"""
     cursor_regex_3 = re.compile(r'\shref="(\/groups\/[^"]+bac=[^"]+)"')  # for Group requests
 
     def get_next_page(self) -> Optional[URL]:
