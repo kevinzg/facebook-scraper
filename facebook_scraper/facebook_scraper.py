@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class FacebookScraper:
     """Class for creating FacebookScraper Iterators"""
+
     base_url = FB_MOBILE_BASE_URL
     user_agent = (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
