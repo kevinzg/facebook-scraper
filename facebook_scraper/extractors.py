@@ -32,6 +32,7 @@ def extract_group_post(raw_post: RawPost, options: Options, request_fn: RequestF
 
 
 class PostExtractor:
+    """Class for Extracting fields from a FacebookPost"""
     likes_regex = re.compile(r'like_def[^>]*>([0-9,.]+)')
     comments_regex = re.compile(r'cmt_def[^>]*>([0-9,.]+)')
     shares_regex = re.compile(r'([0-9,.]+)\s+Shares', re.IGNORECASE)
@@ -369,6 +370,7 @@ class PostExtractor:
 
 
 class GroupPostExtractor(PostExtractor):
+    """Class for extracting posts from Facebook Groups rather than Pages"""
     # TODO: This might need to be aware of the timezone and locale (?)
     def extract_time(self) -> PartialPost:
         # This is a string with this format 'April 3, 2018 at 8:02 PM'

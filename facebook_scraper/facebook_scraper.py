@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 class FacebookScraper:
+    """Class for creating FacebookScraper Iterators"""
     base_url = FB_MOBILE_BASE_URL
     user_agent = (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -59,7 +60,7 @@ class FacebookScraper:
             logger.exception("Exception while requesting URL: %s\nException: %r", url, ex)
             raise
 
-    def login(self, email, password):
+    def login(self, email: str, password: str):
         login_page = self.get(self.base_url)
         login_action = login_page.html.find('#login_form', first=True).attrs.get('action')
 
