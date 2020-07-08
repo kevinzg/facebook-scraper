@@ -14,6 +14,9 @@ def run():
     parser.add_argument('-p', '--pages', type=int, help="Number of pages to download", default=10)
     parser.add_argument('-g', '--group', action='store_true', help="Use group scraper")
     parser.add_argument('-v', '--verbose', action='count', help="Enable logging", default=0)
+    parser.add_argument(
+        '--encoding', action='store', help="Encoding for the output file", default=None
+    )
 
     args = parser.parse_args()
 
@@ -27,7 +30,7 @@ def run():
         level = {1: logging.WARNING, 2: logging.INFO, 3: logging.DEBUG}[args.verbose]
         enable_logging(level)
 
-    write_posts_to_csv(**kwargs, filename=args.filename, pages=args.pages)
+    write_posts_to_csv(**kwargs, filename=args.filename, pages=args.pages, encoding=args.encoding)
 
 
 if __name__ == '__main__':

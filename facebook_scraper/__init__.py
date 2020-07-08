@@ -1,4 +1,5 @@
 import csv
+import locale
 import logging
 import sys
 from typing import Iterator, Optional, Tuple, Union
@@ -66,14 +67,16 @@ def write_posts_to_csv(
     account: Optional[str] = None,
     group: Union[str, int, None] = None,
     filename: str = None,
+    encoding: str = None,
     **kwargs,
 ):
     """Write posts from an account or group to a CSV file
 
     Args:
         account (str): Facebook account name e.g. "nike" or "nintendo"
-        group (Union[str, int, None]): Facebook group id e.g. 676845025728409 
+        group (Union[str, int, None]): Facebook group id e.g. 676845025728409
         filename (str): Filename, defaults to <account or group>_posts.csv
+        encoding (str): Encoding for the output file, defaults to locale.getpreferredencoding()
         credentials (Optional[Tuple[str, str]]): Tuple of email and password to login before scraping. Defaults to scrape anonymously
         timeout (Optional[int]): Timeout for requests.
         page_limit (Optional[int]): How many pages of posts to go through.
@@ -91,7 +94,10 @@ def write_posts_to_csv(
     if filename is None:
         filename = str(account or group) + "_posts.csv"
 
-    with open(filename, 'w') as output_file:
+    if encoding is None:
+        encoding = locale.getpreferredencoding()
+
+    with open(filename, 'w', encoding=encoding) as output_file:
         dict_writer = csv.DictWriter(output_file, keys)
         dict_writer.writeheader()
         dict_writer.writerows(list_of_posts)
