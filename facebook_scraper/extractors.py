@@ -113,7 +113,10 @@ class PostExtractor:
 
         if 'reactions' in self.options:
             reactions = self.extract_reactions()
-            post.update(reactions)
+            if reactions is None:
+                logger.warning("Could not extract reactions")
+            else:
+                post.update(reactions)
 
         return post
 
