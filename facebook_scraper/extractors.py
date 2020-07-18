@@ -48,7 +48,7 @@ class PostExtractor:
     post_url_regex = re.compile(r'/story.php\?story_fbid=')
 
     shares_and_reactions_regex = re.compile(
-        r'<script>.*bigPipe.onPageletArrive\((?P<data>\{.*RelayPrefetchedStreamCache.*\})\);'
+        r'<script nonce=.*>.*bigPipe.onPageletArrive\((?P<data>\{.*RelayPrefetchedStreamCache.*\})\);'
         '.*</script>'
     )
     bad_json_key_regex = re.compile(r'(?P<prefix>[{,])(?P<key>\w+):')
