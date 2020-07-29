@@ -161,9 +161,12 @@ class PostExtractor:
                 else:
                     shared_text.append(node.text)
 
-            text = '\n'.join(itertools.chain(post_text, shared_text))
-            post_text = '\n'.join(post_text)
-            shared_text = '\n'.join(shared_text)
+            # Separation between paragraphs
+            paragraph_separator = '\n\n'
+
+            text = paragraph_separator.join(itertools.chain(post_text, shared_text))
+            post_text = paragraph_separator.join(post_text)
+            shared_text = paragraph_separator.join(shared_text)
 
             return {
                 'text': text,
