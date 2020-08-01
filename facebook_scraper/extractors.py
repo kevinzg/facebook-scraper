@@ -45,6 +45,7 @@ class PostExtractor:
         re.IGNORECASE,
     )
     image_regex_lq = re.compile(r"background-image: url\('(.+)'\)")
+    video_thumbnail_regex = re.compile(r"background: url\('(.+)'\)")
     post_url_regex = re.compile(r'/story.php\?story_fbid=')
 
     shares_and_reactions_regex = re.compile(
@@ -72,6 +73,7 @@ class PostExtractor:
             'time': None,
             'image': None,
             'video': None,
+            'video_thumbnail' : None,
             'likes': None,
             'comments': None,
             'shares': None,
@@ -93,6 +95,7 @@ class PostExtractor:
             self.extract_post_url,
             self.extract_link,
             self.extract_video,
+            self.extract_video_thumbnail,
         ]
 
         post = self.make_new_post()
@@ -351,6 +354,15 @@ class PostExtractor:
                 return {'video': url}
         except ExtractorError as ex:
             logger.error("Error extracting video with youtube-dl: %r", ex)
+        return None
+    def extract_video_thumbnail(self):
+        thumbnail_element = self.element.find('i[data-sigil="playInlineVideo"]', first=True)
+        if not thumbnail_element:
+            return None
+        style = thumbnail_element.attrs.get('style', '')
+        match = self.video_thumbnail_regex.search(style)
+        if match:
+            return {'video_thumbnail': utils.decode_css_url(match.groups()[0])}
         return None
 
     def parse_share_and_reactions(self, html: str):
