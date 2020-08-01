@@ -73,7 +73,7 @@ class PostExtractor:
             'time': None,
             'image': None,
             'video': None,
-            'video_thumbnail' : None,
+            'video_thumbnail': None,
             'likes': None,
             'comments': None,
             'shares': None,
@@ -355,6 +355,7 @@ class PostExtractor:
         except ExtractorError as ex:
             logger.error("Error extracting video with youtube-dl: %r", ex)
         return None
+
     def extract_video_thumbnail(self):
         thumbnail_element = self.element.find('i[data-sigil="playInlineVideo"]', first=True)
         if not thumbnail_element:
