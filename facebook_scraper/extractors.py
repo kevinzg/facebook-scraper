@@ -47,6 +47,7 @@ class PostExtractor:
     image_regex_lq = re.compile(r"background-image: url\('(.+)'\)")
     video_thumbnail_regex = re.compile(r"background: url\('(.+)'\)")
     post_url_regex = re.compile(r'/story.php\?story_fbid=')
+    video_post_url_regex = re.compile(r'https://www.facebook.com/\w+/videos/.+/')
 
     shares_and_reactions_regex = re.compile(
         r'<script nonce=.*>.*bigPipe.onPageletArrive\((?P<data>\{.*RelayPrefetchedStreamCache.*\})\);'
@@ -230,11 +231,14 @@ class PostExtractor:
         elements = self.element.find('header a')
         for element in elements:
             href = element.attrs.get('href', '')
-            match = self.post_url_regex.match(href)
-            if match:
+            post_match = self.post_url_regex.match(href)
+            if post_match:
                 path = utils.filter_query_params(href, whitelist=query_params)
                 url = utils.urljoin(FB_MOBILE_BASE_URL, path)
                 return {'post_url': url}
+            elif self.video_post_url_regex.match(href):
+                clean_url = utils.filter_query_params(href, whitelist=query_params)
+                return {'post_url': clean_url}
         return None
 
     # TODO: Remove `or 0` from this methods
