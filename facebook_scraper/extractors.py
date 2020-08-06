@@ -346,6 +346,9 @@ class PostExtractor:
             'format': 'best',
             'quiet': True,
         }
+        if 'youtube_dl_verbose' in self.options:
+            ydl_opts.quiet = False
+            
         try:
             post_id = self.post.get('post_id')
             video_page = 'https://www.facebook.com/' + post_id
