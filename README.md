@@ -80,7 +80,6 @@ for more details on CLI usage
 
 - Async support
 - Image galleries
-- Videos
 - Profiles or post authors
 - Comments
 
