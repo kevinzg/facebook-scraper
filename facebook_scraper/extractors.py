@@ -401,9 +401,15 @@ class GroupPostExtractor(PostExtractor):
 
     # TODO: This might need to be aware of the timezone and locale (?)
     def extract_time(self) -> PartialPost:
-        # This is a string with this format 'April 3, 2018 at 8:02 PM'
-        time = self.element.find('abbr', first=True).text
-        time = datetime.strptime(time, '%B %d, %Y at %I:%M %p')
-        return {
-            'time': time,
-        }
+        page_insights = self.data_ft['page_insights']
+
+        for page in page_insights.values():
+            try:
+                timestamp = page['post_context']['publish_time']
+                return {
+                    'time': datetime.fromtimestamp(timestamp),
+                }
+            except (KeyError, ValueError):
+                continue
+
+        return None
