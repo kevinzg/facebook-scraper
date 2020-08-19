@@ -7,7 +7,7 @@ from json import JSONDecodeError
 from typing import Any, Dict, Optional
 
 from . import utils
-from .constants import FB_MOBILE_BASE_URL
+from .constants import FB_BASE_URL, FB_MOBILE_BASE_URL
 from .fb_types import RawPost, Options, Post, RequestFunction
 
 try:
@@ -237,12 +237,12 @@ class PostExtractor:
 
             if post_match:
                 path = utils.filter_query_params(href, whitelist=query_params)
-                url = utils.urljoin(FB_MOBILE_BASE_URL, path)
+                url = utils.urljoin(FB_BASE_URL, path)
                 return {'post_url': url}
 
             elif video_post_match:
                 video_post_id = video_post_match.group(1)
-                url = utils.urljoin(FB_MOBILE_BASE_URL, f'watch/?v={video_post_id}')
+                url = utils.urljoin(FB_BASE_URL, f'watch/?v={video_post_id}')
                 return {'post_url': url}
         return None
 
