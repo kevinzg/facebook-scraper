@@ -116,9 +116,14 @@ class PostExtractor:
                 logger.warning("Exception while running %s: %r", method.__name__, ex)
 
         if 'reactions' in self.options:
-            reactions = self.extract_reactions()
+            try:
+                reactions = self.extract_reactions()
+            except Exception as ex:
+                logger.warning("Exception while extracting reactions: %r", ex)
+                reactions = {}
+
             if reactions is None:
-                logger.warning("Could not extract reactions")
+                logger.warning("Extract reactions didn't return anything")
             else:
                 post.update(reactions)
 
