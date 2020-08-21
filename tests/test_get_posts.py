@@ -19,7 +19,7 @@ class TestGetPosts:
             'post_text': 'Check out these themed wallpapers and many more at the link '
             'below for your personal use! We hope you enjoy them!\n\n'
             'https://www.nintendo.com/wallpapers/',
-            'post_url': 'https://m.facebook.com/story.php?story_fbid=3065154550235644&id=119240841493711',
+            'post_url': 'https://facebook.com/story.php?story_fbid=3065154550235644&id=119240841493711',
             'shared_text': '',
             'shares': 0,
             'text': 'Check out these themed wallpapers and many more at the link below '
