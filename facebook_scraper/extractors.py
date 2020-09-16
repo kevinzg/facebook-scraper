@@ -82,6 +82,7 @@ class PostExtractor:
             'shares': None,
             'post_url': None,
             'link': None,
+            'user_id': None,
         }
 
     def extract_post(self) -> Post:
@@ -97,6 +98,7 @@ class PostExtractor:
             self.extract_shares,
             self.extract_post_url,
             self.extract_link,
+            self.extract_user_id,
             self.extract_video,
             self.extract_video_thumbnail,
             self.extract_video_id,
@@ -202,6 +204,9 @@ class PostExtractor:
                 continue
 
         return None
+
+    def extract_user_id(self) -> PartialPost:
+        return {'user_id': self.data_ft['content_owner_id_new']}
 
     def extract_image(self) -> PartialPost:
         image_link = self.extract_photo_link()
@@ -365,7 +370,7 @@ class PostExtractor:
         }
         if 'youtube_dl_verbose' in self.options:
             ydl_opts.quiet = False
-            
+
         try:
             post_id = self.post.get('post_id')
             video_page = 'https://www.facebook.com/' + post_id
