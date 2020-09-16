@@ -47,7 +47,7 @@ class PostExtractor:
     image_regex_lq = re.compile(r"background-image: url\('(.+)'\)")
     video_thumbnail_regex = re.compile(r"background: url\('(.+)'\)")
     post_url_regex = re.compile(r'/story.php\?story_fbid=')
-    video_post_url_regex = re.compile(r'https://www.facebook.com/.+/videos/.+/(.+)/.+')
+    video_post_url_regex = re.compile(r'/.+/videos/.+/(.+)/.+')
     video_id_regex = re.compile(r'{&quot;videoID&quot;:&quot;([0-9]+)&quot;')
 
     shares_and_reactions_regex = re.compile(
