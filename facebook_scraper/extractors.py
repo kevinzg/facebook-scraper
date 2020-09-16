@@ -48,6 +48,7 @@ class PostExtractor:
     video_thumbnail_regex = re.compile(r"background: url\('(.+)'\)")
     post_url_regex = re.compile(r'/story.php\?story_fbid=')
     video_post_url_regex = re.compile(r'/.+/videos/.+/(.+)/.+')
+    video_id_regex = re.compile(r'{&quot;videoID&quot;:&quot;([0-9]+)&quot;')
 
     shares_and_reactions_regex = re.compile(
         r'<script nonce=.*>.*bigPipe.onPageletArrive\((?P<data>\{.*RelayPrefetchedStreamCache.*\})\);'
@@ -75,6 +76,7 @@ class PostExtractor:
             'image': None,
             'video': None,
             'video_thumbnail': None,
+            'video_id': None,
             'likes': None,
             'comments': None,
             'shares': None,
@@ -97,6 +99,7 @@ class PostExtractor:
             self.extract_link,
             self.extract_video,
             self.extract_video_thumbnail,
+            self.extract_video_id,
         ]
 
         post = self.make_new_post()
@@ -381,6 +384,12 @@ class PostExtractor:
         match = self.video_thumbnail_regex.search(style)
         if match:
             return {'video_thumbnail': utils.decode_css_url(match.groups()[0])}
+        return None
+
+    def extract_video_id(self):
+        match = self.video_id_regex.search(self.element.html)
+        if match:
+            return {'video_id': match.groups()[0]}
         return None
 
     def parse_share_and_reactions(self, html: str):
