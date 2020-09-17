@@ -255,7 +255,7 @@ class PostExtractor:
 
             elif video_post_match:
                 video_post_id = video_post_match.group(1)
-                url = utils.urljoin(FB_BASE_URL, f'watch/?v={video_post_id}')
+                url = utils.urljoin(FB_BASE_URL, f'watch?v={video_post_id}')
                 return {'post_url': url}
         return None
 
