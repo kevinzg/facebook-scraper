@@ -285,20 +285,20 @@ class PostExtractor:
         }
 
     def extract_photo_link(self) -> PartialPost:
-        match = self.photo_link.search(self.element.html)
-        if not match:
-            return None
+        images = []
+        matches = self.photo_link.finditer(self.element.html)
 
-        url = utils.urljoin(FB_MOBILE_BASE_URL, match.groups()[0])
+        for match in matches:
+            url = utils.urljoin(FB_MOBILE_BASE_URL, match.groups()[0])
 
-        response = self.request(url)
-        html = response.text
-        match = self.image_regex.search(html)
-        if match:
-            return {
-                'image': match.groups()[0].replace("&amp;", "&"),
-            }
-        return None
+            response = self.request(url)
+            html = response.text
+            match = self.image_regex.search(html)
+            if match:
+                images.append(match.groups()[0].replace("&amp;", "&"))
+        return {
+            "image": images
+        }
 
     def extract_reactions(self) -> PartialPost:
         """Fetch share and reactions information with a existing post obtained by `get_posts`.
