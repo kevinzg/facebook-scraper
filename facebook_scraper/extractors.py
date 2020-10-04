@@ -296,8 +296,10 @@ class PostExtractor:
             match = self.image_regex.search(html)
             if match:
                 images.append(match.groups()[0].replace("&amp;", "&"))
+        image = images[0] if images else None
         return {
-            "image": images
+            "image": image,
+            "images": images
         }
 
     def extract_reactions(self) -> PartialPost:
