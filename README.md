@@ -39,7 +39,6 @@ for more details on CLI usage
 - **group**: group id, to scrape groups instead of pages. Default is `None`.
 - **pages**: how many pages of posts to request, usually the first page has 2 posts and the rest 4. Default is 10.
 - **timeout**: how many seconds to wait before timing out. Default is 5.
-- **sleep**: how many seconds to sleep between each request. Default is 0.
 - **credentials**: tuple of user and password to login before requesting the posts. Default is `None`.
 - **extra_info**: bool, if true the function will try to do an extra request to get the post reactions. Default is False.
 - **youtube_dl**: bool, use Youtube-DL for (high-quality) video extraction. You need to have youtube-dl installed on your environment. Default is False.
