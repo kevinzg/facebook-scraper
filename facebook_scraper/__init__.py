@@ -2,11 +2,12 @@ import csv
 import locale
 import logging
 import sys
+import warnings
 from typing import Iterator, Optional, Tuple, Union
 
 from .constants import DEFAULT_REQUESTS_TIMEOUT
 from .facebook_scraper import FacebookScraper
-from .fb_types import Post, Credentials
+from .fb_types import Credentials, Post
 
 
 _scraper = FacebookScraper()
@@ -41,6 +42,13 @@ def get_posts(
     _scraper.requests_kwargs['timeout'] = kwargs.pop('timeout', DEFAULT_REQUESTS_TIMEOUT)
 
     options = kwargs.setdefault('options', set())
+
+    # TODO: Add a better throttling mechanism
+    if 'sleep' in kwargs:
+        warnings.warn(
+            "The sleep parameter has been removed, it won't have any effect.", stacklevel=2
+        )
+        kwargs.pop('sleep')
 
     # TODO: Deprecate `pages` in favor of `page_limit` since it is less confusing
     if 'pages' in kwargs:
