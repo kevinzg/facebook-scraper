@@ -211,11 +211,12 @@ class PostExtractor:
             if time_match:
                 time = time_match.group(0)
                 return {
-                    # 'time': datetime.strptime(time, '%B %d at %I:%M %p').replace(year=datetime.now().year),
                     'time': dateparser.parse(time)
                 }
         except:
             return None
+
+        return None
 
     def extract_user_id(self) -> PartialPost:
         return {'user_id': self.data_ft['content_owner_id_new']}
