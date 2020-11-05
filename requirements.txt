@@ -92,3 +92,7 @@ websockets==8.0.2 \
     --hash=sha256:f5cb2683367e32da6a256b60929a3af9c29c212b5091cf5bace9358d03011bf5 \
     --hash=sha256:049e694abe33f8a1d99969fee7bfc0ae6761f7fd5f297c58ea933b27dd6805f2 \
     --hash=sha256:882a7266fa867a2ebb2c0baaa0f9159cabf131cf18c1b4270d79ad42f9208dc5
+
+html2text~=2020.1.16
+requests~=2.24.0
+dateparser~=1.0.0

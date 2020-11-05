@@ -6,6 +6,8 @@ from datetime import datetime
 from json import JSONDecodeError
 from typing import Any, Dict, Optional
 
+import dateparser
+
 from . import utils
 from .constants import FB_BASE_URL, FB_MOBILE_BASE_URL
 from .fb_types import RawPost, Options, Post, RequestFunction
@@ -38,6 +40,7 @@ class PostExtractor:
     comments_regex = re.compile(r'cmt_def[^>]*>([0-9,.]+)')
     shares_regex = re.compile(r'([0-9,.]+)\s+Shares', re.IGNORECASE)
     link_regex = re.compile(r"href=\"https:\/\/lm\.facebook\.com\/l\.php\?u=(.+?)\&amp;h=")
+    time_regex = re.compile(r"(\w+ \d{2} at \d{2}:\d{2} (AM|PM))|(\d{1,2} \w+)")
 
     photo_link = re.compile(r'href=\"(/[^\"]+/photos/[^\"]+?)\"')
     image_regex = re.compile(
@@ -203,7 +206,16 @@ class PostExtractor:
             except (KeyError, ValueError):
                 continue
 
-        return None
+        try:
+            time_match = self.time_regex.search(self.element.full_text)
+            if time_match:
+                time = time_match.group(0)
+                return {
+                    # 'time': datetime.strptime(time, '%B %d at %I:%M %p').replace(year=datetime.now().year),
+                    'time': dateparser.parse(time)
+                }
+        except:
+            return None
 
     def extract_user_id(self) -> PartialPost:
         return {'user_id': self.data_ft['content_owner_id_new']}
