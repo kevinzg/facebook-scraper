@@ -209,7 +209,7 @@ class PostExtractor:
                 return {
                     'time': date
                 }
-        except:
+        except Exception:
             return None
 
         return None
