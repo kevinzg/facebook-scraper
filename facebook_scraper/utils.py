@@ -69,11 +69,11 @@ period = r"AM|PM"
 exact_time = f"({date}) at {hour}:{minute} ({period})"
 relative_time = r"\d{1,2} \w+"
 
-time_regex = re.compile(fr"({exact_time}|{relative_time})")
+datetime_regex = re.compile(fr"({exact_time}|{relative_time})")
 
 
-def parse_date(element_full_text: str) -> Optional[datetime]:
-    time_match = time_regex.search(element_full_text)
+def parse_datetime(element_full_text: str) -> Optional[datetime]:
+    time_match = datetime_regex.search(element_full_text)
     if time_match:
         time = time_match.group(0)
         return dateparser.parse(time)
