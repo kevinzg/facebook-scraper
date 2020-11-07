@@ -203,14 +203,11 @@ class PostExtractor:
             except (KeyError, ValueError):
                 continue
 
-        try:
-            date = utils.parse_date(element_full_text=self.element.full_text)
-            if date:
-                return {
-                    'time': date
-                }
-        except:
-            return None
+        date = utils.parse_date(element_full_text=self.element.full_text)
+        if date:
+            return {
+                'time': date
+            }
 
         return None
 
