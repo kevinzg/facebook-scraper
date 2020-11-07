@@ -48,24 +48,25 @@ def html2text(html: str) -> str:
     return _html2text(html)
 
 
-date = r"Jan(?:uary)?|" \
-       r"Feb(?:ruary)?|" \
-       r"Mar(?:ch)?|" \
-       r"Apr(?:il)?|" \
-       r"May|" \
-       r"Jun(?:e)?|" \
-       r"Jul(?:y)?|" \
-       r"Aug(?:ust)?|" \
-       r"Sep(?:tember)?|" \
-       r"Oct(?:ober)?|" \
-       r"Nov(?:ember)?|" \
-       r"Dec(?:ember)?|" \
-       r"Yesterday|" \
-       r"Today"
+month = r"Jan(?:uary)?|" \
+        r"Feb(?:ruary)?|" \
+        r"Mar(?:ch)?|" \
+        r"Apr(?:il)?|" \
+        r"May|" \
+        r"Jun(?:e)?|" \
+        r"Jul(?:y)?|" \
+        r"Aug(?:ust)?|" \
+        r"Sep(?:tember)?|" \
+        r"Oct(?:ober)?|" \
+        r"Nov(?:ember)?|" \
+        r"Dec(?:ember)?|" \
+        r"Yesterday|" \
+        r"Today"
+date = f"({month}) " + r"\d{1,2}"
 hour = r"\d{1,2}"
 minute = r"\d{2}"
 period = r"AM|PM"
-exact_time = fr"({date}) at {hour}:{minute} ({period})"
+exact_time = f"({date}) at {hour}:{minute} ({period})"
 relative_time = r"\d{1,2} \w+"
 
 time_regex = re.compile(fr"({exact_time}|{relative_time})")
