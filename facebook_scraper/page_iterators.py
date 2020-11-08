@@ -70,7 +70,7 @@ class PageParser:
             logger.warning("No raw posts (<article> elements) were found in this page.")
             if logger.isEnabledFor(logging.DEBUG):
                 content = textwrap.indent(
-                    utils.html2text(raw_page.html),
+                    raw_page.text,
                     prefix='| ',
                     predicate=lambda _: True,
                 )
