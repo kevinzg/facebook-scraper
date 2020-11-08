@@ -62,7 +62,7 @@ month = r"Jan(?:uary)?|" \
         r"Dec(?:ember)?|" \
         r"Yesterday|" \
         r"Today"
-date = f"({month}) " + r"\d{1,2}"
+date = f"(?:{month}) " + r"\d{1,2}" + r"(?:, \d{4})?"
 hour = r"\d{1,2}"
 minute = r"\d{2}"
 period = r"AM|PM"
