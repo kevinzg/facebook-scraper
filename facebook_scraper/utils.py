@@ -1,7 +1,10 @@
 import codecs
 import re
+from datetime import datetime
+from typing import Optional
 from urllib.parse import parse_qsl, unquote, urlencode, urljoin, urlparse, urlunparse
 
+import dateparser
 from html2text import html2text as _html2text
 from requests_html import DEFAULT_URL, Element, PyQuery
 
@@ -43,3 +46,36 @@ def make_html_element(html: str, url=DEFAULT_URL) -> Element:
 
 def html2text(html: str) -> str:
     return _html2text(html)
+
+
+month = r"Jan(?:uary)?|" \
+        r"Feb(?:ruary)?|" \
+        r"Mar(?:ch)?|" \
+        r"Apr(?:il)?|" \
+        r"May|" \
+        r"Jun(?:e)?|" \
+        r"Jul(?:y)?|" \
+        r"Aug(?:ust)?|" \
+        r"Sep(?:tember)?|" \
+        r"Oct(?:ober)?|" \
+        r"Nov(?:ember)?|" \
+        r"Dec(?:ember)?|" \
+        r"Yesterday|" \
+        r"Today"
+date = f"(?:{month}) " + r"\d{1,2}" + r"(?:, \d{4})?"
+hour = r"\d{1,2}"
+minute = r"\d{2}"
+period = r"AM|PM"
+exact_time = f"(?:{date}) at {hour}:{minute} (?:{period})"
+relative_time = r"\b\d{1,2}(?:h| hrs)"
+
+datetime_regex = re.compile(fr"({exact_time}|{relative_time})")
+
+
+def parse_datetime(element_full_text: str) -> Optional[datetime]:
+    time_match = datetime_regex.search(element_full_text)
+    if time_match:
+        time = time_match.group(0)
+        return dateparser.parse(time)
+    else:
+        return None

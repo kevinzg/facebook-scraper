@@ -203,6 +203,12 @@ class PostExtractor:
             except (KeyError, ValueError):
                 continue
 
+        date = utils.parse_datetime(element_full_text=self.element.full_text)
+        if date:
+            return {
+                'time': date
+            }
+
         return None
 
     def extract_user_id(self) -> PartialPost:
