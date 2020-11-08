@@ -72,8 +72,8 @@ relative_time = r"\b\d{1,2}(?:h| hrs)"
 datetime_regex = re.compile(fr"({exact_time}|{relative_time})")
 
 
-def parse_datetime(element_full_text: str) -> Optional[datetime]:
-    time_match = datetime_regex.search(element_full_text)
+def parse_datetime(text: str) -> Optional[datetime]:
+    time_match = datetime_regex.search(text)
     if time_match:
         time = time_match.group(0)
         return dateparser.parse(time)

@@ -192,6 +192,7 @@ class PostExtractor:
 
     # TODO: Add the correct timezone
     def extract_time(self) -> PartialPost:
+        # Try to extract time for timestamp
         page_insights = self.data_ft.get('page_insights', {})
 
         for page in page_insights.values():
@@ -203,12 +204,17 @@ class PostExtractor:
             except (KeyError, ValueError):
                 continue
 
-        date = utils.parse_datetime(element_full_text=self.element.full_text)
-        if date:
-            return {
-                'time': date
-            }
+        # Try to extract from the date string
+        date_element = self.element.find('abbr', first=True)
+        if date_element is None:
+            logger.warning("Could not find the abbr element for the date")
+            return None
 
+        date = utils.parse_datetime(date_element.text)
+        if date:
+            return {'time': date}
+
+        logger.debug("Could not parse date: %s", date_element.text)
         return None
 
     def extract_user_id(self) -> PartialPost:
