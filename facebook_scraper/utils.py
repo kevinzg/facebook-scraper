@@ -5,6 +5,8 @@ from typing import Optional
 from urllib.parse import parse_qsl, unquote, urlencode, urljoin, urlparse, urlunparse
 
 import dateparser
+import lxml.html
+from bs4 import BeautifulSoup
 from html2text import html2text as _html2text
 from requests_html import DEFAULT_URL, Element, PyQuery
 
@@ -81,3 +83,10 @@ def parse_datetime(text: str) -> Optional[datetime]:
         return dateparser.parse(time)
     else:
         return None
+
+
+def html_element_to_string(element: Element, pretty=False) -> str:
+    html = lxml.html.tostring(element.element, encoding='unicode')
+    if pretty:
+        html = BeautifulSoup(html, features='html.parser').prettify()
+    return html

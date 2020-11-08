@@ -84,6 +84,7 @@ class PostExtractor:
             'post_url': None,
             'link': None,
             'user_id': None,
+            'source': None,
         }
 
     def extract_post(self) -> Post:
@@ -106,6 +107,7 @@ class PostExtractor:
         ]
 
         post = self.make_new_post()
+        post['source'] = self.element
 
         # TODO: this is just used by `extract_reactions`, probably should not be acceded from self
         self.post = post

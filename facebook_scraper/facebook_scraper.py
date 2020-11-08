@@ -84,7 +84,12 @@ class FacebookScraper:
         return not response.url.startswith('https://m.facebook.com/login.php')
 
     def _generic_get_posts(
-        self, extract_post_fn, iter_pages_fn, page_limit=DEFAULT_PAGE_LIMIT, options=None
+        self,
+        extract_post_fn,
+        iter_pages_fn,
+        page_limit=DEFAULT_PAGE_LIMIT,
+        options=None,
+        remove_source=True,
     ):
         counter = itertools.count(0) if page_limit is None else range(page_limit)
 
@@ -95,4 +100,7 @@ class FacebookScraper:
         for i, page in zip(counter, iter_pages_fn()):
             logger.debug("Extracting posts from page %s", i)
             for post_element in page:
-                yield extract_post_fn(post_element, options=options, request_fn=self.get)
+                post = extract_post_fn(post_element, options=options, request_fn=self.get)
+                if remove_source:
+                    post.pop('source', None)
+                yield post

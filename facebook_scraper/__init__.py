@@ -1,13 +1,16 @@
 import csv
+import json
 import locale
 import logging
+import pathlib
 import sys
 import warnings
 from typing import Iterator, Optional, Tuple, Union
 
 from .constants import DEFAULT_REQUESTS_TIMEOUT
 from .facebook_scraper import FacebookScraper
-from .fb_types import Credentials, Post
+from .fb_types import Credentials, Post, RawPost
+from .utils import html_element_to_string
 
 
 _scraper = FacebookScraper()
@@ -90,12 +93,38 @@ def write_posts_to_csv(
         page_limit (Optional[int]): How many pages of posts to go through.
             Use None to try to get all of them.
         extra_info (Optional[bool]): Set to True to try to get reactions.
+        dump_location (Optional[pathlib.Path]): Location where to write the HTML source of the posts.
     """
-    list_of_posts = list(get_posts(account=account, group=group, **kwargs))
+    dump_location = kwargs.pop('dump_location', None)
+
+    list_of_posts = list(
+        get_posts(account=account, group=group, remove_source=not bool(dump_location), **kwargs)
+    )
 
     if not list_of_posts:
         print("Couldn't get any posts.", file=sys.stderr)
         return
+
+    def write_post_to_disk(post: Post, source: RawPost, location: pathlib.Path, index: int):
+        post_id = post['post_id'] or f'no_id_{index}'
+        filename = f'{post_id}.html'
+
+        logger.debug("Writing post %s", post_id)
+        with open(location.joinpath(filename), mode='wt') as f:
+            f.write('<!--\n')
+            json.dump(post, f, indent=4, default=str)
+            f.write('\n-->\n')
+            f.write(html_element_to_string(source, pretty=True))
+
+    if dump_location is not None:
+        dump_location.mkdir(exist_ok=True)
+
+        for i, post in enumerate(list_of_posts):
+            source = post.pop('source')
+            try:
+                write_post_to_disk(post, source, dump_location, i)
+            except Exception:
+                logger.exception("Error writing post to disk")
 
     keys = list_of_posts[0].keys()
 
