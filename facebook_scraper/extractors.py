@@ -123,7 +123,7 @@ class PostExtractor:
             except Exception as ex:
                 logger.warning("Exception while running %s: %r", method.__name__, ex)
 
-        if 'reactions' in self.options:
+        if self.options.get('reactions'):
             try:
                 reactions = self.extract_reactions()
             except Exception as ex:
@@ -361,7 +361,7 @@ class PostExtractor:
         video_data_element = self.element.find('[data-sigil="inlineVideo"]', first=True)
         if video_data_element is None:
             return None
-        if 'youtube_dl' in self.options:
+        if self.options.get('youtube_dl'):
             vid = self.extract_video_highres()
             if vid:
                 return vid
@@ -386,7 +386,7 @@ class PostExtractor:
             'format': 'best',
             'quiet': True,
         }
-        if 'youtube_dl_verbose' in self.options:
+        if self.options.get('youtube_dl_verbose'):
             ydl_opts.quiet = False
 
         try:

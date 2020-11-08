@@ -5,7 +5,7 @@ from requests_html import Element
 
 
 URL = str
-Options = Set[str]
+Options = Dict[str, Any]
 Post = Dict[str, Any]
 RequestFunction = Callable[[URL], Response]
 RawPage = Element

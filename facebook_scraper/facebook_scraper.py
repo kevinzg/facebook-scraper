@@ -94,7 +94,10 @@ class FacebookScraper:
         counter = itertools.count(0) if page_limit is None else range(page_limit)
 
         if options is None:
-            options = set()
+            options = {}
+        elif isinstance(options, set):
+            warnings.warn("The options argument should be a dictionary.", stacklevel=3)
+            options = {k: True for k in options}
 
         logger.debug("Starting to iterate pages")
         for i, page in zip(counter, iter_pages_fn()):

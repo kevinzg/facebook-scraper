@@ -44,7 +44,10 @@ def get_posts(
 
     _scraper.requests_kwargs['timeout'] = kwargs.pop('timeout', DEFAULT_REQUESTS_TIMEOUT)
 
-    options = kwargs.setdefault('options', set())
+    options = kwargs.setdefault('options', {})
+    if isinstance(options, set):
+        warnings.warn("The options argument should be a dictionary.", stacklevel=2)
+        options = {k: True for k in options}
 
     # TODO: Add a better throttling mechanism
     if 'sleep' in kwargs:
@@ -58,11 +61,8 @@ def get_posts(
         kwargs['page_limit'] = kwargs.pop('pages')
 
     # TODO: Deprecate `extra_info` in favor of `options`
-    extra_info = kwargs.pop('extra_info', False)
-    if extra_info:
-        options.add('reactions')
-    if kwargs.pop('youtube_dl', False):
-        options.add('youtube_dl')
+    options['reactions'] = kwargs.pop('extra_info', False)
+    options['youtube_dl'] = kwargs.pop('youtube_dl', False)
 
     if credentials is not None:
         _scraper.login(*credentials)
