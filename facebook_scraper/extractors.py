@@ -436,17 +436,3 @@ class PostExtractor:
 
 class GroupPostExtractor(PostExtractor):
     """Class for extracting posts from Facebook Groups rather than Pages"""
-
-    # TODO: This might need to be aware of the timezone and locale (?)
-    def extract_time(self) -> PartialPost:
-        time = super().extract_time()
-        if time is not None:
-            return time
-
-        # In case the previous method didn't work try to parse the date.
-        # This only works for old posts that have this date format 'April 3, 2018 at 8:02 PM'.
-        time = self.element.find('abbr', first=True).text
-        time = datetime.strptime(time, '%B %d, %Y at %I:%M %p')
-        return {
-            'time': time,
-        }
