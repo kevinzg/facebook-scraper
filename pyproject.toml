@@ -16,6 +16,7 @@ youtube_dl = {version = "^2020.6.16", optional=true}
 ipython = "^7.14.0"
 pytest = "^5.4.1"
 pytest-vcr = "^1.0.2"
+ipdb = "^0.13.4"
 
 [tool.poetry.extras]
 youtube-dl = ["youtube_dl"]
