@@ -11,10 +11,12 @@ class TestGetPosts:
         expected_post = {
             'comments': 73,
             'image': 'https://scontent.faqp2-3.fna.fbcdn.net/v/t1.0-9/fr/cp0/e15/q65/96724875_3065146506903115_4237164853036318720_o.jpg?_nc_cat=103&_nc_sid=8024bb&_nc_oc=AQmzJTxqWcBz-Q2u7AX_Aj_6bwv6V86hZS-v9BY-3w0h7jy9_LGi-LXss6UJuQn9xhk&_nc_ht=scontent.faqp2-3.fna&_nc_tp=14&oh=a057d46d536592575cce1605eac62dc4&oe=5EE011FB',
-            'images': ['https://scontent.faqp2-3.fna.fbcdn.net/v/t1.0-9/fr/cp0/e15/q65/96724875_3065146506903115_4237164853036318720_o.jpg?_nc_cat=103&_nc_sid=8024bb&_nc_oc=AQmzJTxqWcBz-Q2u7AX_Aj_6bwv6V86hZS-v9BY-3w0h7jy9_LGi-LXss6UJuQn9xhk&_nc_ht=scontent.faqp2-3.fna&_nc_tp=14&oh=a057d46d536592575cce1605eac62dc4&oe=5EE011FB',
-                       'https://scontent.faqp2-2.fna.fbcdn.net/v/t1.0-9/fr/cp0/e15/q65/96657922_3065146630236436_9052202957155598336_o.jpg?_nc_cat=101&_nc_sid=8024bb&_nc_ohc=HJe4yM4ZM-IAX_A4Gbb&_nc_ht=scontent.faqp2-2.fna&tp=14&oh=0f88fe17a844510b3ca40ecd53392657&oe=5FA220AD',
-                       'https://scontent.faqp2-3.fna.fbcdn.net/v/t1.0-9/fr/cp0/e15/q65/96557798_3065146790236420_838564679184809984_o.jpg?_nc_cat=103&_nc_sid=8024bb&_nc_ohc=ZAWOX3v_GjwAX_nMJvh&_nc_ht=scontent.faqp2-3.fna&tp=14&oh=0351cb4b748dd6ce296dd02341f3f949&oe=5FA16534',
-                       'https://scontent.faqp2-3.fna.fbcdn.net/v/t1.0-9/fr/cp0/e15/q65/96688092_3065146896903076_7861539131082407936_o.jpg?_nc_cat=108&_nc_sid=8024bb&_nc_ohc=G3b4bTeYIoEAX8IYjU4&_nc_ht=scontent.faqp2-3.fna&tp=14&oh=ae53e61554bfe97b85fe3dff884a4a2f&oe=5FA1DB01'],
+            'images': [
+                'https://scontent.faqp2-3.fna.fbcdn.net/v/t1.0-9/fr/cp0/e15/q65/96724875_3065146506903115_4237164853036318720_o.jpg?_nc_cat=103&_nc_sid=8024bb&_nc_oc=AQmzJTxqWcBz-Q2u7AX_Aj_6bwv6V86hZS-v9BY-3w0h7jy9_LGi-LXss6UJuQn9xhk&_nc_ht=scontent.faqp2-3.fna&_nc_tp=14&oh=a057d46d536592575cce1605eac62dc4&oe=5EE011FB',
+                'https://scontent.faqp2-2.fna.fbcdn.net/v/t1.0-9/fr/cp0/e15/q65/96657922_3065146630236436_9052202957155598336_o.jpg?_nc_cat=101&_nc_sid=8024bb&_nc_ohc=HJe4yM4ZM-IAX_A4Gbb&_nc_ht=scontent.faqp2-2.fna&tp=14&oh=0f88fe17a844510b3ca40ecd53392657&oe=5FA220AD',
+                'https://scontent.faqp2-3.fna.fbcdn.net/v/t1.0-9/fr/cp0/e15/q65/96557798_3065146790236420_838564679184809984_o.jpg?_nc_cat=103&_nc_sid=8024bb&_nc_ohc=ZAWOX3v_GjwAX_nMJvh&_nc_ht=scontent.faqp2-3.fna&tp=14&oh=0351cb4b748dd6ce296dd02341f3f949&oe=5FA16534',
+                'https://scontent.faqp2-3.fna.fbcdn.net/v/t1.0-9/fr/cp0/e15/q65/96688092_3065146896903076_7861539131082407936_o.jpg?_nc_cat=108&_nc_sid=8024bb&_nc_ohc=G3b4bTeYIoEAX8IYjU4&_nc_ht=scontent.faqp2-3.fna&tp=14&oh=ae53e61554bfe97b85fe3dff884a4a2f&oe=5FA1DB01',
+            ],
             'video': None,
             'video_thumbnail': None,
             'likes': 1334,

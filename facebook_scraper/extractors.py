@@ -8,7 +8,8 @@ from typing import Any, Dict, Optional
 
 from . import utils
 from .constants import FB_BASE_URL, FB_MOBILE_BASE_URL
-from .fb_types import RawPost, Options, Post, RequestFunction
+from .fb_types import Options, Post, RawPost, RequestFunction
+
 
 try:
     from youtube_dl import YoutubeDL
@@ -309,10 +310,7 @@ class PostExtractor:
             if match:
                 images.append(match.groups()[0].replace("&amp;", "&"))
         image = images[0] if images else None
-        return {
-            "image": image,
-            "images": images
-        }
+        return {"image": image, "images": images}
 
     def extract_reactions(self) -> PartialPost:
         """Fetch share and reactions information with a existing post obtained by `get_posts`.

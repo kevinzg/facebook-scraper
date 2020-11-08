@@ -6,7 +6,7 @@ from typing import Iterator, Optional
 
 from . import utils
 from .constants import FB_MOBILE_BASE_URL
-from .fb_types import URL, RawPage, Page, RequestFunction, Response
+from .fb_types import URL, Page, RawPage, RequestFunction, Response
 
 
 logger = logging.getLogger(__name__)
@@ -70,7 +70,9 @@ class PageParser:
             logger.warning("No raw posts (<article> elements) were found in this page.")
             if logger.isEnabledFor(logging.DEBUG):
                 content = textwrap.indent(
-                    utils.html2text(raw_page.html), prefix='| ', predicate=lambda _: True,
+                    utils.html2text(raw_page.html),
+                    prefix='| ',
+                    predicate=lambda _: True,
                 )
                 sep = '+' + '-' * 60
                 logger.debug("The page url is: %s", self.response.url)
@@ -102,7 +104,8 @@ class PageParser:
     def _parse_html(self):
         # TODO: Why are we uncommenting HTML?
         self.html = utils.make_html_element(
-            self.response.text.replace('<!--', '').replace('-->', ''), url=self.response.url,
+            self.response.text.replace('<!--', '').replace('-->', ''),
+            url=self.response.url,
         )
         self.cursor_blob = self.response.text
 
