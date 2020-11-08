@@ -66,7 +66,7 @@ date = f"(?:{month}) " + r"\d{1,2}" + r"(?:, \d{4})?"
 hour = r"\d{1,2}"
 minute = r"\d{2}"
 period = r"AM|PM"
-exact_time = f"({date}) at {hour}:{minute} ({period})"
+exact_time = f"(?:{date}) at {hour}:{minute} (?:{period})"
 relative_time = r"\b\d{1,2}(?:h| hrs)"
 
 datetime_regex = re.compile(fr"({exact_time}|{relative_time})")
