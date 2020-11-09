@@ -57,14 +57,17 @@ month = (
     r"Sep(?:tember)?|"
     r"Oct(?:ober)?|"
     r"Nov(?:ember)?|"
-    r"Dec(?:ember)?|"
-    r"Yesterday|"
-    r"Today"
+    r"Dec(?:ember)?"
 )
-date = f"(?:{month}) " + r"\d{1,2}" + r"(?:, \d{4})?"
+day_of_month = r"\d{1,2}"
+specific_date = f"(?:{month}) {day_of_month}" + r" (?:, \d{4})?"
+
+date = f"{specific_date}|Today|Yesterday"
+
 hour = r"\d{1,2}"
 minute = r"\d{2}"
 period = r"AM|PM"
+
 exact_time = f"(?:{date}) at {hour}:{minute} (?:{period})"
 relative_time = r"\b\d{1,2}(?:h| hrs)"
 
