@@ -1,9 +1,6 @@
-import pytest
-
 from facebook_scraper.utils import parse_datetime
 
 
-@pytest.mark.vcr()
 class TestParseDate:
     dates = [
         'Oct 1 at 1:00 PM',
@@ -27,7 +24,11 @@ class TestParseDate:
         '1h',
         '16h',
         '1hrs',
-        '16hrs'
+        '16hrs',
+        '1 hr',
+        '16 hrs',
+        '1 min',
+        '50 mins',
     ]
 
     def test_all_dates(self):
