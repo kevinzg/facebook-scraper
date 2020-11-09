@@ -60,7 +60,7 @@ month = (
     r"Dec(?:ember)?"
 )
 day_of_month = r"\d{1,2}"
-specific_date = f"(?:{month}) {day_of_month}" + r" (?:, \d{4})?"
+specific_date = f"(?:{month}) {day_of_month}" + r"(?:, \d{4})?"
 
 date = f"{specific_date}|Today|Yesterday"
 
