@@ -90,7 +90,6 @@ def parse_datetime(text: str, search=True) -> Optional[datetime]:
     Returns:
         The datetime object, or None if it couldn't find a date.
     """
-    print(text)
     if search:
         time_match = datetime_regex.search(text)
         if time_match:
