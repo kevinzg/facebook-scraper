@@ -207,17 +207,21 @@ class PostExtractor:
             except (KeyError, ValueError):
                 continue
 
-        # Try to extract from the date string
+        # Try to extract from the abbr element
         date_element = self.element.find('abbr', first=True)
-        if date_element is None:
+        if date_element is not None:
+            date = utils.parse_datetime(date_element.text, search=False)
+            if date:
+                return {'time': date}
+            logger.debug("Could not parse date: %s", date_element.text)
+        else:
             logger.warning("Could not find the abbr element for the date")
-            return None
 
-        date = utils.parse_datetime(date_element.text)
+        # Try to look in the entire text
+        date = utils.parse_datetime(self.element.text)
         if date:
             return {'time': date}
 
-        logger.debug("Could not parse date: %s", date_element.text)
         return None
 
     def extract_user_id(self) -> PartialPost:

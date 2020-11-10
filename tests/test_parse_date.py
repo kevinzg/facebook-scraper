@@ -21,6 +21,8 @@ class TestParseDate:
         'Today at 11:00 PM',
         'Yesterday at 1:00 PM',
         'Yesterday at 11:00 PM',
+        'Yesterday at 15:28',
+        '7 November at 20:01',
         '1h',
         '16h',
         '1hrs',
