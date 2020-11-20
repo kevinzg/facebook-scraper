@@ -32,9 +32,12 @@ Use
 ```sh
 $ facebook-scraper --help
 ```
-for more details on CLI usage
+for more details on CLI usage.
+
+Note: If you get a `UnicodeEncodeError` try adding `--encoding utf-8`.
 
 ### Optional parameters
+*(For the `get_posts` function)*.
 
 - **group**: group id, to scrape groups instead of pages. Default is `None`.
 - **pages**: how many pages of posts to request, usually the first page has 2 posts and the rest 4. Default is 10.
