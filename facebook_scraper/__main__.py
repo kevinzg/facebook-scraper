@@ -51,6 +51,7 @@ def run():
         **kwargs,
         filename=args.filename,
         pages=args.pages,
+        days_limit=args.days_limit,
         encoding=args.encoding,
         dump_location=args.dump_location,
     )

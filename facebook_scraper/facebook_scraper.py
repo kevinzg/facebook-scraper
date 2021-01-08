@@ -3,7 +3,7 @@ import logging
 import warnings
 from functools import partial
 from typing import Iterator
-from datetime import datetime 
+from datetime import datetime, timedelta 
 
 from requests import RequestException
 from requests_html import HTMLSession
@@ -103,11 +103,11 @@ class FacebookScraper:
         all_posts_collected = False
         for i, page in zip(counter, iter_pages_fn()):
             logger.debug("Extracting posts from page %s", i)
-            if not all_posts_collected:
+            if all_posts_collected:
                 break
             for post_element in page:
                 post = extract_post_fn(post_element, options=options, request_fn=self.get)
-                if days_limit and post.time < datetime.now() - days_limit:
+                if days_limit and post["time"] < datetime.now() - timedelta(days=days_limit):
                     all_posts_collected = True
                     break
                 if remove_source:
