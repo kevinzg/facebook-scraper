@@ -6,9 +6,9 @@ from datetime import datetime
 from json import JSONDecodeError
 from typing import Any, Dict, Optional
 
-import utils
-from constants import FB_BASE_URL, FB_MOBILE_BASE_URL
-from fb_types import Options, Post, RawPost, RequestFunction
+from . import utils
+from .constants import FB_BASE_URL, FB_MOBILE_BASE_URL
+from .fb_types import Options, Post, RawPost, RequestFunction
 
 
 try:
