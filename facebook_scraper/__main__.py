@@ -3,7 +3,7 @@ import logging
 import pathlib
 import datetime
 
-from . import enable_logging, write_posts_to_csv
+from __init__ import enable_logging, write_posts_to_csv
 
 def run():
     """facebook-scraper entry point when used as a script"""
@@ -17,9 +17,6 @@ def run():
     parser.add_argument('-v', '--verbose', action='count', help="Enable logging", default=0)
     parser.add_argument('-p', '--pages', type=int, help="Number of pages to download")
     parser.add_argument('-d', '--days-limit', dest='days_limit', type=int, help="Number of pages to download")
-
-    if args.foo is None and args.bar is None:
-        parser.error("at least one of --foo and --bar required")
 
     parser.add_argument(
         '--dump',

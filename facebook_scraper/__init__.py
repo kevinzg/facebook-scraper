@@ -7,10 +7,10 @@ import sys
 import warnings
 from typing import Iterator, Optional, Tuple, Union
 
-from .constants import DEFAULT_REQUESTS_TIMEOUT
-from .facebook_scraper import FacebookScraper
-from .fb_types import Credentials, Post, RawPost
-from .utils import html_element_to_string
+from constants import DEFAULT_REQUESTS_TIMEOUT
+from facebook_scraper import FacebookScraper
+from fb_types import Credentials, Post, RawPost
+from utils import html_element_to_string
 
 
 _scraper = FacebookScraper()

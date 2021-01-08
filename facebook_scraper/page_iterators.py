@@ -4,9 +4,9 @@ import re
 import textwrap
 from typing import Iterator, Optional
 
-from . import utils
-from .constants import FB_MOBILE_BASE_URL
-from .fb_types import URL, Page, RawPage, RequestFunction, Response
+import utils
+from constants import FB_MOBILE_BASE_URL
+from fb_types import URL, Page, RawPage, RequestFunction, Response
 
 
 logger = logging.getLogger(__name__)
