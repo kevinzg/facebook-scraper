@@ -89,6 +89,7 @@ class FacebookScraper:
         extract_post_fn,
         iter_pages_fn,
         page_limit=DEFAULT_PAGE_LIMIT,
+        days_limit=None,
         options=None,
         remove_source=True,
     ):
@@ -106,7 +107,7 @@ class FacebookScraper:
                 break
             for post_element in page:
                 post = extract_post_fn(post_element, options=options, request_fn=self.get)
-                if post.time < datetime.now() - days_limit:
+                if days_limit and post.time < datetime.now() - days_limit:
                     all_posts_collected = True
                     break
                 if remove_source:

@@ -1,9 +1,9 @@
 import argparse
 import logging
 import pathlib
+import datetime
 
 from . import enable_logging, write_posts_to_csv
-
 
 def run():
     """facebook-scraper entry point when used as a script"""
@@ -13,9 +13,14 @@ def run():
     )
     parser.add_argument('account', type=str, help="Facebook account or group")
     parser.add_argument('-f', '--filename', type=str, help="Output filename")
-    parser.add_argument('-p', '--pages', type=int, help="Number of pages to download", default=10)
     parser.add_argument('-g', '--group', action='store_true', help="Use group scraper")
     parser.add_argument('-v', '--verbose', action='count', help="Enable logging", default=0)
+    parser.add_argument('-p', '--pages', type=int, help="Number of pages to download")
+    parser.add_argument('-d', '--days-limit', dest='days_limit', type=int, help="Number of pages to download")
+
+    if args.foo is None and args.bar is None:
+        parser.error("at least one of --foo and --bar required")
+
     parser.add_argument(
         '--dump',
         type=pathlib.Path,
@@ -31,6 +36,9 @@ def run():
     )
 
     args = parser.parse_args()
+
+    if args.days_limit is None and args.pages is None:
+        parser.error("at least one of --days-limit and --pages arguments is required")
 
     # Choose the right argument to pass to write_posts_to_csv (group or account)
     account_type = 'group' if args.group else 'account'
