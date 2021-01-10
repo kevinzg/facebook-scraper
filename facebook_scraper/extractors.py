@@ -38,6 +38,7 @@ class PostExtractor:
     likes_regex = re.compile(r'like_def[^>]*>([0-9,.]+)')
     comments_regex = re.compile(r'cmt_def[^>]*>([0-9,.]+)')
     shares_regex = re.compile(r'([0-9,.]+)\s+Shares', re.IGNORECASE)
+    live_regex = re.compile(r'.+(is live).+')
     link_regex = re.compile(r"href=\"https:\/\/lm\.facebook\.com\/l\.php\?u=(.+?)\&amp;h=")
 
     photo_link = re.compile(r'href=\"(/[^\"]+/photos/[^\"]+?)\"')
@@ -85,6 +86,7 @@ class PostExtractor:
             'link': None,
             'user_id': None,
             'source': None,
+            'is_live': False
         }
 
     def extract_post(self) -> Post:
@@ -104,6 +106,7 @@ class PostExtractor:
             self.extract_video,
             self.extract_video_thumbnail,
             self.extract_video_id,
+            self.extract_is_live
         ]
 
         post = self.make_new_post()
@@ -425,6 +428,16 @@ class PostExtractor:
         if match:
             return {'video_id': match.groups()[0]}
         return None
+
+    def extract_is_live(self):
+        header = self.element.find('header')[0].full_text
+
+        match = self.live_regex.search(header)
+
+        if match is not None:
+            return {'is_live': True}
+
+        return {'is_live': False}
 
     def parse_share_and_reactions(self, html: str):
         bad_jsons = self.shares_and_reactions_regex.findall(html)
