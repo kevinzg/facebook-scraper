@@ -44,7 +44,7 @@ def get_posts(
 
     _scraper.requests_kwargs['timeout'] = kwargs.pop('timeout', DEFAULT_REQUESTS_TIMEOUT)
 
-    options = kwargs.setdefault('options', set())
+    options = kwargs.setdefault('options', {'account': account})
 
     # TODO: Add a better throttling mechanism
     if 'sleep' in kwargs:

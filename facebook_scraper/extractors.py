@@ -258,9 +258,12 @@ class PostExtractor:
         return None
 
     def extract_post_url(self) -> PartialPost:
-        query_params = ('story_fbid', 'id')
 
+        query_params = ('story_fbid', 'id')
+        account = self.options.get('account')
         elements = self.element.find('header a')
+        video_post_match = None
+
         for element in elements:
             href = element.attrs.get('href', '')
 
@@ -269,14 +272,22 @@ class PostExtractor:
 
             if post_match:
                 path = utils.filter_query_params(href, whitelist=query_params)
-                url = utils.urljoin(FB_BASE_URL, path)
-                return {'post_url': url}
 
             elif video_post_match:
                 video_post_id = video_post_match.group(1)
-                url = utils.urljoin(FB_BASE_URL, f'watch?v={video_post_id}')
-                return {'post_url': url}
-        return None
+
+                if account is None:
+                    path = f'watch?v={video_post_id}'
+                else:
+                    path = f'{account}/videos/{video_post_id}'
+
+        post_id = self._data_ft.get('top_level_post_id')
+
+        if video_post_match is None and account is not None and post_id is not None:
+            path = f'{account}/posts/{post_id}'
+
+        url = utils.urljoin(FB_BASE_URL, path)
+        return {'post_url': url}
 
     # TODO: Remove `or 0` from this methods
     def extract_likes(self) -> PartialPost:
