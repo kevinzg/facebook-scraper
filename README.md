@@ -71,7 +71,7 @@ Note: If you get a `UnicodeEncodeError` try adding `--encoding utf-8`.
  'reactions': {'like': 135, 'love': 64, 'haha': 10, 'wow': 4, 'anger': 1},  # if `extra_info` was set
  'post_url': 'https://m.facebook.com/story.php'
              '?story_fbid=2257188721032235&id=119240841493711',
- 'link': 'https://bit.ly/something'
+ 'link': 'https://bit.ly/something', 
  'is_live': False}
 ```
 
