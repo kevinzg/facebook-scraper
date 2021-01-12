@@ -48,6 +48,7 @@ def get_posts(
     if isinstance(options, set):
         warnings.warn("The options argument should be a dictionary.", stacklevel=2)
         options = {k: True for k in options}
+    options.setdefault('account', account)
 
     # TODO: Add a better throttling mechanism
     if 'sleep' in kwargs:
