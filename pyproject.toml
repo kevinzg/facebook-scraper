@@ -10,7 +10,7 @@ repository = "https://github.com/kevinzg/facebook-scraper"
 [tool.poetry.dependencies]
 python = "^3.6"
 requests-html = "^0.10.0"
-youtube_dl = {version = "^2020.6.16", optional=true}
+youtube_dl = {version = "*", optional=true}
 dateparser = "^1.0.0"
 
 [tool.poetry.dev-dependencies]
