@@ -86,7 +86,7 @@ class PostExtractor:
             'link': None,
             'user_id': None,
             'source': None,
-            'is_live': False
+            'is_live': False,
         }
 
     def extract_post(self) -> Post:
@@ -106,7 +106,7 @@ class PostExtractor:
             self.extract_video,
             self.extract_video_thumbnail,
             self.extract_video_id,
-            self.extract_is_live
+            self.extract_is_live,
         ]
 
         post = self.make_new_post()
