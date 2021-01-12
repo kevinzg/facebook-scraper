@@ -156,7 +156,7 @@ class PostExtractor:
                 response = self.request(url)
                 element = response.html.find('.story_body_container', first=True)
 
-        nodes = element.find('p, header')
+        nodes = element.find('p, header, span[role=presentation]')
         if nodes:
             post_text = []
             shared_text = []
