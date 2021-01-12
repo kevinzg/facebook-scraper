@@ -25,7 +25,7 @@ class TestGetPosts:
             'post_text': 'Check out these themed wallpapers and many more at the link '
             'below for your personal use! We hope you enjoy them!\n\n'
             'https://www.nintendo.com/wallpapers/',
-            'post_url': 'https://facebook.com/story.php?story_fbid=3065154550235644&id=119240841493711',
+            'post_url': 'https://facebook.com/Nintendo/posts/3065154550235644',
             'shared_text': '',
             'shares': 0,
             'text': 'Check out these themed wallpapers and many more at the link below '
@@ -34,6 +34,7 @@ class TestGetPosts:
             'time': datetime.datetime(2020, 5, 12, 20, 1, 18),
             'user_id': '119240841493711',
             'video_id': None,
+            'is_live': False,
         }
 
         post = next(get_posts(account='Nintendo'))
@@ -155,6 +156,7 @@ class TestGetGroupPosts:
             'shares': 0,
             'text': text,
             'time': datetime.datetime(2018, 4, 3, 20, 2, 0),
+            'is_live': False,
         }
 
         post = next(get_posts(group=117507531664134))
