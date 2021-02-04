@@ -33,6 +33,7 @@ class TestGetPosts:
             'https://www.nintendo.com/wallpapers/',
             'time': datetime.datetime(2020, 5, 12, 20, 1, 18),
             'user_id': '119240841493711',
+            'username': 'Nintendo',
             'video_id': None,
             'is_live': False,
         }
@@ -152,6 +153,7 @@ class TestGetGroupPosts:
             'post_text': text,
             'post_url': None,
             'user_id': 757122227,
+            'username': 'Omar U. Florez',
             'shared_text': '',
             'shares': 0,
             'text': text,
