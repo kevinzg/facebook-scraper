@@ -147,7 +147,7 @@ class PostExtractor:
 
     def extract_username(self) -> PartialPost:
         username = self.element.find('h3 strong a')
-        return {'username':username[0].text} if len(username) > 0 else None
+        return {'username': username[0].text} if len(username) > 0 else None
 
     # TODO: this method needs test for the 'has more' case and shared content
     def extract_text(self) -> PartialPost:
