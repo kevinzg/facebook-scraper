@@ -85,6 +85,7 @@ class PostExtractor:
             'post_url': None,
             'link': None,
             'user_id': None,
+            'username': None,
             'source': None,
             'is_live': False,
         }
@@ -103,6 +104,7 @@ class PostExtractor:
             self.extract_post_url,
             self.extract_link,
             self.extract_user_id,
+            self.extract_username,
             self.extract_video,
             self.extract_video_thumbnail,
             self.extract_video_id,
@@ -142,6 +144,10 @@ class PostExtractor:
 
     def extract_post_id(self) -> PartialPost:
         return {'post_id': self.data_ft.get('mf_story_key')}
+
+    def extract_username(self) -> PartialPost:
+        username = self.element.find('h3 strong a')
+        return {'username': username[0].text} if len(username) > 0 else None
 
     # TODO: this method needs test for the 'has more' case and shared content
     def extract_text(self) -> PartialPost:
