@@ -272,6 +272,7 @@ class PostExtractor:
         account = self.options.get('account')
         elements = self.element.find('header a')
         video_post_match = None
+        path = None
 
         for element in elements:
             href = element.attrs.get('href', '')
@@ -294,6 +295,9 @@ class PostExtractor:
 
         if video_post_match is None and account is not None and post_id is not None:
             path = f'{account}/posts/{post_id}'
+
+        if path is None:
+            return None
 
         url = utils.urljoin(FB_BASE_URL, path)
         return {'post_url': url}
@@ -402,21 +406,26 @@ class PostExtractor:
             raise ModuleNotFoundError(
                 "youtube-dl must be installed to download videos in high resolution."
             )
+
         ydl_opts = {
             'format': 'best',
             'quiet': True,
         }
         if self.options.get('youtube_dl_verbose'):
-            ydl_opts.quiet = False
+            ydl_opts['quiet'] = False
 
         try:
             post_id = self.post.get('post_id')
+            if post_id is None:
+                return None
+
             video_page = 'https://www.facebook.com/' + post_id
             with YoutubeDL(ydl_opts) as ydl:
                 url = ydl.extract_info(video_page, download=False)['url']
                 return {'video': url}
         except ExtractorError as ex:
             logger.error("Error extracting video with youtube-dl: %r", ex)
+
         return None
 
     def extract_video_thumbnail(self):
