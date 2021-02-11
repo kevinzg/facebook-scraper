@@ -100,6 +100,7 @@ class FacebookScraper:
 
         logger.debug("Starting to iterate pages")
         
+        first_possible_pinned_post_passed = False
         all_posts_collected = False
         for i, page in zip(counter, iter_pages_fn()):
             logger.debug("Extracting posts from page %s", i)
@@ -107,9 +108,12 @@ class FacebookScraper:
                 break
             for post_element in page:
                 post = extract_post_fn(post_element, options=options, request_fn=self.get)
-                if days_limit and post["time"] < datetime.now() - timedelta(days=days_limit):
+                
+                if first_possible_pinned_post_passed and days_limit and post["time"] < datetime.now() - timedelta(days=days_limit):
                     all_posts_collected = True
                     break
                 if remove_source:
                     post.pop('source', None)
+                    
+                first_possible_pinned_post_passed = False
                 yield post
