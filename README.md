@@ -24,19 +24,9 @@ The final step on the road to the Super Smash Bros
 We’re headed to PAX East 3/28-3/31 with new games
 ```
 
-### CLI usage
-```sh
-$ facebook-scraper --filename nintendo_page_posts.csv --pages 1 nintendo
-```
-Use
-```sh
-$ facebook-scraper --help
-```
-for more details on CLI usage.
-
-Note: If you get a `UnicodeEncodeError` try adding `--encoding utf-8`.
 
 ### Optional parameters
+
 *(For the `get_posts` function)*.
 
 - **group**: group id, to scrape groups instead of pages. Default is `None`.
@@ -45,6 +35,17 @@ Note: If you get a `UnicodeEncodeError` try adding `--encoding utf-8`.
 - **credentials**: tuple of user and password to login before requesting the posts. Default is `None`.
 - **extra_info**: bool, if true the function will try to do an extra request to get the post reactions. Default is False.
 - **youtube_dl**: bool, use Youtube-DL for (high-quality) video extraction. You need to have youtube-dl installed on your environment. Default is False.
+
+
+## CLI usage
+
+```sh
+$ facebook-scraper --filename nintendo_page_posts.csv --pages 1 nintendo
+```
+
+Run `facebook-scraper --help` for more details on CLI usage.
+
+**Note:** If you get a `UnicodeEncodeError` try adding `--encoding utf-8`.
 
 
 ## Post example
