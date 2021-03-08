@@ -88,6 +88,7 @@ class PostExtractor:
             'username': None,
             'source': None,
             'is_live': False,
+            'factcheck': None
         }
 
     def extract_post(self) -> Post:
@@ -109,6 +110,7 @@ class PostExtractor:
             self.extract_video_thumbnail,
             self.extract_video_id,
             self.extract_is_live,
+            self.extract_factcheck
         ]
 
         post = self.make_new_post()
@@ -453,6 +455,18 @@ class PostExtractor:
             return {'is_live': True}
 
         return {'is_live': False}
+
+    def extract_factcheck(self):
+        button = self.element.find('button[value="See Why"]', first=True)
+        if not button:
+            return None
+        factcheck_div = button.element.getparent().getparent()
+        factcheck = ""
+        for text in factcheck_div.itertext():
+            if text.strip() == "See Why":
+                continue
+            factcheck += text + "\n"
+        return {'factcheck': factcheck}
 
     def parse_share_and_reactions(self, html: str):
         bad_jsons = self.shares_and_reactions_regex.findall(html)
