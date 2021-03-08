@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 def iter_pages(account: str, request_fn: RequestFunction) -> Iterator[Page]:
-    start_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/posts/')
+    start_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/')
     return generic_iter_pages(start_url, PageParser, request_fn)
 
 
