@@ -54,6 +54,8 @@ class PageParser:
 
     cursor_regex = re.compile(r'href:"(/page_content[^"]+)"')  # First request
     cursor_regex_2 = re.compile(r'href":"(\\/page_content[^"]+)"')  # Other requests
+    cursor_regex_3 = re.compile(r'href:"(/profile/timeline/stream/\?cursor[^"]+)"') # scroll/cursor based, first request
+    cursor_regex_4 = re.compile(r'href\\":\\"\\+(/profile\\+/timeline\\+/stream[^"]+)\"') # scroll/cursor based, other requests
 
     def __init__(self, response: Response):
         self.response = response
@@ -92,6 +94,15 @@ class PageParser:
         if match:
             value = match.groups()[0]
             return value.encode('utf-8').decode('unicode_escape').replace('\\/', '/')
+
+        match = self.cursor_regex_3.search(self.cursor_blob)
+        if match:
+            return match.groups()[0]
+
+        match = self.cursor_regex_4.search(self.response.text)
+        if match:
+            value = match.groups()[0]
+            return value.replace('\\', '')
 
         return None
 
