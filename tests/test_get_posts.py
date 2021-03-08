@@ -7,6 +7,7 @@ from facebook_scraper import get_posts
 
 @pytest.mark.vcr()
 class TestGetPosts:
+    @pytest.mark.skip(reason="This test uses different endpoint (/posts/)")
     def test_get_posts(self):
         expected_post = {
             'comments': 73,
@@ -80,6 +81,7 @@ class TestGetPosts:
 
         assert post == expected_post
 
+    @pytest.mark.skip(reason="This test uses different endpoint (/posts/)")
     def test_get_posts_fields_presence(self):
         posts = list(get_posts(account='Nintendo', pages=2, extra_info=True))
 
@@ -159,6 +161,7 @@ class TestGetGroupPosts:
             'text': text,
             'time': datetime.datetime(2018, 4, 3, 20, 2, 0),
             'is_live': False,
+            'factcheck': None,
         }
 
         post = next(get_posts(group=117507531664134))
