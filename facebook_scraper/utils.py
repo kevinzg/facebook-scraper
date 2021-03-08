@@ -7,6 +7,7 @@ from urllib.parse import parse_qsl, unquote, urlencode, urljoin, urlparse, urlun
 import dateparser
 import lxml.html
 from bs4 import BeautifulSoup
+from requests.cookies import RequestsCookieJar
 from requests_html import DEFAULT_URL, Element, PyQuery
 
 
@@ -105,3 +106,21 @@ def html_element_to_string(element: Element, pretty=False) -> str:
     if pretty:
         html = BeautifulSoup(html, features='html.parser').prettify()
     return html
+
+
+def parse_cookie_file(filename: str) -> RequestsCookieJar:
+    jar = RequestsCookieJar()
+
+    with open(filename, mode='rt') as file:
+        for line in file:
+            line = line.strip()
+            if line == "" or line.startswith('#'):
+                continue
+
+            domain, _, path, secure, expires, name, value = line.split('\t')
+            secure = secure.lower() == 'true'
+            expires = None if expires == '0' else int(expires)
+
+            jar.set(name, value, domain=domain, path=path, secure=secure, expires=expires)
+
+    return jar
