@@ -5,7 +5,7 @@ import logging
 import pathlib
 import sys
 import warnings
-from typing import Iterator, Optional, Tuple, Union
+from typing import Iterator, Optional, Tuple, Union, Dict, Any, Set
 
 from .constants import DEFAULT_REQUESTS_TIMEOUT
 from .facebook_scraper import FacebookScraper
@@ -44,7 +44,7 @@ def get_posts(
 
     _scraper.requests_kwargs['timeout'] = kwargs.pop('timeout', DEFAULT_REQUESTS_TIMEOUT)
 
-    options = kwargs.setdefault('options', {})
+    options: Union[Dict[str, Any], Set[str]] = kwargs.setdefault('options', {})
     if isinstance(options, set):
         warnings.warn("The options argument should be a dictionary.", stacklevel=2)
         options = {k: True for k in options}
@@ -73,6 +73,8 @@ def get_posts(
 
     elif group is not None:
         return _scraper.get_group_posts(group, **kwargs)
+
+    raise ValueError('No account nor group')
 
 
 def write_posts_to_csv(
