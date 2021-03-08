@@ -5,12 +5,14 @@ import logging
 import pathlib
 import sys
 import warnings
-from typing import Iterator, Optional, Tuple, Union, Dict, Any, Set
+from typing import Any, Dict, Iterator, Optional, Set, Tuple, Union
+
+from requests.cookies import cookiejar_from_dict
 
 from .constants import DEFAULT_REQUESTS_TIMEOUT
 from .facebook_scraper import FacebookScraper
 from .fb_types import Credentials, Post, RawPost
-from .utils import html_element_to_string
+from .utils import html_element_to_string, parse_cookie_file
 
 
 _scraper = FacebookScraper()
@@ -33,6 +35,8 @@ def get_posts(
             Use None to try to get all of them.
         extra_info (bool): Set to True to try to get reactions.
         youtube_dl (bool): Use Youtube-DL for video extraction.
+        cookies (Union[dict, CookieJar, str]): Cookie jar to use.
+            Can also be a filename to load the cookies from a file (Netscape format).
 
     Yields:
         dict: The post representation in a dictionary.
@@ -43,6 +47,19 @@ def get_posts(
         raise ValueError("You need to specify either account or group")
 
     _scraper.requests_kwargs['timeout'] = kwargs.pop('timeout', DEFAULT_REQUESTS_TIMEOUT)
+
+    cookies = kwargs.pop('cookies', None)
+
+    if isinstance(cookies, str):
+        cookies = parse_cookie_file(cookies)
+    elif isinstance(cookies, dict):
+        cookies = cookiejar_from_dict(cookies)
+
+    if cookies is not None and credentials is not None:
+        raise ValueError("Can't use cookies and credentials arguments at the same time")
+
+    if cookies is not None:
+        _scraper.session.cookies = cookies
 
     options: Union[Dict[str, Any], Set[str]] = kwargs.setdefault('options', {})
     if isinstance(options, set):
