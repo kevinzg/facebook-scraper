@@ -14,10 +14,10 @@ youtube_dl = {version = "*", optional=true}
 dateparser = "^1.0.0"
 
 [tool.poetry.dev-dependencies]
-ipython = "^7.14.0"
-pytest = "^5.4.1"
+ipdb = {version = "*", python = "^3.7"}
+ipython = {version = "*", python = "^3.7"}
+pytest = "^6.2.2"
 pytest-vcr = "^1.0.2"
-ipdb = "^0.13.4"
 
 [tool.poetry.extras]
 youtube-dl = ["youtube_dl"]
