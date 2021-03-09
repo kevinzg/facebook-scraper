@@ -26,11 +26,9 @@ class FacebookScraper:
         "AppleWebKit/537.36 (KHTML, like Gecko) "
         "Chrome/76.0.3809.87 Safari/537.36"
     )
-    cookie = 'locale=en_US;'
     default_headers = {
         'User-Agent': user_agent,
         'Accept-Language': 'en-US,en;q=0.5',
-        'cookie': cookie,
     }
 
     def __init__(self, session=None, requests_kwargs=None):
