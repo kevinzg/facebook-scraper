@@ -119,26 +119,33 @@ class PostExtractor:
         # TODO: this is just used by `extract_reactions`, probably should not be acceded from self
         self.post = post
 
+        def log_warning(msg, *args):
+            post_id = self.post.get('post_id', 'unknown post')
+            logger.warning(
+                f"[%s] {msg}",
+                post_id, *args
+            )
+
         for method in methods:
             try:
                 partial_post = method()
                 if partial_post is None:
-                    logger.warning("Extract method %s didn't return anything", method.__name__)
+                    log_warning("Extract method %s didn't return anything", method.__name__)
                     continue
 
                 post.update(partial_post)
             except Exception as ex:
-                logger.warning("Exception while running %s: %r", method.__name__, ex)
+                log_warning("Exception while running %s: %r", method.__name__, ex)
 
         if self.options.get('reactions'):
             try:
                 reactions = self.extract_reactions()
             except Exception as ex:
-                logger.warning("Exception while extracting reactions: %r", ex)
+                log_warning("Exception while extracting reactions: %r", ex)
                 reactions = {}
 
             if reactions is None:
-                logger.warning("Extract reactions didn't return anything")
+                log_warning("Extract reactions didn't return anything")
             else:
                 post.update(reactions)
 
