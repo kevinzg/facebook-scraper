@@ -30,7 +30,7 @@ We’re headed to PAX East 3/28-3/31 with new games
 *(For the `get_posts` function)*.
 
 - **group**: group id, to scrape groups instead of pages. Default is `None`.
-- **pages**: how many pages of posts to request, usually the first page has 2 posts and the rest 4. Default is 10.
+- **pages**: how many pages of posts to request, the first 2 pages may have no results, so try with a number greater than 2. Default is 10.
 - **timeout**: how many seconds to wait before timing out. Default is 5.
 - **credentials**: tuple of user and password to login before requesting the posts. Default is `None`.
 - **extra_info**: bool, if true the function will try to do an extra request to get the post reactions. Default is False.
@@ -40,7 +40,7 @@ We’re headed to PAX East 3/28-3/31 with new games
 ## CLI usage
 
 ```sh
-$ facebook-scraper --filename nintendo_page_posts.csv --pages 1 nintendo
+$ facebook-scraper --filename nintendo_page_posts.csv --pages 10 nintendo
 ```
 
 Run `facebook-scraper --help` for more details on CLI usage.
