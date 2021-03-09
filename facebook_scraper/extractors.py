@@ -165,6 +165,8 @@ class PostExtractor:
             if match:
                 url = utils.urljoin(FB_MOBILE_BASE_URL, match.groups()[0].replace("&amp;", "&"))
                 response = self.request(url)
+                # If .story_body_container is commented the find function won't work
+                response.html.html = response.html.html.replace('<!--', '').replace('-->', '')
                 element = response.html.find('.story_body_container', first=True)
 
         nodes = element.find('p, header, span[role=presentation]')
