@@ -127,10 +127,7 @@ class PostExtractor:
 
         def log_warning(msg, *args):
             post_id = self.post.get('post_id', 'unknown post')
-            logger.warning(
-                f"[%s] {msg}",
-                post_id, *args
-            )
+            logger.warning(f"[%s] {msg}", post_id, *args)
 
         for method in methods:
             try:
