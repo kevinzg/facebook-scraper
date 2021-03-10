@@ -86,6 +86,8 @@ class PageParser:
         return self.html
 
     def get_next_page(self) -> Optional[URL]:
+        assert self.cursor_blob is not None
+
         match = self.cursor_regex.search(self.cursor_blob)
         if match:
             return match.groups()[0]
@@ -143,6 +145,8 @@ class GroupPageParser(PageParser):
         next_page = super().get_next_page()
         if next_page:
             return next_page
+
+        assert self.cursor_blob is not None
 
         match = self.cursor_regex_3.search(self.cursor_blob)
         if match:
