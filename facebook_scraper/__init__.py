@@ -5,7 +5,7 @@ import logging
 import pathlib
 import sys
 import warnings
-from typing import Any, Dict, Iterator, Optional, Set, Tuple, Union
+from typing import Any, Dict, Iterator, Optional, Set, Union
 
 from requests.cookies import cookiejar_from_dict
 

@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, Iterable, Set, Tuple
+from typing import Any, Callable, Dict, Iterable, Tuple
 
 from requests import Response
 from requests_html import Element
