@@ -97,7 +97,7 @@ class FacebookScraper:
             warnings.warn("The options argument should be a dictionary.", stacklevel=3)
             options = {k: True for k in options}
 
-        if page_limit <= 2:
+        if page_limit and page_limit <= 2:
             warnings.warn(
                 "A low page limit (<=2) might return no results, try increasing the limit",
                 stacklevel=3,
