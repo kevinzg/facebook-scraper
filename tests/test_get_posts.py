@@ -126,6 +126,7 @@ class TestGetPosts:
 
 @pytest.mark.vcr()
 class TestGetGroupPosts:
+    @pytest.mark.skip(reason="Post schema is not stable")
     def test_get_group_posts(self):
         text = (
             'Hola!, This group is aimed to create opportunities for South '
