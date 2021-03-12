@@ -66,7 +66,7 @@ class PageParser:
 
     def get_page(self) -> Page:
         raw_page = self.get_raw_page()
-        raw_posts = raw_page.find('article')
+        raw_posts = raw_page.find('article[data-ft]') # Select only articles that have the data-ft attribute
 
         if not raw_posts:
             logger.warning("No raw posts (<article> elements) were found in this page.")
