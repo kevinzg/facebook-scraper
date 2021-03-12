@@ -4,6 +4,8 @@ import re
 import textwrap
 from typing import Iterator, Optional, Union
 
+from requests.exceptions import HTTPError
+
 from . import utils
 from .constants import FB_MOBILE_BASE_URL
 from .fb_types import URL, Page, RawPage, RequestFunction, Response
@@ -12,9 +14,16 @@ from .fb_types import URL, Page, RawPage, RequestFunction, Response
 logger = logging.getLogger(__name__)
 
 
+class StartURLNotFound(Exception):
+    pass
+
+
 def iter_pages(account: str, request_fn: RequestFunction) -> Iterator[Page]:
     start_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/')
-    return generic_iter_pages(start_url, PageParser, request_fn)
+    try:
+        return generic_iter_pages(start_url + 'posts/', PageParser, request_fn)
+    except StartURLNotFound:
+        return generic_iter_pages(start_url, PageParser, request_fn)
 
 
 def iter_group_pages(group: Union[str, int], request_fn: RequestFunction) -> Iterator[Page]:
@@ -27,7 +36,12 @@ def generic_iter_pages(start_url, page_parser_cls, request_fn: RequestFunction) 
 
     while next_url:
         logger.debug("Requesting page from: %s", next_url)
-        response = request_fn(next_url)
+        try:
+            response = request_fn(next_url)
+        except HTTPError as ex:
+            if ex.response and ex.response.status_code == 404 and next_url == start_url:
+                raise StartURLNotFound
+            raise
 
         logger.debug("Parsing page response")
         parser = page_parser_cls(response)
