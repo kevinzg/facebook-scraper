@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "facebook-scraper"
-version = "0.2.23"
+version = "0.2.24"
 description = "Scrape Facebook public pages without an API key"
 authors = ["Kevin Zúñiga <kevin.zun@gmail.com>"]
 license = "MIT"
