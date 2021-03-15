@@ -40,7 +40,7 @@ def generic_iter_pages(start_url, page_parser_cls, request_fn: RequestFunction) 
             response = request_fn(next_url)
         except HTTPError as ex:
             if ex.response and ex.response.status_code == 404 and next_url == start_url:
-                raise StartURLNotFound
+                raise StartURLNotFound from ex
             raise
 
         logger.debug("Parsing page response")
