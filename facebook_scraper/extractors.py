@@ -94,6 +94,7 @@ class PostExtractor:
             'shared_user_id': None,
             'shared_username': None,
             'shared_post_url': None,
+            'available': None,
         }
 
     def extract_post(self) -> Post:
@@ -117,6 +118,7 @@ class PostExtractor:
             self.extract_is_live,
             self.extract_factcheck,
             self.extract_share_information,
+            self.extract_availability,
         ]
 
         post = self.make_new_post()
@@ -494,6 +496,11 @@ class PostExtractor:
             'shared_user_id': self.data_ft["original_content_owner_id"],
             'shared_username': shared_post.extract_username().get("username"),
             'shared_post_url': shared_post.extract_post_url().get("post_url")
+        }
+
+    def extract_availability(self):
+        return {
+            'available': ">This content isn't available at the moment<" not in self.element.html
         }
 
     def parse_share_and_reactions(self, html: str):
