@@ -21,6 +21,7 @@ _scraper = FacebookScraper()
 def get_posts(
     account: Optional[str] = None,
     group: Union[str, int, None] = None,
+    post_urls: Optional[Iterator[str]] = None,
     credentials: Optional[Credentials] = None,
     **kwargs,
 ) -> Iterator[Post]:
@@ -29,6 +30,7 @@ def get_posts(
     Args:
         account (str): The account of the page.
         group (int): The group id.
+        post_urls ([str]): List of manually specified post URLs.
         credentials (Optional[Tuple[str, str]]): Tuple of email and password to login before scraping.
         timeout (int): Timeout for requests.
         page_limit (int): How many pages of posts to go through.
@@ -41,10 +43,10 @@ def get_posts(
     Yields:
         dict: The post representation in a dictionary.
     """
-    valid_args = sum(arg is not None for arg in (account, group))
+    valid_args = sum(arg is not None for arg in (account, group, post_urls))
 
     if valid_args != 1:
-        raise ValueError("You need to specify either account or group")
+        raise ValueError("You need to specify either account, group, or post_urls")
 
     _scraper.requests_kwargs['timeout'] = kwargs.pop('timeout', DEFAULT_REQUESTS_TIMEOUT)
 
@@ -90,6 +92,9 @@ def get_posts(
 
     elif group is not None:
         return _scraper.get_group_posts(group, **kwargs)
+
+    elif post_urls is not None:
+        return _scraper.get_posts_by_url(post_urls, **kwargs)
 
     raise ValueError('No account nor group')
 
