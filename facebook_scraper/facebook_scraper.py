@@ -53,7 +53,9 @@ class FacebookScraper:
             if not post_url.startswith(FB_MOBILE_BASE_URL):
                 post_url = utils.urljoin(FB_MOBILE_BASE_URL, post_url)
             logger.debug(f"Requesting page from: {post_url}")
-            elem = self.get(post_url).html.find('article[data-ft],div.async_like[data-ft]', first=True)
+            response = self.get(post_url)
+            response.html.html = response.html.html.replace('<!--', '').replace('-->', '')
+            elem = response.html.find('article[data-ft],div.async_like[data-ft]', first=True)
             post = extract_post(elem, request_fn=self.get, options=options)
             if remove_source:
                 post.pop('source', None)
