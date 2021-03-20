@@ -155,7 +155,7 @@ class PostExtractor:
         return post
 
     def extract_post_id(self) -> PartialPost:
-        return {'post_id': self.data_ft.get('mf_story_key')}
+        return {'post_id': self.data_ft.get('top_level_post_id')}
 
     def extract_username(self) -> PartialPost:
         username = self.element.find('h3 strong a')

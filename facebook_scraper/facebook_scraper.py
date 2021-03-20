@@ -8,7 +8,7 @@ from requests import RequestException
 from requests_html import HTMLSession
 
 from . import utils
-from .constants import DEFAULT_PAGE_LIMIT, FB_MOBILE_BASE_URL
+from .constants import DEFAULT_PAGE_LIMIT, FB_MOBILE_BASE_URL, FB_BASE_URL
 from .extractors import extract_group_post, extract_post
 from .fb_types import Post
 from .page_iterators import iter_group_pages, iter_pages
@@ -45,6 +45,21 @@ class FacebookScraper:
     def get_posts(self, account: str, **kwargs) -> Iterator[Post]:
         iter_pages_fn = partial(iter_pages, account=account, request_fn=self.get)
         return self._generic_get_posts(extract_post, iter_pages_fn, **kwargs)
+
+    def get_posts_by_url(self, post_urls, options={}, remove_source=True) -> Iterator[Post]:
+        for post_url in post_urls:
+            if post_url.startswith(FB_BASE_URL):
+                post_url = post_url.replace(FB_BASE_URL, FB_MOBILE_BASE_URL)
+            if not post_url.startswith(FB_MOBILE_BASE_URL):
+                post_url = utils.urljoin(FB_MOBILE_BASE_URL, post_url)
+            logger.debug(f"Requesting page from: {post_url}")
+            response = self.get(post_url)
+            response.html.html = response.html.html.replace('<!--', '').replace('-->', '')
+            elem = response.html.find('article[data-ft],div.async_like[data-ft]', first=True)
+            post = extract_post(elem, request_fn=self.get, options=options)
+            if remove_source:
+                post.pop('source', None)
+            yield post
 
     def get_group_posts(self, group: Union[str, int], **kwargs) -> Iterator[Post]:
         iter_pages_fn = partial(iter_group_pages, group=group, request_fn=self.get)
