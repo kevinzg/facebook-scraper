@@ -13,6 +13,7 @@ from .fb_types import URL, Page, RawPage, RequestFunction, Response
 
 logger = logging.getLogger(__name__)
 
+
 def iter_pages(account: str, request_fn: RequestFunction) -> Iterator[Page]:
     start_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/posts/')
     try:
@@ -75,7 +76,9 @@ class PageParser:
 
     def get_page(self) -> Page:
         raw_page = self.get_raw_page()
-        raw_posts = raw_page.find('article[data-ft],div.async_like[data-ft]') # Select only articles that have the data-ft attribute
+        raw_posts = raw_page.find(
+            'article[data-ft],div.async_like[data-ft]'
+        )  # Select only articles that have the data-ft attribute
 
         if not raw_posts:
             logger.warning("No raw posts (<article> elements) were found in this page.")

@@ -8,7 +8,7 @@ from requests import RequestException
 from requests_html import HTMLSession
 
 from . import utils
-from .constants import DEFAULT_PAGE_LIMIT, FB_MOBILE_BASE_URL, FB_BASE_URL
+from .constants import DEFAULT_PAGE_LIMIT, FB_BASE_URL, FB_MOBILE_BASE_URL
 from .extractors import extract_group_post, extract_post
 from .fb_types import Post
 from .page_iterators import iter_group_pages, iter_pages

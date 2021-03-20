@@ -485,9 +485,13 @@ class PostExtractor:
     def extract_share_information(self):
         if not self.data_ft.get("original_content_id"):
             return None
-        logger.debug("%s is a share of %s", self.post["post_id"], self.data_ft["original_content_id"])
+        logger.debug(
+            "%s is a share of %s", self.post["post_id"], self.data_ft["original_content_id"]
+        )
         # A shared post contains an <article> element within it's own <article> element, or a header element for a shared image
-        raw_post = self.element.find("article article, .story_body_container .story_body_container header", first=True)
+        raw_post = self.element.find(
+            "article article, .story_body_container .story_body_container header", first=True
+        )
         # We can re-use the existing parsers, as a one level deep recursion
         shared_post = PostExtractor(raw_post, self.options, self.request)
         return {
@@ -495,7 +499,7 @@ class PostExtractor:
             'shared_time': shared_post.extract_time().get("time"),
             'shared_user_id': self.data_ft["original_content_owner_id"],
             'shared_username': shared_post.extract_username().get("username"),
-            'shared_post_url': shared_post.extract_post_url().get("post_url")
+            'shared_post_url': shared_post.extract_post_url().get("post_url"),
         }
 
     def extract_availability(self):
