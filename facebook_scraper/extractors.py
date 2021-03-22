@@ -42,6 +42,7 @@ class PostExtractor:
     link_regex = re.compile(r"href=\"https:\/\/lm\.facebook\.com\/l\.php\?u=(.+?)\&amp;h=")
 
     photo_link = re.compile(r'href=\"(/[^\"]+/photos/[^\"]+?)\"')
+    photo_link_2 = re.compile(r'href=\"(/photo.php[^\"]+?)\"')
     image_regex = re.compile(
         r'<a href=\"([^\"]+?)\" target=\"_blank\" class=\"sec\">View Full Size<\/a>',
         re.IGNORECASE,
@@ -345,7 +346,9 @@ class PostExtractor:
 
     def extract_photo_link(self) -> PartialPost:
         images = []
-        matches = self.photo_link.finditer(self.element.html)
+        matches = list(self.photo_link.finditer(self.element.html))
+        if not matches:
+            matches = self.photo_link_2.finditer(self.element.html)
 
         for match in matches:
             url = utils.urljoin(FB_MOBILE_BASE_URL, match.groups()[0])
@@ -354,7 +357,10 @@ class PostExtractor:
             html = response.text
             match = self.image_regex.search(html)
             if match:
-                images.append(match.groups()[0].replace("&amp;", "&"))
+                url = match.groups()[0].replace("&amp;", "&")
+                if not url.startswith("http"):
+                    url = utils.urljoin(FB_MOBILE_BASE_URL, url)
+                images.append(url)
         image = images[0] if images else None
         return {"image": image, "images": images}
 
