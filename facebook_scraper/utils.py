@@ -24,6 +24,7 @@ def parse_int(value: str) -> int:
 def decode_css_url(url: str) -> str:
     url = re.sub(r'\\(..) ', r'\\x\g<1>', url)
     url, _ = codecs.unicode_escape_decode(url)
+    url, _ = codecs.unicode_escape_decode(url)
     return url
 
 

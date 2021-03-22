@@ -255,7 +255,7 @@ class PostExtractor:
 
     def extract_image(self) -> PartialPost:
         image_link = self.extract_photo_link()
-        if image_link is not None:
+        if image_link["image"] is not None:
             return image_link
         return self.extract_image_lq()
 
@@ -270,6 +270,9 @@ class PostExtractor:
             if image_container is None:
                 continue
 
+            src = image_container.attrs.get('src')
+            if src:
+                return {'image': src, 'images': [src]}
             style = image_container.attrs.get('style', '')
             match = self.image_regex_lq.search(style)
             if match:
