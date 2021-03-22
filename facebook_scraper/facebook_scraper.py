@@ -54,7 +54,6 @@ class FacebookScraper:
                 post_url = utils.urljoin(FB_MOBILE_BASE_URL, post_url)
             logger.debug(f"Requesting page from: {post_url}")
             response = self.get(post_url)
-            response.html.html = response.html.html.replace('<!--', '').replace('-->', '')
             elem = response.html.find('article[data-ft],div.async_like[data-ft]', first=True)
             post = extract_post(elem, request_fn=self.get, options=options)
             if remove_source:
@@ -68,6 +67,7 @@ class FacebookScraper:
     def get(self, url, **kwargs):
         try:
             response = self.session.get(url=url, **self.requests_kwargs, **kwargs)
+            response.html.html = response.html.html.replace('<!--', '').replace('-->', '')
             response.raise_for_status()
             return response
         except RequestException as ex:
