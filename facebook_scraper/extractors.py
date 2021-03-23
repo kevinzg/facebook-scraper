@@ -515,11 +515,19 @@ class PostExtractor:
 
     def extract_comments_full(self):
         """Fetch comments for an existing post obtained by `get_posts`.
-        Note that this method will raise one http request per post"""
+        Note that this method may raise multiple http requests per post to get all comments"""
         url = self.post.get('post_url').replace(FB_BASE_URL, FB_MOBILE_BASE_URL)
         logger.debug(f"Fetching {url}")
         response = self.request(url)
-        comments = response.html.find('div[data-sigil="comment"]')
+        comments = list(response.html.find('div[data-sigil="comment"]'))
+        more = response.html.find("a", containing="View more comments", first=True)
+        while more:
+            url = utils.urljoin(FB_MOBILE_BASE_URL, more.attrs.get("href"))
+            logger.debug(f"Fetching {url}")
+            response = self.request(url)
+            more_comments = response.html.find('div[data-sigil="comment"]')
+            comments.extend(more_comments)
+            more = response.html.find("a", containing="View more comments", first=True)
         logger.debug(f"Found {len(comments)} comments")
         result = []
         for comment in comments:
@@ -527,7 +535,6 @@ class PostExtractor:
             first_link = comment.find("a[href]:not([data-click]):not([data-store]):not([data-sigil]):not([class])", first=True)
             comment_body_elem = comment.find('[data-sigil="comment-body"]', first=True)
             if first_link:
-                logger.debug(first_link)
                 url = utils.urljoin(FB_BASE_URL, first_link.attrs.get("href"))
                 name = first_link.text
             else:
