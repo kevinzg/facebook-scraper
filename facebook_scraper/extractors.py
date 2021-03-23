@@ -534,9 +534,12 @@ class PostExtractor:
             comment_id = comment.attrs.get("id")
             first_link = comment.find("a[href]:not([data-click]):not([data-store]):not([data-sigil]):not([class])", first=True)
             comment_body_elem = comment.find('[data-sigil="comment-body"]', first=True)
+            commenter_meta = None
             if first_link:
                 url = utils.urljoin(FB_BASE_URL, first_link.attrs.get("href"))
                 name = first_link.text
+                if "\n" in name:
+                    commenter_meta, name = name.split("\n")
             else:
                 # Adjacent div to comment body, if not logged in. No link to user page available in that case
                 url = None
@@ -551,8 +554,9 @@ class PostExtractor:
                 "comment_id": comment_id,
                 "commenter_url": url,
                 "commenter_name": name,
+                "commenter_meta": commenter_meta,
                 "comment_text": text,
-                "comment_time": date
+                "comment_time": date,
             })
         return {"comments_full": result}
 
