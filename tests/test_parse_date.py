@@ -31,6 +31,7 @@ class TestParseDate:
         '16 hrs',
         '1 min',
         '50 mins',
+        'on Sat',
     ]
 
     def test_all_dates(self):

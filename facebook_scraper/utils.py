@@ -61,9 +61,19 @@ month = (
     r"Nov(?:ember)?|"
     r"Dec(?:ember)?"
 )
+day = (
+    r"Mon|"
+    r"Tue|"
+    r"Wed|"
+    r"Thu|"
+    r"Fri|"
+    r"Sat|"
+    r"Sun"
+)
 day_of_month = r"\d{1,2}"
 specific_date_md = f"(?:{month}) {day_of_month}" + r"(?:,? \d{4})?"
 specific_date_dm = f"{day_of_month} (?:{month})" + r"(?:,? \d{4})?"
+day_of_week = f"on ({day})"
 
 date = f"{specific_date_md}|{specific_date_dm}|Today|Yesterday"
 
@@ -76,7 +86,7 @@ relative_time_hours = r"\b\d{1,2} ?h(?:rs?)?"
 relative_time_mins = r"\b\d{1,2} ?mins?"
 relative_time = f"{relative_time_hours}|{relative_time_mins}"
 
-datetime_regex = re.compile(fr"({exact_time}|{relative_time})", re.IGNORECASE)
+datetime_regex = re.compile(fr"({exact_time}|{relative_time}|{day_of_week})", re.IGNORECASE)
 
 
 def parse_datetime(text: str, search=True) -> Optional[datetime]:
