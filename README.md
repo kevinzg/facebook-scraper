@@ -88,9 +88,9 @@ Run `facebook-scraper --help` for more details on CLI usage.
 ## To-Do
 
 - Async support
-- Image galleries
+- ~~Image galleries~~ (`images` entry)
 - Profiles or post authors
-- Comments
+- ~~Comments~~ (with `options={'comments': True}`)
 
 
 ## Alternatives and related projects
