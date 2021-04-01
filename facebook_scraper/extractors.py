@@ -77,6 +77,7 @@ class PostExtractor:
             'shared_text': None,
             'time': None,
             'image': None,
+            'images': None,
             'video': None,
             'video_thumbnail': None,
             'video_id': None,
@@ -282,7 +283,8 @@ class PostExtractor:
             style = image_container.attrs.get('style', '')
             match = self.image_regex_lq.search(style)
             if match:
-                return {'image': utils.decode_css_url(match.groups()[0])}
+                src = utils.decode_css_url(match.groups()[0])
+                return {'image': src, 'images': [src]}
 
         return None
 
