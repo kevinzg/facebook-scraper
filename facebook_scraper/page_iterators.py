@@ -127,11 +127,7 @@ class PageParser:
             self._parse_html()
 
     def _parse_html(self):
-        # TODO: Why are we uncommenting HTML?
-        self.html = utils.make_html_element(
-            self.response.text.replace('<!--', '').replace('-->', ''),
-            url=self.response.url,
-        )
+        self.html = self.response.html
         self.cursor_blob = self.response.text
 
     def _parse_json(self):
