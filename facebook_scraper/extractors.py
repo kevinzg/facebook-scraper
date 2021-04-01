@@ -393,6 +393,21 @@ class PostExtractor:
         url = self.post.get('post_url')
         post_id = self.post.get('post_id')
 
+        reaction_url = f'https://m.facebook.com/ufi/reaction/profile/browser/?ft_ent_identifier={post_id}'
+        resp = self.request(reaction_url)
+        reactions = {}
+        for span in resp.html.find("span[aria-label]"):
+            label = span.attrs.get("aria-label", "")
+            if " people reacted with " in label:
+                reaction_count, reaction_type = label.split(" people reacted with ")
+                reactions[reaction_type.lower()] = int(reaction_count)
+        if reactions:
+            return {
+                'likes': reactions.get("like"),
+                'reactions': reactions,
+                'fetched_time': datetime.now(),
+            }
+
         if url:
             w3_fb_url = utils.urlparse(url)._replace(netloc='www.facebook.com').geturl()
             resp = self.request(w3_fb_url)
