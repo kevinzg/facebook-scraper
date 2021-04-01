@@ -400,7 +400,7 @@ class PostExtractor:
             label = span.attrs.get("aria-label", "")
             if " people reacted with " in label:
                 reaction_count, reaction_type = label.split(" people reacted with ")
-                reactions[reaction_type.lower()] = int(reaction_count)
+                reactions[reaction_type.lower()] = utils.convert_numeric_abbr(reaction_count)
         if reactions:
             return {
                 'likes': reactions.get("like"),

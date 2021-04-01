@@ -20,6 +20,11 @@ def find_and_search(node, selector, pattern, cast=str):
 def parse_int(value: str) -> int:
     return int(''.join(filter(lambda c: c.isdigit(), value)))
 
+def convert_numeric_abbr(s):
+    mapping = {'k': 1000, 'm': 1e6}
+    if s[-1].isalpha():
+        return int(float(s[:-1]) * mapping[s[-1].lower()])
+    return int(s)
 
 def decode_css_url(url: str) -> str:
     url = re.sub(r'\\(..) ', r'\\x\g<1>', url)
