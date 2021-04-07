@@ -10,7 +10,7 @@ from requests_html import HTMLSession
 from . import utils
 from .constants import DEFAULT_PAGE_LIMIT, FB_BASE_URL, FB_MOBILE_BASE_URL
 from .extractors import extract_group_post, extract_post
-from .fb_types import Post
+from .fb_types import Post, Profile
 from .page_iterators import iter_group_pages, iter_pages
 
 
@@ -59,6 +59,72 @@ class FacebookScraper:
             if remove_source:
                 post.pop('source', None)
             yield post
+
+    def get_profile(self, account, **kwargs) -> Profile:
+        about_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/about/')
+        logger.debug(f"Requesting page from: {about_url}")
+        response = self.get(about_url)
+        result = {}
+        # Profile name is in the title
+        title = response.html.find("title", first=True).text
+        if " | " in title:
+            title = title.split(" | ")[0]
+        result["Name"] = title
+
+        about = response.html.find("div#main_column,div.aboutme", first=True)
+        for card in about.find("div[data-sigil='profile-card']"):
+            header = card.find("header", first=True).text
+            if header.startswith("About"):
+                header = "About" # Truncate strings like "About Mark"
+            if header in ["Work, Education"]:
+                experience = []
+                for elem in card.find("div.experience"):
+                    xp = {}
+                    try:
+                        xp["link"] = elem.find("a", first=True).attrs["href"]
+                    except:
+                        pass
+                    bits = elem.text.split("\n")
+                    if len(bits) == 2:
+                        xp["text"], xp["type"] = bits
+                    elif len(bits) == 3:
+                        xp["text"], xp["type"], xp["year"] = bits
+                    else:
+                        xp["text"] = elem.text
+                    experience.append(xp)
+                result[header] = experience
+            elif header == "Places lived":
+                places = []
+                for elem in card.find("div.touchable"):
+                    place = {}
+                    try:
+                        place["link"] = elem.find("a", first=True).attrs["href"]
+                    except:
+                        pass
+                    if "\n" in elem.text:
+                        place["text"], place["type"] = elem.text.split("\n")
+                    else:
+                        place["text"] = elem.text
+                    places.append(place)
+                result[header] = places
+            else:
+                bits = card.text.split("\n")[1:] # Remove header
+                if header == "Relationship":
+                    result[header] = {
+                        "to": bits[0],
+                        "type": bits[1],
+                        "since": bits[2]
+                    }
+                elif len(bits) == 1:
+                    result[header] = bits[0]
+                elif header in ["Contact Info", "Basic info", "Other names"] and len(bits) % 2 == 0: # Divisible by two, assume pairs
+                    pairs = {}
+                    for i in range(0, len(bits), 2):
+                        pairs[bits[i + 1]] = bits[i]
+                    result[header] = pairs
+                else:
+                    result[header] = "\n".join(bits)
+        return result
 
     def get_group_posts(self, group: Union[str, int], **kwargs) -> Iterator[Post]:
         iter_pages_fn = partial(iter_group_pages, group=group, request_fn=self.get)
