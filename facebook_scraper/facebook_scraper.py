@@ -72,6 +72,9 @@ class FacebookScraper:
         result["Name"] = title
 
         about = response.html.find("div#main_column,div.aboutme", first=True)
+        if not about:
+            logger.warning("No about section found")
+            return result
         for card in about.find("div[data-sigil='profile-card']"):
             header = card.find("header", first=True).text
             if header.startswith("About"):
@@ -109,7 +112,7 @@ class FacebookScraper:
                 result[header] = places
             else:
                 bits = card.text.split("\n")[1:] # Remove header
-                if header == "Relationship":
+                if len(bits) >= 3 and header == "Relationship":
                     result[header] = {
                         "to": bits[0],
                         "type": bits[1],
