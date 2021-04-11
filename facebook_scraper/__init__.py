@@ -11,12 +11,34 @@ from requests.cookies import cookiejar_from_dict
 
 from .constants import DEFAULT_REQUESTS_TIMEOUT
 from .facebook_scraper import FacebookScraper
-from .fb_types import Credentials, Post, RawPost
+from .fb_types import Credentials, Post, RawPost, Profile
 from .utils import html_element_to_string, parse_cookie_file
 
 
 _scraper = FacebookScraper()
 
+def set_cookies(cookies):
+    if isinstance(cookies, str):
+        cookies = parse_cookie_file(cookies)
+    elif isinstance(cookies, dict):
+        cookies = cookiejar_from_dict(cookies)
+    if cookies is not None:
+        _scraper.session.cookies = cookies
+
+def get_profile(
+    account: str,
+    **kwargs,
+ ) -> Profile:
+    """Get a Facebook user's profile information
+    Args:
+        account(str): The account of the profile.
+        cookies (Union[dict, CookieJar, str]): Cookie jar to use.
+            Can also be a filename to load the cookies from a file (Netscape format).
+    """
+    _scraper.requests_kwargs['timeout'] = kwargs.pop('timeout', DEFAULT_REQUESTS_TIMEOUT)
+    cookies = kwargs.pop('cookies', None)
+    set_cookies(cookies)
+    return _scraper.get_profile(account, **kwargs)
 
 def get_posts(
     account: Optional[str] = None,
@@ -52,16 +74,9 @@ def get_posts(
 
     cookies = kwargs.pop('cookies', None)
 
-    if isinstance(cookies, str):
-        cookies = parse_cookie_file(cookies)
-    elif isinstance(cookies, dict):
-        cookies = cookiejar_from_dict(cookies)
-
     if cookies is not None and credentials is not None:
         raise ValueError("Can't use cookies and credentials arguments at the same time")
-
-    if cookies is not None:
-        _scraper.session.cookies = cookies
+    set_cookies(cookies)
 
     options: Union[Dict[str, Any], Set[str]] = kwargs.setdefault('options', {})
     if isinstance(options, set):
