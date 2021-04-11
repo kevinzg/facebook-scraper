@@ -495,7 +495,7 @@ class PostExtractor:
     def extract_video_lowres(self, video_data_element):
         try:
             data = json.loads(video_data_element.attrs['data-store'])
-            return {'video': data.get('src')}
+            return {'video': data.get('src').replace("\\/", "/")}
         except JSONDecodeError as ex:
             logger.error("Error parsing data-store JSON: %r", ex)
         except KeyError:

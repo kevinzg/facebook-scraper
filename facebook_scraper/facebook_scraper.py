@@ -55,6 +55,8 @@ class FacebookScraper:
             logger.debug(f"Requesting page from: {post_url}")
             response = self.get(post_url)
             elem = response.html.find('article[data-ft],div.async_like[data-ft]', first=True)
+            if not elem:
+                logger.warning("No raw posts (<article> elements) were found in this page.")
             post = extract_post(elem, request_fn=self.get, options=options)
             if remove_source:
                 post.pop('source', None)
