@@ -116,7 +116,7 @@ class PageParser:
         match = self.cursor_regex_4.search(self.response.text)
         if match:
             value = match.groups()[0]
-            return value.replace('\\', '')
+            return value.replace('\\/', '/')
 
         return None
 
