@@ -69,6 +69,7 @@ class PostExtractor:
 
         self._data_ft = None
 
+    # TODO: This is getting ugly, create a dataclass for Post
     def make_new_post(self) -> Post:
         return {
             'post_id': None,
@@ -99,6 +100,7 @@ class PostExtractor:
             'available': None,
             'comments_full': None,
             'reactors': None,
+            'w3_fb_url': None,
         }
 
     def extract_post(self) -> Post:
@@ -393,6 +395,7 @@ class PostExtractor:
         """
         url = self.post.get('post_url')
         post_id = self.post.get('post_id')
+        w3_fb_url = url and utils.urlparse(url)._replace(netloc='www.facebook.com').geturl()
 
         reaction_url = f'https://m.facebook.com/ufi/reaction/profile/browser/?ft_ent_identifier={post_id}'
         response = self.request(reaction_url)
@@ -456,10 +459,10 @@ class PostExtractor:
                 'reactions': reactions,
                 'reactors': reactors,
                 'fetched_time': datetime.now(),
+                'w3_fb_url': w3_fb_url,
             }
 
         if url:
-            w3_fb_url = utils.urlparse(url)._replace(netloc='www.facebook.com').geturl()
             resp = self.request(w3_fb_url)
             for item in self.parse_share_and_reactions(resp.text):
                 data = item['jsmods']['pre_display_requires'][0][3][1]['__bbox']['result'][
