@@ -69,6 +69,7 @@ class PostExtractor:
 
         self._data_ft = None
 
+    # TODO: This is getting ugly, create a dataclass for Post
     def make_new_post(self) -> Post:
         return {
             'post_id': None,
@@ -98,6 +99,8 @@ class PostExtractor:
             'shared_post_url': None,
             'available': None,
             'comments_full': None,
+            'reactors': None,
+            'w3_fb_url': None,
         }
 
     def extract_post(self) -> Post:
@@ -145,7 +148,7 @@ class PostExtractor:
             except Exception as ex:
                 log_warning("Exception while running %s: %r", method.__name__, ex)
 
-        if self.options.get('reactions'):
+        if self.options.get('reactions') or self.options.get('reactors'):
             try:
                 reactions = self.extract_reactions()
             except Exception as ex:
@@ -392,9 +395,74 @@ class PostExtractor:
         """
         url = self.post.get('post_url')
         post_id = self.post.get('post_id')
+        w3_fb_url = url and utils.urlparse(url)._replace(netloc='www.facebook.com').geturl()
+
+        reaction_url = f'https://m.facebook.com/ufi/reaction/profile/browser/?ft_ent_identifier={post_id}'
+        response = self.request(reaction_url)
+        reactions = {}
+
+        # Dict mapping class names to human readable reaction names. Prepopulated in case FB doesn't include them
+        reaction_lookup = {
+            'sx_cbd149': 'Like',
+            'sx_202991': 'Love',
+            'sx_41edbc': 'Care',
+            'sx_0d839a': 'Haha',
+            'sx_2b1a8e': 'Wow',
+            'sx_454e38': 'Angry',
+            'sx_1a0b4b': 'Sad'
+        }
+
+        for span in response.html.find("span[aria-label]"):
+            label = span.attrs.get("aria-label", "")
+            if " people reacted with " in label:
+                reaction_count, reaction_type = label.split(" people reacted with ")
+                reactions[reaction_type.lower()] = utils.convert_numeric_abbr(reaction_count)
+                if self.options.get("reactors"):
+                    emoji_class = span.find("i", first=True).attrs.get("class")[-1]
+                    reaction_lookup[emoji_class] = reaction_type
+
+        reactors = []
+
+        if self.options.get("reactors"):
+            """Fetch people reacting to an existing post obtained by `get_posts`.
+            Note that this method may raise one more http request per post to get all reactors"""
+            logger.debug("Fetching reactors")
+            elems = list(response.html.find("div#reaction_profile_browser>div"))
+            more = response.html.find("div#reaction_profile_pager a", first=True)
+            if more:
+                url = utils.urljoin(FB_MOBILE_BASE_URL, more.attrs.get("href"))
+                url = url.replace("limit=50", f"limit={1e6}")
+                logger.debug(f"Fetching {url}")
+                response = self.request(url)
+                prefix_length = len('for (;;);')
+                data = json.loads(response.text[prefix_length:])  # Strip 'for (;;);'
+
+                for action in data['payload']['actions']:
+                    if action['cmd'] == 'append':
+                        html = utils.make_html_element(f"<div id='reaction_profile_browser'>{action['html']}</div>", url=FB_MOBILE_BASE_URL)
+                        more_elems = html.find('div#reaction_profile_browser>div')
+                        elems.extend(more_elems)
+            logger.debug(f"Found {len(elems)} reactors")
+            for elem in elems:
+                emoji_class = elem.find("div>i:not(.nub)", first=True).attrs.get("class")[-1]
+                if not reaction_lookup.get(emoji_class):
+                    logger.error(f"Don't know {emoji_class}")
+                reactors.append({
+                    "name": elem.find("strong", first=True).text,
+                    "link": utils.urljoin(FB_BASE_URL, elem.find("a", first=True).attrs.get("href")),
+                    "type": reaction_lookup.get(emoji_class)
+                })
+
+        if reactions:
+            return {
+                'likes': reactions.get("like"),
+                'reactions': reactions,
+                'reactors': reactors,
+                'fetched_time': datetime.now(),
+                'w3_fb_url': w3_fb_url,
+            }
 
         if url:
-            w3_fb_url = utils.urlparse(url)._replace(netloc='www.facebook.com').geturl()
             resp = self.request(w3_fb_url)
             for item in self.parse_share_and_reactions(resp.text):
                 data = item['jsmods']['pre_display_requires'][0][3][1]['__bbox']['result'][
