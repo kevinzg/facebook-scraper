@@ -26,7 +26,7 @@ def set_cookies(cookies):
         _scraper.session.cookies = cookies
 
 def get_profile(
-    account: Optional[str] = None,
+    account: str,
     **kwargs,
  ) -> Profile:
     """Get a Facebook user's profile information
@@ -35,8 +35,6 @@ def get_profile(
         cookies (Union[dict, CookieJar, str]): Cookie jar to use.
             Can also be a filename to load the cookies from a file (Netscape format).
     """
-    if not account:
-        raise ValueError("You need to specify the account")
     _scraper.requests_kwargs['timeout'] = kwargs.pop('timeout', DEFAULT_REQUESTS_TIMEOUT)
     cookies = kwargs.pop('cookies', None)
     set_cookies(cookies)
