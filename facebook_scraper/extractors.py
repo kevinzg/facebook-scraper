@@ -185,7 +185,7 @@ class PostExtractor:
         element = self.element
 
         has_more = self.more_url_regex.search(element.html)
-        if has_more:
+        if has_more and self.options.get("allow_extra_requests", True):
             match = self.post_story_regex.search(element.html)
             if match:
                 url = utils.urljoin(FB_MOBILE_BASE_URL, match.groups()[0].replace("&amp;", "&"))
@@ -264,9 +264,10 @@ class PostExtractor:
         return {'user_id': self.data_ft['content_owner_id_new']}
 
     def extract_image(self) -> PartialPost:
-        image_link = self.extract_photo_link()
-        if image_link["image"] is not None:
-            return image_link
+        if self.options.get("allow_extra_requests", True):
+            image_link = self.extract_photo_link()
+            if image_link["image"] is not None:
+                return image_link
         return self.extract_image_lq()
 
     def extract_image_lq(self) -> PartialPost:

@@ -14,13 +14,13 @@ from .fb_types import URL, Page, RawPage, RequestFunction, Response
 logger = logging.getLogger(__name__)
 
 
-def iter_pages(account: str, request_fn: RequestFunction) -> Iterator[Page]:
+def iter_pages(account: str, request_fn: RequestFunction, **kwargs) -> Iterator[Page]:
     start_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/posts/')
     try:
         request_fn(start_url)
     except HTTPError as ex:
         start_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/')
-    return generic_iter_pages(start_url, PageParser, request_fn)
+    return generic_iter_pages(start_url, PageParser, request_fn, **kwargs)
 
 
 def iter_group_pages(group: Union[str, int], request_fn: RequestFunction) -> Iterator[Page]:
@@ -28,7 +28,7 @@ def iter_group_pages(group: Union[str, int], request_fn: RequestFunction) -> Ite
     return generic_iter_pages(start_url, GroupPageParser, request_fn)
 
 
-def generic_iter_pages(start_url, page_parser_cls, request_fn: RequestFunction) -> Iterator[Page]:
+def generic_iter_pages(start_url, page_parser_cls, request_fn: RequestFunction, **kwargs) -> Iterator[Page]:
     next_url = start_url
 
     while next_url:
@@ -47,6 +47,9 @@ def generic_iter_pages(start_url, page_parser_cls, request_fn: RequestFunction) 
         logger.debug("Looking for next page URL")
         next_page = parser.get_next_page()
         if next_page:
+            posts_per_page = kwargs.get("options", {}).get("posts_per_page")
+            if posts_per_page:
+                next_page = next_page.replace("num_to_fetch=4", f"num_to_fetch={posts_per_page}")
             next_url = utils.urljoin(FB_MOBILE_BASE_URL, next_page)
         else:
             logger.info("Page parser did not find next page URL")
