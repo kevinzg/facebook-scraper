@@ -264,10 +264,9 @@ class PostExtractor:
         return {'user_id': self.data_ft['content_owner_id_new']}
 
     def extract_image(self) -> PartialPost:
-        if self.options.get("allow_extra_requests", True):
-            image_link = self.extract_photo_link()
-            if image_link["image"] is not None:
-                return image_link
+        image_link = self.extract_photo_link()
+        if image_link["image"] is not None:
+            return image_link
         return self.extract_image_lq()
 
     def extract_image_lq(self) -> PartialPost:
@@ -360,6 +359,8 @@ class PostExtractor:
         }
 
     def extract_photo_link(self) -> PartialPost:
+        if not self.options.get("allow_extra_requests", True):
+            return None
         images = []
         matches = list(self.photo_link.finditer(self.element.html))
         if not matches:
