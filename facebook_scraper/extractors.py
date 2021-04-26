@@ -598,8 +598,9 @@ class PostExtractor:
         url = self.post.get('post_url').replace(FB_BASE_URL, FB_MOBILE_BASE_URL)
         logger.debug(f"Fetching {url}")
         response = self.request(url)
-        comments = list(response.html.find('div[data-sigil="comment"]'))
-        more = response.html.find("a", containing="View more comments", first=True)
+        elem = response.html.find('article[data-ft],div.async_like[data-ft]', first=True)
+        comments = list(elem.find('div[data-sigil="comment"]'))
+        more = elem.find("a", containing="View more comments", first=True)
         while more:
             url = utils.urljoin(FB_MOBILE_BASE_URL, more.attrs.get("href"))
             logger.debug(f"Fetching {url}")
