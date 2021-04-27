@@ -427,8 +427,8 @@ class PostExtractor:
         if reactors_opt:
             """Fetch people reacting to an existing post obtained by `get_posts`.
             Note that this method may raise one more http request per post to get all reactors"""
-            limit = 5000
-            if type(reactors_opt) in [int, float] and reactors_opt < 5000:
+            limit = 3000
+            if type(reactors_opt) in [int, float] and reactors_opt < limit:
                 limit = reactors_opt
             logger.debug(f"Fetching {limit} reactors")
             elems = list(response.html.find("div#reaction_profile_browser>div"))
