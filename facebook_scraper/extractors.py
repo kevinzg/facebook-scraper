@@ -592,61 +592,73 @@ class PostExtractor:
             'available': ">This content isn't available at the moment<" not in self.element.html
         }
 
+    def parse_comment(self, comment):
+        comment_id = comment.attrs.get("id")
+        first_link = comment.find("div:not([data-sigil])>a[href]:not([data-click]):not([data-store]):not([data-sigil])", first=True)
+        comment_body_elem = comment.find('[data-sigil="comment-body"]', first=True)
+        commenter_meta = None
+        if first_link:
+            url = utils.urljoin(FB_BASE_URL, first_link.attrs.get("href"))
+            name = first_link.text
+            if "\n" in name:
+                commenter_meta, name = name.split("\n")
+        else:
+            # Adjacent div to comment body, if not logged in. No link to user page available in that case
+            url = None
+            elem = comment_body_elem.element.getprevious()
+            if elem is not None:
+                name = elem.text
+            else:
+                name = None
+
+        text = comment_body_elem.text
+        # Try to extract from the abbr element
+        date_element = comment.find('abbr', first=True)
+        if date_element:
+            date = utils.parse_datetime(date_element.text, search=False)
+        else:
+            date = None
+
+        return {
+            "comment_id": comment_id,
+            "commenter_url": url,
+            "commenter_name": name,
+            "commenter_meta": commenter_meta,
+            "comment_text": text,
+            "comment_time": date,
+        }
+
     def extract_comments_full(self):
         """Fetch comments for an existing post obtained by `get_posts`.
         Note that this method may raise multiple http requests per post to get all comments"""
         url = self.post.get('post_url').replace(FB_BASE_URL, FB_MOBILE_BASE_URL)
         logger.debug(f"Fetching {url}")
         response = self.request(url)
-        elem = response.html.find('article[data-ft],div.async_like[data-ft]', first=True)
+        elem = response.html.find('div[data-sigil="m-mentions-expand"]', first=True)
         comments = list(elem.find('div[data-sigil="comment"]'))
         more = elem.find("a", containing="View more comments", first=True)
         while more:
             url = utils.urljoin(FB_MOBILE_BASE_URL, more.attrs.get("href"))
             logger.debug(f"Fetching {url}")
             response = self.request(url)
-            elem = response.html.find('article[data-ft],div.async_like[data-ft]', first=True)
+            elem = response.html.find('div[data-sigil="m-mentions-expand"]', first=True)
             more_comments = elem.find('div[data-sigil="comment"]')
             comments.extend(more_comments)
             more = response.html.find("a", containing="View more comments", first=True)
         logger.debug(f"Found {len(comments)} comments")
-        result = []
+        results = []
         for comment in comments:
-            comment_id = comment.attrs.get("id")
-            first_link = comment.find("div:not([data-sigil])>a[href]:not([data-click]):not([data-store]):not([data-sigil]):not([class])", first=True)
-            comment_body_elem = comment.find('[data-sigil="comment-body"]', first=True)
-            commenter_meta = None
-            if first_link:
-                url = utils.urljoin(FB_BASE_URL, first_link.attrs.get("href"))
-                name = first_link.text
-                if "\n" in name:
-                    commenter_meta, name = name.split("\n")
-            else:
-                # Adjacent div to comment body, if not logged in. No link to user page available in that case
-                url = None
-                elem = comment_body_elem.element.getprevious()
-                if elem is not None:
-                    name = elem.text
-                else:
-                    name = None
-
-            text = comment_body_elem.text
-            # Try to extract from the abbr element
-            date_element = comment.find('abbr', first=True)
-            if date_element:
-                date = utils.parse_datetime(date_element.text, search=False)
-            else:
-                date = None
-
-            result.append({
-                "comment_id": comment_id,
-                "commenter_url": url,
-                "commenter_name": name,
-                "commenter_meta": commenter_meta,
-                "comment_text": text,
-                "comment_time": date,
-            })
-        return {"comments_full": result}
+            result = self.parse_comment(comment)
+            replies = comment.find("div.async_elem[data-sigil='replies-see-more'] a[href]", first=True)
+            if replies:
+                logger.debug(f"{result['comment_id']} has replies")
+                url = utils.urljoin(FB_MOBILE_BASE_URL, replies.attrs["href"])
+                logger.debug(f"Fetching {url}")
+                response = self.request(url)
+                replies = response.html.find('div[data-sigil="comment"]')
+                result["replies"] = [self.parse_comment(reply) for reply in replies[1:]] # Skip first element, as it will be this comment itself
+            results.append(result)
+        return {"comments_full": results}
 
     def parse_share_and_reactions(self, html: str):
         bad_jsons = self.shares_and_reactions_regex.findall(html)
