@@ -426,15 +426,19 @@ class PostExtractor:
 
         reactors = []
 
-        if self.options.get("reactors"):
+        reactors_opt = self.options.get("reactors")
+        if reactors_opt:
             """Fetch people reacting to an existing post obtained by `get_posts`.
             Note that this method may raise one more http request per post to get all reactors"""
-            logger.debug("Fetching reactors")
+            limit = 3000
+            if type(reactors_opt) in [int, float] and reactors_opt < limit:
+                limit = reactors_opt
+            logger.debug(f"Fetching {limit} reactors")
             elems = list(response.html.find("div#reaction_profile_browser>div"))
             more = response.html.find("div#reaction_profile_pager a", first=True)
-            if more:
+            if more and limit > 50:
                 url = utils.urljoin(FB_MOBILE_BASE_URL, more.attrs.get("href"))
-                url = url.replace("limit=50", f"limit={1e6}")
+                url = url.replace("limit=50", f"limit={limit - 50}")
                 logger.debug(f"Fetching {url}")
                 response = self.request(url)
                 prefix_length = len('for (;;);')
