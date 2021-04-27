@@ -1,6 +1,7 @@
 import itertools
 import logging
 import warnings
+import re
 from functools import partial
 from typing import Iterator, Union
 
@@ -129,6 +130,35 @@ class FacebookScraper:
                     result[header] = pairs
                 else:
                     result[header] = "\n".join(bits)
+        friend_opt = kwargs.get("friends")
+        if friend_opt:
+            limit = None
+            if type(friend_opt) in [int, float]:
+                limit = friend_opt
+            friend_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/friends/')
+            elems = []
+            while friend_url:
+                logger.debug(f"Requesting page from: {friend_url}")
+                response = self.get(friend_url)
+                elems.extend(response.html.find('div[data-sigil="undoable-action"]'))
+                if limit and len(elems) > limit:
+                    break
+                more = re.search(r'href:"(/[^/]+/friends[^"]+)"', response.text)
+                if more:
+                    friend_url = utils.urljoin(FB_MOBILE_BASE_URL, more.group(1))
+                else:
+                    break
+            logger.debug(f"Found {len(elems)} friends")
+            friends = []
+            for elem in elems:
+                name = elem.find("h3>a", first=True)
+                tagline = elem.find("div.notice.ellipsis", first=True).text
+                friends.append({
+                    "link": name.attrs.get("href"),
+                    "name": name.text,
+                    "tagline": tagline
+                })
+            result["Friends"] = friends
         return result
 
     def get_group_posts(self, group: Union[str, int], **kwargs) -> Iterator[Post]:
