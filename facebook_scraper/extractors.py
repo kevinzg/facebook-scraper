@@ -301,7 +301,7 @@ class PostExtractor:
 
         query_params = ('story_fbid', 'id')
         account = self.options.get('account')
-        elements = self.element.find('header a')
+        elements = self.element.find('a')
         video_post_match = None
         path = None
 
@@ -673,3 +673,5 @@ class PostExtractor:
 
 class GroupPostExtractor(PostExtractor):
     """Class for extracting posts from Facebook Groups rather than Pages"""
+    post_url_regex = re.compile(r'https://m.facebook.com/groups/[^/]+/permalink/')
+    post_story_regex = re.compile(r'href="(https://m.facebook.com/groups/[^/]+/permalink/\d+/)')

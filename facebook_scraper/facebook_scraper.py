@@ -57,7 +57,12 @@ class FacebookScraper:
             elem = response.html.find('article[data-ft],div.async_like[data-ft]', first=True)
             if not elem:
                 logger.warning("No raw posts (<article> elements) were found in this page.")
-            post = extract_post(elem, request_fn=self.get, options=options)
+            if post_url.startswith(utils.urljoin(FB_MOBILE_BASE_URL, "/groups/")):
+                post = extract_group_post(elem, request_fn=self.get, options=options)
+            else:
+                post = extract_post(elem, request_fn=self.get, options=options)
+            if not post.get("post_url"):
+                post["post_url"] = post_url
             if remove_source:
                 post.pop('source', None)
             yield post
