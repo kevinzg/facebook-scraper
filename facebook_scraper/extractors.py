@@ -78,6 +78,7 @@ class PostExtractor:
             'shared_text': None,
             'time': None,
             'image': None,
+            'image_lowquality': None,
             'images': None,
             'video': None,
             'video_thumbnail': None,
@@ -110,7 +111,8 @@ class PostExtractor:
             self.extract_post_id,
             self.extract_text,
             self.extract_time,
-            self.extract_image,
+            self.extract_photo_link,
+            self.extract_image_lq,
             self.extract_likes,
             self.extract_comments,
             self.extract_shares,
@@ -263,12 +265,6 @@ class PostExtractor:
     def extract_user_id(self) -> PartialPost:
         return {'user_id': self.data_ft['content_owner_id_new']}
 
-    def extract_image(self) -> PartialPost:
-        image_link = self.extract_photo_link()
-        if image_link["image"] is not None:
-            return image_link
-        return self.extract_image_lq()
-
     def extract_image_lq(self) -> PartialPost:
         story_container = self.element.find('div.story_body_container', first=True)
         if story_container is None:
@@ -282,12 +278,12 @@ class PostExtractor:
 
             src = image_container.attrs.get('src')
             if src:
-                return {'image': src, 'images': [src]}
+                return {'image_lowquality': src}
             style = image_container.attrs.get('style', '')
             match = self.image_regex_lq.search(style)
             if match:
                 src = utils.decode_css_url(match.groups()[0])
-                return {'image': src, 'images': [src]}
+                return {'image_lowquality': src}
 
         return None
 
@@ -376,6 +372,11 @@ class PostExtractor:
                 url = match.groups()[0].replace("&amp;", "&")
                 if not url.startswith("http"):
                     url = utils.urljoin(FB_MOBILE_BASE_URL, url)
+                if url.startswith(utils.urljoin(FB_MOBILE_BASE_URL, "/photo/view_full_size/")):
+                    # Try resolve redirect
+                    response = self.request(url)
+                    if not response.url.startswith(utils.urljoin(FB_MOBILE_BASE_URL, "login.php")):
+                        url = response.html.find("a", first=True).attrs.get("href").replace("&amp;", "&")
                 images.append(url)
         image = images[0] if images else None
         return {"image": image, "images": images}
