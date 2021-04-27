@@ -185,7 +185,7 @@ class PostExtractor:
         element = self.element
 
         has_more = self.more_url_regex.search(element.html)
-        if has_more:
+        if has_more and self.options.get("allow_extra_requests", True):
             match = self.post_story_regex.search(element.html)
             if match:
                 url = utils.urljoin(FB_MOBILE_BASE_URL, match.groups()[0].replace("&amp;", "&"))
@@ -359,6 +359,8 @@ class PostExtractor:
         }
 
     def extract_photo_link(self) -> PartialPost:
+        if not self.options.get("allow_extra_requests", True):
+            return None
         images = []
         matches = list(self.photo_link.finditer(self.element.html))
         if not matches:

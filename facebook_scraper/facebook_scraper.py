@@ -43,7 +43,7 @@ class FacebookScraper:
         self.requests_kwargs = requests_kwargs
 
     def get_posts(self, account: str, **kwargs) -> Iterator[Post]:
-        iter_pages_fn = partial(iter_pages, account=account, request_fn=self.get)
+        iter_pages_fn = partial(iter_pages, account=account, request_fn=self.get, **kwargs)
         return self._generic_get_posts(extract_post, iter_pages_fn, **kwargs)
 
     def get_posts_by_url(self, post_urls, options={}, remove_source=True) -> Iterator[Post]:
