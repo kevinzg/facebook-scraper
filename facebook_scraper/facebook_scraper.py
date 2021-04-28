@@ -9,7 +9,7 @@ from requests import RequestException
 from requests_html import HTMLSession
 
 from . import utils
-from .constants import DEFAULT_PAGE_LIMIT, FB_BASE_URL, FB_MOBILE_BASE_URL
+from .constants import DEFAULT_PAGE_LIMIT, FB_BASE_URL, FB_MOBILE_BASE_URL, FB_W3_BASE_URL
 from .extractors import extract_group_post, extract_post
 from .fb_types import Post, Profile
 from .page_iterators import iter_group_pages, iter_pages
@@ -51,6 +51,8 @@ class FacebookScraper:
         for post_url in post_urls:
             if post_url.startswith(FB_BASE_URL):
                 post_url = post_url.replace(FB_BASE_URL, FB_MOBILE_BASE_URL)
+            if post_url.startswith(FB_W3_BASE_URL):
+                post_url = post_url.replace(FB_W3_BASE_URL, FB_MOBILE_BASE_URL)
             if not post_url.startswith(FB_MOBILE_BASE_URL):
                 post_url = utils.urljoin(FB_MOBILE_BASE_URL, post_url)
             logger.debug(f"Requesting page from: {post_url}")
