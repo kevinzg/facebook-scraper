@@ -90,6 +90,7 @@ class PostExtractor:
             'link': None,
             'user_id': None,
             'username': None,
+            'user_url': None,
             'source': None,
             'is_live': False,
             'factcheck': None,
@@ -175,8 +176,12 @@ class PostExtractor:
         return {'post_id': self.data_ft.get('top_level_post_id')}
 
     def extract_username(self) -> PartialPost:
-        username = self.element.find('h3 strong a')
-        return {'username': username[0].text} if len(username) > 0 else None
+        elem = self.element.find('h3 strong a', first=True)
+        if elem:
+            url = elem.attrs.get("href")
+            if url:
+                url = utils.urljoin(FB_BASE_URL, url)
+            return {'username': elem.text, 'user_url': url}
 
     # TODO: this method needs test for the 'has more' case and shared content
     def extract_text(self) -> PartialPost:
