@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional
 
 from . import utils
 from .constants import FB_BASE_URL, FB_MOBILE_BASE_URL
-from .fb_types import Options, Post, RawPost, RequestFunction
+from .fb_types import Options, Post, RawPost, RequestFunction, Response, URL
 
 
 try:
@@ -354,30 +354,47 @@ class PostExtractor:
             or 0,
         }
 
+    def extract_photo_link_HQ(self, response: Response) -> URL:
+        match = self.image_regex.search(response.text)
+        if match:
+            url = match.groups()[0].replace("&amp;", "&")
+            if not url.startswith("http"):
+                url = utils.urljoin(FB_MOBILE_BASE_URL, url)
+            if url.startswith(utils.urljoin(FB_MOBILE_BASE_URL, "/photo/view_full_size/")):
+                # Try resolve redirect
+                logger.debug(f"Fetching {url}")
+                redirect_response = self.request(url)
+                if not redirect_response.url.startswith(utils.urljoin(FB_MOBILE_BASE_URL, "login.php")):
+                    url = redirect_response.html.find("a", first=True).attrs.get("href").replace("&amp;", "&")
+            return url
+        else:
+            return None
+
     def extract_photo_link(self) -> PartialPost:
         if not self.options.get("allow_extra_requests", True):
             return None
         images = []
-        matches = list(self.photo_link.finditer(self.element.html))
-        if not matches:
-            matches = self.photo_link_2.finditer(self.element.html)
+        photo_links = self.element.find("a[href*='photo.php'],a[href*='/photos/']")
+        total_photos_in_gallery = len(photo_links)
+        if len(photo_links) == 4 and photo_links[-1].text:
+            total_photos_in_gallery = 4 + int(photo_links[-1].text.strip("+"))
+            logger.debug(f"{total_photos_in_gallery} total photos in gallery")
 
-        for match in matches:
-            url = utils.urljoin(FB_MOBILE_BASE_URL, match.groups()[0])
-
+        # This gets up to 4 images in gallery
+        for link in photo_links:
+            url = utils.urljoin(FB_MOBILE_BASE_URL, link.attrs["href"])
+            logger.debug(f"Fetching {url}")
             response = self.request(url)
-            html = response.text
-            match = self.image_regex.search(html)
-            if match:
-                url = match.groups()[0].replace("&amp;", "&")
-                if not url.startswith("http"):
-                    url = utils.urljoin(FB_MOBILE_BASE_URL, url)
-                if url.startswith(utils.urljoin(FB_MOBILE_BASE_URL, "/photo/view_full_size/")):
-                    # Try resolve redirect
-                    response = self.request(url)
-                    if not response.url.startswith(utils.urljoin(FB_MOBILE_BASE_URL, "login.php")):
-                        url = response.html.find("a", first=True).attrs.get("href").replace("&amp;", "&")
-                images.append(url)
+            images.append(self.extract_photo_link_HQ(response))
+
+        while len(images) < total_photos_in_gallery:
+            # More photos to fetch. Follow the right arrow link of the last image we were on
+            url = response.html.find('a.touchable[data-gt=\'{"tn":"+="}\']', first=True).attrs["href"]
+            if not url.startswith("http"):
+                url = utils.urljoin(FB_MOBILE_BASE_URL, url)
+            logger.debug(f"Fetching {url}")
+            response = self.request(url)
+            images.append(self.extract_photo_link_HQ(response))
         image = images[0] if images else None
         return {"image": image, "images": images}
 
