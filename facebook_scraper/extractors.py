@@ -664,6 +664,9 @@ class PostExtractor:
         logger.debug(f"Fetching {url}")
         response = self.request(url)
         elem = response.html.find('div[data-sigil="m-mentions-expand"]', first=True)
+        if not elem:
+            logger.warning("No comments found on page")
+            return
         comments = list(elem.find('div[data-sigil="comment"]'))
         limit = 5000
         comments_opt = self.options.get('comments')
@@ -675,9 +678,13 @@ class PostExtractor:
             logger.debug(f"Fetching {url}")
             response = self.request(url)
             elem = response.html.find('div[data-sigil="m-mentions-expand"]', first=True)
+            if not elem:
+                logger.warning("No comments found on page")
+                break
             more_comments = elem.find('div[data-sigil="comment"]')
             comments.extend(more_comments)
             more = response.html.find("a", containing="View more comments", first=True)
+
         logger.debug(f"Found {len(comments)} comments")
         results = []
         for comment in comments:
