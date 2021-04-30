@@ -41,7 +41,7 @@ We’re headed to PAX East 3/28-3/31 with new games
 Both `comments` and `reactors` can also be set to a number to set a limit for the amount of comments/reactors to retrieve.
 The default limit for comments is 5000 and the default limit for reactors is 3000.
 Set `options={"allow_extra_requests": False}` to disable making extra requests when extracting post data (required for some things like full text and image links).
-Set `options={"posts_per_page": 200}` to request 200 posts per page.
+Set `options={"posts_per_page": 200}` to request 200 posts per page. The default is 4.
 
 ## CLI usage
 
