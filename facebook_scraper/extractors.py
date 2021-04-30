@@ -35,8 +35,8 @@ def extract_group_post(raw_post: RawPost, options: Options, request_fn: RequestF
 class PostExtractor:
     """Class for Extracting fields from a FacebookPost"""
 
-    likes_regex = re.compile(r'like_def[^>]*>([0-9,.]+)')
-    comments_regex = re.compile(r'cmt_def[^>]*>([0-9,.]+)')
+    likes_regex = re.compile(r'([\d,.]+)\s+(Like|left reaction)', re.IGNORECASE)
+    comments_regex = re.compile(r'([\d,.]+)\s+comment', re.IGNORECASE)
     shares_regex = re.compile(r'([0-9,.]+)\s+Shares', re.IGNORECASE)
     live_regex = re.compile(r'.+(is live).+')
     link_regex = re.compile(r"href=\"https:\/\/lm\.facebook\.com\/l\.php\?u=(.+?)\&amp;h=")
