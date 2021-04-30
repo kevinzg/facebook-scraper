@@ -665,8 +665,12 @@ class PostExtractor:
         response = self.request(url)
         elem = response.html.find('div[data-sigil="m-mentions-expand"]', first=True)
         comments = list(elem.find('div[data-sigil="comment"]'))
+        limit = 5000
+        comments_opt = self.options.get('comments')
+        if type(comments_opt) in [int, float]:
+            limit = comments_opt
         more = elem.find("a", containing="View more comments", first=True)
-        while more:
+        while more and len(comments) < limit:
             url = utils.urljoin(FB_MOBILE_BASE_URL, more.attrs.get("href"))
             logger.debug(f"Fetching {url}")
             response = self.request(url)
