@@ -623,22 +623,21 @@ class PostExtractor:
 
     def parse_comment(self, comment):
         comment_id = comment.attrs.get("id")
+
+        profile_picture = comment.find(".profpic.img", first=True)
+        name = profile_picture.attrs.get("alt") or profile_picture.attrs.get("aria-label")
+        name = name.split(",")[0]
+
+        url = profile_picture.element.getparent().attrib.get("href")
+        if url:
+            url = utils.urljoin(FB_BASE_URL, url)
+
         first_link = comment.find("div:not([data-sigil])>a[href]:not([data-click]):not([data-store]):not([data-sigil])", first=True)
         comment_body_elem = comment.find('[data-sigil="comment-body"]', first=True)
         commenter_meta = None
         if first_link:
-            url = utils.urljoin(FB_BASE_URL, first_link.attrs.get("href"))
-            name = first_link.text
-            if "\n" in name:
-                commenter_meta, name = name.split("\n")
-        else:
-            # Adjacent div to comment body, if not logged in. No link to user page available in that case
-            url = None
-            elem = comment_body_elem.element.getprevious()
-            if elem is not None:
-                name = elem.text
-            else:
-                name = None
+            if "\n" in first_link.text:
+                commenter_meta = first_link.text.split("\n")[0]
 
         text = comment_body_elem.text
         # Try to extract from the abbr element
