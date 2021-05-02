@@ -35,9 +35,9 @@ def extract_group_post(raw_post: RawPost, options: Options, request_fn: RequestF
 class PostExtractor:
     """Class for Extracting fields from a FacebookPost"""
 
-    likes_regex = re.compile(r'([\d,.]+)\s+(Like|left reaction)', re.IGNORECASE)
-    comments_regex = re.compile(r'([\d,.]+)\s+comment', re.IGNORECASE)
-    shares_regex = re.compile(r'([0-9,.]+)\s+Shares', re.IGNORECASE)
+    likes_regex = re.compile(r'([\d.KM]+)\s+(Like|left reaction)', re.IGNORECASE)
+    comments_regex = re.compile(r'([\d,.KM]+)\s+comment', re.IGNORECASE)
+    shares_regex = re.compile(r'([\d,.KM]+)\s+Shares', re.IGNORECASE)
     live_regex = re.compile(r'.+(is live).+')
     link_regex = re.compile(r"href=\"https:\/\/lm\.facebook\.com\/l\.php\?u=(.+?)\&amp;h=")
 
@@ -244,6 +244,7 @@ class PostExtractor:
         for page in page_insights.values():
             try:
                 timestamp = page['post_context']['publish_time']
+                logger.debug(f"Got exact timestamp from publish_time: {datetime.fromtimestamp(timestamp)}")
                 return {
                     'time': datetime.fromtimestamp(timestamp),
                 }
@@ -338,7 +339,7 @@ class PostExtractor:
     def extract_likes(self) -> PartialPost:
         return {
             'likes': utils.find_and_search(
-                self.element, 'footer', self.likes_regex, utils.parse_int
+                self.element, 'footer', self.likes_regex, utils.convert_numeric_abbr
             )
             or 0,
         }
@@ -346,7 +347,7 @@ class PostExtractor:
     def extract_comments(self) -> PartialPost:
         return {
             'comments': utils.find_and_search(
-                self.element, 'footer', self.comments_regex, utils.parse_int
+                self.element, 'footer', self.comments_regex, utils.convert_numeric_abbr
             )
             or 0,
         }
@@ -354,7 +355,7 @@ class PostExtractor:
     def extract_shares(self) -> PartialPost:
         return {
             'shares': utils.find_and_search(
-                self.element, 'footer', self.shares_regex, utils.parse_int
+                self.element, 'footer', self.shares_regex, utils.convert_numeric_abbr
             )
             or 0,
         }
