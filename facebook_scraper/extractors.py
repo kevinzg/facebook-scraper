@@ -80,6 +80,7 @@ class PostExtractor:
             'image': None,
             'image_lowquality': None,
             'images': None,
+            'images_lowquality': None,
             'video': None,
             'video_thumbnail': None,
             'video_id': None,
@@ -272,26 +273,19 @@ class PostExtractor:
         return {'user_id': self.data_ft['content_owner_id_new']}
 
     def extract_image_lq(self) -> PartialPost:
-        story_container = self.element.find('div.story_body_container', first=True)
-        if story_container is None:
-            return None
-        other_containers = story_container.xpath('div/div')
+        elems = self.element.find('div.story_body_container>div .img:not(.profpic)')
+        images = []
+        for elem in elems:
+            if elem.attrs.get('src'):
+                images.append(elem.attrs.get('src'))
+            elif elem.attrs.get('style'):
+                match = self.image_regex_lq.search(elem.attrs.get('style'))
+                if match:
+                    src = utils.decode_css_url(match.groups()[0])
+                    images.append(src)
 
-        for container in other_containers:
-            image_container = container.find('.img', first=True)
-            if image_container is None:
-                continue
-
-            src = image_container.attrs.get('src')
-            if src:
-                return {'image_lowquality': src}
-            style = image_container.attrs.get('style', '')
-            match = self.image_regex_lq.search(style)
-            if match:
-                src = utils.decode_css_url(match.groups()[0])
-                return {'image_lowquality': src}
-
-        return None
+        image = images[0] if images else None
+        return {"image_lowquality": image, "images_lowquality": images}
 
     def extract_link(self) -> PartialPost:
         match = self.link_regex.search(self.element.html)
