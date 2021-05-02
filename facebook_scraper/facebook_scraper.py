@@ -31,6 +31,7 @@ class FacebookScraper:
         'User-Agent': user_agent,
         'Accept-Language': 'en-US,en;q=0.5',
     }
+    have_checked_locale = False
 
     def __init__(self, session=None, requests_kwargs=None):
         if session is None:
@@ -175,11 +176,22 @@ class FacebookScraper:
         iter_pages_fn = partial(iter_group_pages, group=group, request_fn=self.get)
         return self._generic_get_posts(extract_group_post, iter_pages_fn, **kwargs)
 
+    def check_locale(self, response):
+        if self.have_checked_locale:
+            return
+        match = re.search(r'"IntlCurrentLocale",\[\],{code:"(\w{2}_\w{2})"}', response.text)
+        if match:
+            locale = match.groups(1)[0]
+            if locale != "en_US":
+                warnings.warn(f"Locale detected as {locale} - for best results, set to en_US")
+            self.have_checked_locale = True
+
     def get(self, url, **kwargs):
         try:
             response = self.session.get(url=url, **self.requests_kwargs, **kwargs)
             response.html.html = response.html.html.replace('<!--', '').replace('-->', '')
             response.raise_for_status()
+            self.check_locale(response)
             return response
         except RequestException as ex:
             logger.exception("Exception while requesting URL: %s\nException: %r", url, ex)
