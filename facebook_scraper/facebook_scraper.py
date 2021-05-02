@@ -60,6 +60,9 @@ class FacebookScraper:
             elem = response.html.find('article[data-ft],div.async_like[data-ft]', first=True)
             if not elem:
                 logger.warning("No raw posts (<article> elements) were found in this page.")
+            comments_area = response.html.find('div[data-sigil="m-mentions-expand"]', first=True)
+            if comments_area:
+                elem = utils.make_html_element(elem.html.replace("</footer>", comments_area.html + "</footer>"))
             if post_url.startswith(utils.urljoin(FB_MOBILE_BASE_URL, "/groups/")):
                 post = extract_group_post(elem, request_fn=self.get, options=options)
             else:
