@@ -87,9 +87,11 @@ minute = r"\d{2}"
 period = r"AM|PM|"
 
 exact_time = f"(?:{date}) at {hour}:{minute} ?(?:{period})"
+relative_time_years = r'\b\d{1,2} yrs?'
+relative_time_weeks = r'\b\d{1,2} wks?'
 relative_time_hours = r"\b\d{1,2} ?h(?:rs?)?"
 relative_time_mins = r"\b\d{1,2} ?mins?"
-relative_time = f"{relative_time_hours}|{relative_time_mins}"
+relative_time = f"{relative_time_years}|{relative_time_weeks}|{relative_time_hours}|{relative_time_mins}"
 
 datetime_regex = re.compile(fr"({exact_time}|{relative_time}|{day_of_week})", re.IGNORECASE)
 
@@ -110,7 +112,7 @@ def parse_datetime(text: str, search=True) -> Optional[datetime]:
     if search:
         time_match = datetime_regex.search(text)
         if time_match:
-            text = time_match.group(0)
+            text = time_match.group(0).replace("wk", "week").replace("yr", "year")
         else:
             return None
 
