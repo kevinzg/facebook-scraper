@@ -169,6 +169,9 @@ class PostExtractor:
             try:
                 comments = self.extract_comments_full()
                 post.update(comments)
+                if post.get("comments_full") and not post.get("comments"):
+                    post["comments"] = len(post.get("comments_full"))
+
             except Exception as ex:
                 log_warning("Exception while extracting comments: %r", ex)
 
