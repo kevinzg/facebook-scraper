@@ -5,6 +5,7 @@ import re
 from datetime import datetime
 from json import JSONDecodeError
 from typing import Any, Dict, Optional
+from urllib.parse import parse_qs, urlparse
 
 from . import utils
 from .constants import FB_BASE_URL, FB_MOBILE_BASE_URL
@@ -374,7 +375,7 @@ class PostExtractor:
         if not self.options.get("allow_extra_requests", True):
             return None
         images = []
-        photo_links = self.element.find("a[href*='photo.php'],a[href*='/photos/']")
+        photo_links = self.element.find("div.story_body_container>div a[href*='photo.php'],a[href*='/photos/']")
         total_photos_in_gallery = len(photo_links)
         if len(photo_links) == 4 and photo_links[-1].text:
             total_photos_in_gallery = 4 + int(photo_links[-1].text.strip("+"))
@@ -382,7 +383,14 @@ class PostExtractor:
 
         # This gets up to 4 images in gallery
         for link in photo_links:
-            url = utils.urljoin(FB_MOBILE_BASE_URL, link.attrs["href"])
+            url = link.attrs["href"]
+            if "photoset_token" in url:
+                query = parse_qs(urlparse(url).query)
+                photo_id = query["photo"][0]
+                profile_id = query["profileid"][0]
+                url = f"/photo.php?fbid={photo_id}&profileid={profile_id}"
+
+            url = utils.urljoin(FB_MOBILE_BASE_URL, url)
             logger.debug(f"Fetching {url}")
             response = self.request(url)
             images.append(self.extract_photo_link_HQ(response))
