@@ -277,8 +277,9 @@ class PostExtractor:
         return {'user_id': self.data_ft['content_owner_id_new']}
 
     def extract_image_lq(self) -> PartialPost:
-        elems = self.element.find('div.story_body_container>div .img:not(.profpic)')
+        elems = self.element.find('div.story_body_container>div .img:not(.profpic):not([style*="static.xx.fbcdn.net"])')
         images = []
+        descriptions = []
         for elem in elems:
             if elem.attrs.get('src'):
                 images.append(elem.attrs.get('src'))
@@ -287,9 +288,10 @@ class PostExtractor:
                 if match:
                     src = utils.decode_css_url(match.groups()[0])
                     images.append(src)
+            descriptions.append(elem.attrs.get("aria-label") or elem.attrs.get("alt"))
 
         image = images[0] if images else None
-        return {"image_lowquality": image, "images_lowquality": images}
+        return {"image_lowquality": image, "images_lowquality": images, "images_lowquality_description": descriptions}
 
     def extract_link(self) -> PartialPost:
         match = self.link_regex.search(self.element.html)
