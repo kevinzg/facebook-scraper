@@ -387,7 +387,7 @@ class PostExtractor:
         photo_links = self.element.find("div.story_body_container>div a[href*='photo.php'],a[href*='/photos/']")
         total_photos_in_gallery = len(photo_links)
         if len(photo_links) == 4 and photo_links[-1].text:
-            total_photos_in_gallery = 4 + int(photo_links[-1].text.strip("+"))
+            total_photos_in_gallery = 4 + int(photo_links[-1].text.strip("+")) - 1
             logger.debug(f"{total_photos_in_gallery} total photos in gallery")
 
         # This gets up to 4 images in gallery
@@ -407,8 +407,8 @@ class PostExtractor:
             descriptions.append(elem.attrs.get("alt") or elem.attrs.get("aria-label"))
 
         while len(images) < total_photos_in_gallery:
-            # More photos to fetch. Follow the right arrow link of the last image we were on
-            url = response.html.find('a.touchable[data-gt=\'{"tn":"+="}\']', first=True).attrs["href"]
+            # More photos to fetch. Follow the left arrow link of the last image we were on
+            url = response.html.find('a.touchable[data-gt=\'{"tn":"+>"}\']', first=True).attrs["href"]
             if not url.startswith("http"):
                 url = utils.urljoin(FB_MOBILE_BASE_URL, url)
             logger.debug(f"Fetching {url}")
