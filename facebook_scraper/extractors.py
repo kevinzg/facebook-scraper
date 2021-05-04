@@ -81,7 +81,9 @@ class PostExtractor:
             'image': None,
             'image_lowquality': None,
             'images': None,
+            'images_description': None,
             'images_lowquality': None,
+            'images_lowquality_description': None,
             'video': None,
             'video_thumbnail': None,
             'video_id': None,
@@ -361,6 +363,7 @@ class PostExtractor:
         }
 
     def extract_photo_link_HQ(self, response: Response) -> URL:
+        # Find a link that says "View Full Size"
         match = self.image_regex.search(response.text)
         if match:
             url = match.groups()[0].replace("&amp;", "&")
@@ -380,6 +383,7 @@ class PostExtractor:
         if not self.options.get("allow_extra_requests", True):
             return None
         images = []
+        descriptions = []
         photo_links = self.element.find("div.story_body_container>div a[href*='photo.php'],a[href*='/photos/']")
         total_photos_in_gallery = len(photo_links)
         if len(photo_links) == 4 and photo_links[-1].text:
@@ -399,6 +403,8 @@ class PostExtractor:
             logger.debug(f"Fetching {url}")
             response = self.request(url)
             images.append(self.extract_photo_link_HQ(response))
+            elem = response.html.find(".img[data-sigil='photo-image']", first=True)
+            descriptions.append(elem.attrs.get("alt") or elem.attrs.get("aria-label"))
 
         while len(images) < total_photos_in_gallery:
             # More photos to fetch. Follow the right arrow link of the last image we were on
@@ -408,8 +414,10 @@ class PostExtractor:
             logger.debug(f"Fetching {url}")
             response = self.request(url)
             images.append(self.extract_photo_link_HQ(response))
+            elem = response.html.find(".img[data-sigil='photo-image']", first=True)
+            descriptions.append(elem.attrs.get("alt") or elem.attrs.get("aria-label"))
         image = images[0] if images else None
-        return {"image": image, "images": images}
+        return {"image": image, "images": images, "images_description": descriptions}
 
     def extract_reactions(self) -> PartialPost:
         """Fetch share and reactions information with a existing post obtained by `get_posts`.
