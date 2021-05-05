@@ -35,8 +35,11 @@ We’re headed to PAX East 3/28-3/31 with new games
 - **credentials**: tuple of user and password to login before requesting the posts. Default is `None`.
 - **extra_info**: bool, if true the function will try to do an extra request to get the post reactions. Default is False.
 - **youtube_dl**: bool, use Youtube-DL for (high-quality) video extraction. You need to have youtube-dl installed on your environment. Default is False.
-- **post_urls**: list of strings, URLs to extract posts from. Alternative to fetching based on username.These can either be full URLs or just fragments, either in `{account}/posts/{post_id}` format, or `story.php?story_fbid={post_id}&id={user_id}` format.
-- **cookies**: Either the path to a file containing cookies in Netscape format, or a [CookieJar](https://docs.python.org/3.9/library/http.cookiejar.html#http.cookiejar.CookieJar), or a dictionary that can be converted to a CookieJar with [cookiejar_from_dict](https://2.python-requests.org/en/master/api/#requests.cookies.cookiejar_from_dict)
+- **post_urls**: list of strings, URLs to extract posts from. Alternative to fetching based on username. These can either be full URLs or just fragments, either in `{account}/posts/{post_id}` format, or `story.php?story_fbid={post_id}&id={user_id}` format.
+- **cookies**: One of:
+  - The path to a file containing cookies in Netscape or JSON format
+  - A [CookieJar](https://docs.python.org/3.9/library/http.cookiejar.html#http.cookiejar.CookieJar)
+  - A dictionary that can be converted to a CookieJar with [cookiejar_from_dict](https://2.python-requests.org/en/master/api/#requests.cookies.cookiejar_from_dict)
 - **options**: Dictionary of options. Set `options={"comments": True}` to extract comments, set `options={"reactors": True}` to extract the people reacting to the post.
 Both `comments` and `reactors` can also be set to a number to set a limit for the amount of comments/reactors to retrieve.
 The default limit for comments is 5000 and the default limit for reactors is 3000.
