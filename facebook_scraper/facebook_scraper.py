@@ -201,8 +201,13 @@ class FacebookScraper:
         login_page = self.get(self.base_url)
         login_action = login_page.html.find('#login_form', first=True).attrs.get('action')
 
+        elems = login_page.html.find('#login_form > input[name][value]')
+        data = { elem.attrs['name']: elem.attrs['value'] for elem in elems }
+        data["email"] = email
+        data["pass"] = password
+
         response = self.session.post(
-            utils.urljoin(self.base_url, login_action), data={'email': email, 'pass': password}
+            utils.urljoin(self.base_url, login_action), data=data
         )
         response_text = response.html.find('#viewport', first=True).text
 
