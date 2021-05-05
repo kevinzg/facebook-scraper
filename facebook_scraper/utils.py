@@ -23,6 +23,7 @@ def parse_int(value: str) -> int:
 
 def convert_numeric_abbr(s):
     mapping = {'k': 1000, 'm': 1e6}
+    s = s.replace(",", "")
     if s[-1].isalpha():
         return int(float(s[:-1]) * mapping[s[-1].lower()])
     return int(s)
