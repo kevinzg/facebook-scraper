@@ -25,6 +25,9 @@ def set_cookies(cookies):
     if cookies is not None:
         _scraper.session.cookies = cookies
 
+def set_proxy(proxy):
+    _scraper.set_proxy(proxy)
+
 def get_profile(
     account: str,
     **kwargs,

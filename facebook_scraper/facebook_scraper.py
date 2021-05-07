@@ -44,6 +44,16 @@ class FacebookScraper:
         self.session = session
         self.requests_kwargs = requests_kwargs
 
+    def set_proxy(self, proxy):
+        self.requests_kwargs.update({
+            'proxies': {
+                'http': proxy,
+                'https': proxy
+            }
+        })
+        ip = self.get("http://ifconfig.co", headers={"Accept": "application/json"}).json()
+        logger.debug(f"Proxy details: {ip}")
+
     def get_posts(self, account: str, **kwargs) -> Iterator[Post]:
         iter_pages_fn = partial(iter_pages, account=account, request_fn=self.get, **kwargs)
         return self._generic_get_posts(extract_post, iter_pages_fn, **kwargs)
