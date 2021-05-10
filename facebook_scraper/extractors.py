@@ -69,6 +69,7 @@ class PostExtractor:
         self.request = request_fn
 
         self._data_ft = None
+        self._full_post_html = None
 
     # TODO: This is getting ugly, create a dataclass for Post
     def make_new_post(self) -> Post:
@@ -85,8 +86,14 @@ class PostExtractor:
             'images_lowquality': None,
             'images_lowquality_description': None,
             'video': None,
-            'video_thumbnail': None,
+            'video_duration_seconds': None,
+            'video_height': None,
             'video_id': None,
+            'video_quality': None,
+            'video_size_MB': None,
+            'video_thumbnail': None,
+            'video_watches': None,
+            'video_width': None,
             'likes': None,
             'comments': None,
             'shares': None,
@@ -113,6 +120,7 @@ class PostExtractor:
         """Parses the element into self.item"""
 
         methods = [
+            self.extract_post_url,
             self.extract_post_id,
             self.extract_text,
             self.extract_time,
@@ -121,13 +129,13 @@ class PostExtractor:
             self.extract_likes,
             self.extract_comments,
             self.extract_shares,
-            self.extract_post_url,
             self.extract_link,
             self.extract_user_id,
             self.extract_username,
             self.extract_video,
             self.extract_video_thumbnail,
             self.extract_video_id,
+            self.extract_video_meta,
             self.extract_is_live,
             self.extract_factcheck,
             self.extract_share_information,
@@ -199,12 +207,8 @@ class PostExtractor:
         element = self.element
 
         has_more = self.more_url_regex.search(element.html)
-        if has_more and self.options.get("allow_extra_requests", True):
-            match = self.post_story_regex.search(element.html)
-            if match:
-                url = utils.urljoin(FB_MOBILE_BASE_URL, match.groups()[0].replace("&amp;", "&"))
-                response = self.request(url)
-                element = response.html.find('.story_body_container', first=True)
+        if has_more and self.full_post_html:
+            element = self.full_post_html.find('.story_body_container', first=True)
 
         nodes = element.find('p, header, span[role=presentation]')
         if nodes:
@@ -326,7 +330,7 @@ class PostExtractor:
                 else:
                     path = f'{account}/videos/{video_post_id}'
 
-        post_id = self._data_ft.get('top_level_post_id')
+        post_id = self.data_ft.get('top_level_post_id')
 
         if video_post_match is None and account is not None and post_id is not None:
             path = f'{account}/posts/{post_id}'
@@ -384,7 +388,7 @@ class PostExtractor:
             return None
         images = []
         descriptions = []
-        photo_links = self.element.find("div.story_body_container>div a[href*='photo.php'],a[href*='/photos/']")
+        photo_links = self.element.find("div.story_body_container>div a[href*='photo.php'], div.story_body_container>div a[href*='/photos/']")
         total_photos_in_gallery = len(photo_links)
         if len(photo_links) == 4 and photo_links[-1].text:
             total_photos_in_gallery = 4 + int(photo_links[-1].text.strip("+")) - 1
@@ -590,6 +594,25 @@ class PostExtractor:
             return {'video_id': match.groups()[0]}
         return None
 
+    def extract_video_meta(self):
+        elem = self.full_post_html.find("script[type='application/ld+json']", first=True)
+        if not elem:
+            return None
+        meta = json.loads(elem.text)
+        watches = 0
+        if "interactionStatistic" in meta:
+            for interaction in meta["interactionStatistic"]:
+                if interaction.get("interactionType")["@type"] == 'http://schema.org/WatchAction':
+                    watches = interaction.get("userInteractionCount")
+        return {
+            'video_duration_seconds': utils.parse_duration(meta.get("duration")),
+            'video_watches': watches,
+            'video_quality': meta.get('videoQuality'),
+            'video_width': meta.get('width'),
+            'video_height': meta.get('height'),
+            'video_size_MB': float(meta.get('contentSize').strip("kB")) / 1000,
+        }
+
     def extract_is_live(self):
         header = self.element.find('header')[0].full_text
 
@@ -675,10 +698,7 @@ class PostExtractor:
     def extract_comments_full(self):
         """Fetch comments for an existing post obtained by `get_posts`.
         Note that this method may raise multiple http requests per post to get all comments"""
-        url = self.post.get('post_url').replace(FB_BASE_URL, FB_MOBILE_BASE_URL)
-        logger.debug(f"Fetching {url}")
-        response = self.request(url)
-        elem = response.html.find('div[data-sigil="m-mentions-expand"]', first=True)
+        elem = self.full_post_html.find('div[data-sigil="m-mentions-expand"]', first=True)
         if not elem:
             logger.warning("No comments found on page")
             return
@@ -736,6 +756,20 @@ class PostExtractor:
             logger.error("data-ft attribute not found")
 
         return self._data_ft
+
+    @property
+    def full_post_html(self):
+        if self._full_post_html is not None:
+            return self._full_post_html
+
+        if self.options.get("allow_extra_requests", True):
+            url = self.post.get('post_url').replace(FB_BASE_URL, FB_MOBILE_BASE_URL)
+            logger.debug(f"Fetching {url}")
+            response = self.request(url)
+            self._full_post_html = response.html
+            return self._full_post_html
+        else:
+            return None
 
 
 class GroupPostExtractor(PostExtractor):

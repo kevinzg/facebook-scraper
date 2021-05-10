@@ -28,6 +28,18 @@ def convert_numeric_abbr(s):
         return int(float(s[:-1]) * mapping[s[-1].lower()])
     return int(s)
 
+def parse_duration(s) -> int:
+    match = re.search('T(?P<minutes>\d+M)?(?P<seconds>\d+S)', s)
+    if match:
+        result = 0
+        for k,v in match.groupdict().items():
+            if v:
+                if k == "minutes":
+                    result += int(v.strip("M")) * 60
+                elif k == "seconds":
+                    result += int(v.strip("S"))
+        return result
+
 def decode_css_url(url: str) -> str:
     url = re.sub(r'\\(..) ', r'\\x\g<1>', url)
     url, _ = codecs.unicode_escape_decode(url)
