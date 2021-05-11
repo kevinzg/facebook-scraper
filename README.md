@@ -35,7 +35,7 @@ We’re headed to PAX East 3/28-3/31 with new games
 - **credentials**: tuple of user and password to login before requesting the posts. Default is `None`.
 - **extra_info**: bool, if true the function will try to do an extra request to get the post reactions. Default is False.
 - **youtube_dl**: bool, use Youtube-DL for (high-quality) video extraction. You need to have youtube-dl installed on your environment. Default is False.
-- **post_urls**: list of strings, URLs to extract posts from. Alternative to fetching based on username. These can either be full URLs or just fragments, either in `{account}/posts/{post_id}` format, or `story.php?story_fbid={post_id}&id={user_id}` format.
+- **post_urls**: list, URLs or post IDs to extract posts from. Alternative to fetching based on username.
 - **cookies**: One of:
   - The path to a file containing cookies in Netscape or JSON format
   - A [CookieJar](https://docs.python.org/3.9/library/http.cookiejar.html#http.cookiejar.CookieJar)

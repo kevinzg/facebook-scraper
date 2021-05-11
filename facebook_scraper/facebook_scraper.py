@@ -60,6 +60,7 @@ class FacebookScraper:
 
     def get_posts_by_url(self, post_urls, options={}, remove_source=True) -> Iterator[Post]:
         for post_url in post_urls:
+            post_url = str(post_url)
             if post_url.startswith(FB_BASE_URL):
                 post_url = post_url.replace(FB_BASE_URL, FB_MOBILE_BASE_URL)
             if post_url.startswith(FB_W3_BASE_URL):
