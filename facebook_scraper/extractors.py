@@ -489,7 +489,7 @@ class PostExtractor:
                 for action in data['payload']['actions']:
                     if action['cmd'] == 'append':
                         html = utils.make_html_element(f"<div id='reaction_profile_browser'>{action['html']}</div>", url=FB_MOBILE_BASE_URL)
-                        more_elems = html.find('div#reaction_profile_browser>div,div#reaction_profile_browser1>')
+                        more_elems = html.find('div#reaction_profile_browser>div,div#reaction_profile_browser1>div')
                         elems.extend(more_elems)
             logger.debug(f"Found {len(elems)} reactors")
             for elem in elems:
