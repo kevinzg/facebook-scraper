@@ -688,6 +688,7 @@ class PostExtractor:
 
         return {
             "comment_id": comment_id,
+            "comment_url": utils.urljoin(FB_BASE_URL, comment_id),
             "commenter_url": url,
             "commenter_name": name,
             "commenter_meta": commenter_meta,
