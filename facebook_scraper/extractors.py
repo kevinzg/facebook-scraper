@@ -476,7 +476,7 @@ class PostExtractor:
             if type(reactors_opt) in [int, float] and reactors_opt < limit:
                 limit = reactors_opt
             logger.debug(f"Fetching {limit} reactors")
-            elems = list(response.html.find("div#reaction_profile_browser>div"))
+            elems = list(response.html.find("div#reaction_profile_browser>div,div#reaction_profile_browser1>div"))
             more = response.html.find("div#reaction_profile_pager a", first=True)
             if more and limit > 50:
                 url = utils.urljoin(FB_MOBILE_BASE_URL, more.attrs.get("href"))
@@ -489,7 +489,7 @@ class PostExtractor:
                 for action in data['payload']['actions']:
                     if action['cmd'] == 'append':
                         html = utils.make_html_element(f"<div id='reaction_profile_browser'>{action['html']}</div>", url=FB_MOBILE_BASE_URL)
-                        more_elems = html.find('div#reaction_profile_browser>div')
+                        more_elems = html.find('div#reaction_profile_browser>div,div#reaction_profile_browser1>')
                         elems.extend(more_elems)
             logger.debug(f"Found {len(elems)} reactors")
             for elem in elems:
