@@ -191,6 +191,7 @@ class FacebookScraper:
         logger.debug(f"Requesting page from: {url}")
         resp = self.get(url).html
         result = {}
+        result["id"] = re.search(r'/groups/(\d+)', url).group(1)
         result["name"] = resp.find("header h3", first=True).text
         result["type"] = resp.find("header div", first=True).text
         members = resp.find("div[data-testid='m_group_sections_members']", first=True)
