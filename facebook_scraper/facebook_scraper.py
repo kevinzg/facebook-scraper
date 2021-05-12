@@ -184,7 +184,10 @@ class FacebookScraper:
         return result
 
     def get_group_info(self, group, **kwargs) -> Profile:
-        url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{group}/?view=info')
+        url = f'/groups/{group}'
+        logger.debug(f"Requesting page from: {url}")
+        resp = self.get(url).html
+        url = resp.find("a[href*='?view=info']", first=True).attrs["href"]
         logger.debug(f"Requesting page from: {url}")
         resp = self.get(url).html
         result = {}
@@ -193,7 +196,6 @@ class FacebookScraper:
         members = resp.find("div[data-testid='m_group_sections_members']", first=True)
         result["members"] = utils.parse_int(members.text)
         url = members.find("a", first=True).attrs.get("href")
-        url = utils.urljoin(FB_MOBILE_BASE_URL, url)
         logger.debug(f"Requesting page from: {url}")
         resp = self.get(url).html
         if "login.php" not in resp.url:
@@ -217,6 +219,8 @@ class FacebookScraper:
 
     def get(self, url, **kwargs):
         try:
+            if not url.startswith("http"):
+                url = utils.urljoin(FB_MOBILE_BASE_URL, url)
             response = self.session.get(url=url, **self.requests_kwargs, **kwargs)
             response.html.html = response.html.html.replace('<!--', '').replace('-->', '')
             response.raise_for_status()
