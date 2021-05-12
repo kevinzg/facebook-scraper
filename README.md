@@ -156,6 +156,33 @@ Outputs:
 
 To extract friends, pass the argument `friends=True`, or to limit the amount of friends retrieved, set `friends` to the desired number.
 
+## Group info
+
+The `get_group_info` function can extract info about a group. Pass in the group name or ID as the first parameter.  
+Note that in order to see the list of admins, you need to be logged in (cookies parameter).
+
+Usage:
+
+```python
+from facebook_scraper import get_group_info
+get_group_info("latesthairstyles") # or get_group_info("latesthairstyles", cookies="cookies.txt")
+```
+
+Output:
+
+```python
+{'admins': [{'link': '/africanstylemagazinecom/?refid=18',
+             'name': 'African Style Magazine'},
+            {'link': '/connectfluencer/?refid=18',
+             'name': 'Everythingbrightandbeautiful'},
+            {'link': '/Kaakakigroup/?refid=18', 'name': 'Kaakaki Group'},
+            {'link': '/opentohelp/?refid=18', 'name': 'Open to Help'}],
+ 'id': '579169815767106',
+ 'members': 6814229,
+ 'name': 'HAIRSTYLES',
+ 'type': 'Public group'}
+```
+
 ## To-Do
 
 - Async support
