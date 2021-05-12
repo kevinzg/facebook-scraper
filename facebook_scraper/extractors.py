@@ -297,7 +297,13 @@ class PostExtractor:
             descriptions.append(elem.attrs.get("aria-label") or elem.attrs.get("alt"))
 
         image = images[0] if images else None
-        return {"image_lowquality": image, "images_lowquality": images, "images_lowquality_description": descriptions}
+        result = {"image_lowquality": image, "images_lowquality": images, "images_lowquality_description": descriptions}
+        if image and "safe_image.php" in image and not self.post.get("image"):
+            url = parse_qs(urlparse(image).query).get("url")
+            if url:
+                url = url[0]
+                result.update({"image": url, "images": [url]})
+        return result
 
     def extract_link(self) -> PartialPost:
         match = self.link_regex.search(self.element.html)
