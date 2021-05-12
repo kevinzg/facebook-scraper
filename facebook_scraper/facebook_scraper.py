@@ -183,6 +183,24 @@ class FacebookScraper:
             result["Friends"] = friends
         return result
 
+    def get_group_info(self, group, **kwargs) -> Profile:
+        url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{group}/?view=info')
+        logger.debug(f"Requesting page from: {url}")
+        resp = self.get(url).html
+        result = {}
+        result["name"] = resp.find("header h3", first=True).text
+        result["type"] = resp.find("header div", first=True).text
+        members = resp.find("div[data-testid='m_group_sections_members']", first=True)
+        result["members"] = utils.parse_int(members.text)
+        url = members.find("a", first=True).attrs.get("href")
+        url = utils.urljoin(FB_MOBILE_BASE_URL, url)
+        logger.debug(f"Requesting page from: {url}")
+        resp = self.get(url).html
+        if "login.php" not in resp.url:
+            admins = resp.find("div:first-child>div.touchable a:not(.touchable)")
+            result["admins"] = [{"name": e.text, "link": e.attrs["href"]} for e in admins]
+        return result
+
     def get_group_posts(self, group: Union[str, int], **kwargs) -> Iterator[Post]:
         iter_pages_fn = partial(iter_group_pages, group=group, request_fn=self.get)
         return self._generic_get_posts(extract_group_post, iter_pages_fn, **kwargs)
