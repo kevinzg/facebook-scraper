@@ -605,6 +605,8 @@ class PostExtractor:
         if not elem:
             return None
         meta = json.loads(elem.text)
+        if meta.get("@type") != "VideoObject":
+            return
         watches = 0
         if "interactionStatistic" in meta:
             for interaction in meta["interactionStatistic"]:
