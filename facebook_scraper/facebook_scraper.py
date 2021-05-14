@@ -72,6 +72,7 @@ class FacebookScraper:
             elem = response.html.find('article[data-ft],div.async_like[data-ft]', first=True)
             if not elem:
                 logger.warning("No raw posts (<article> elements) were found in this page.")
+                yield {}
             comments_area = response.html.find('div[data-sigil="m-mentions-expand"]', first=True)
             if comments_area:
                 elem = utils.make_html_element(elem.html.replace("</footer>", comments_area.html + "</footer>"))
@@ -227,7 +228,8 @@ class FacebookScraper:
             response.raise_for_status()
             self.check_locale(response)
             title = response.html.find("title", first=True)
-            if title and title.text in ["Page Not Found", "Content not found", "You can't use this feature at the moment", "You’re Temporarily Blocked"]:
+            error_states = ["page not found", "content not found", "you can't use this feature at the moment", "you’re temporarily blocked"]
+            if title and title.text.lower() in error_states:
                 warnings.warn(title.text)
             return response
         except RequestException as ex:
