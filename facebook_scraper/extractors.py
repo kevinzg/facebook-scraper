@@ -612,13 +612,16 @@ class PostExtractor:
             for interaction in meta["interactionStatistic"]:
                 if interaction.get("interactionType")["@type"] == 'http://schema.org/WatchAction':
                     watches = interaction.get("userInteractionCount")
+        contentSize = None
+        if meta.get("contentSize"):
+            contentSize = float(meta['contentSize'].strip("kB")) / 1000
         return {
             'video_duration_seconds': utils.parse_duration(meta.get("duration")),
             'video_watches': watches,
             'video_quality': meta.get('videoQuality'),
             'video_width': meta.get('width'),
             'video_height': meta.get('height'),
-            'video_size_MB': float(meta.get('contentSize').strip("kB")) / 1000,
+            'video_size_MB': contentSize,
         }
 
     def extract_is_live(self):

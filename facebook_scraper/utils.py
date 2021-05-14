@@ -29,12 +29,14 @@ def convert_numeric_abbr(s):
     return int(s)
 
 def parse_duration(s) -> int:
-    match = re.search('T(?P<minutes>\d+M)?(?P<seconds>\d+S)', s)
+    match = re.search('T(?P<hours>\d+H)?(?P<minutes>\d+M)?(?P<seconds>\d+S)', s)
     if match:
         result = 0
         for k,v in match.groupdict().items():
             if v:
-                if k == "minutes":
+                if k == 'hours':
+                    result += int(v.strip("H")) * 60 * 60
+                elif k == "minutes":
                     result += int(v.strip("M")) * 60
                 elif k == "seconds":
                     result += int(v.strip("S"))
