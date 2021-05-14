@@ -228,7 +228,7 @@ class FacebookScraper:
             self.check_locale(response)
             title = response.html.find("title", first=True)
             if title and title.text in ["Page Not Found", "Content not found", "You can't use this feature at the moment"]:
-                warnings.warn(title)
+                warnings.warn(title.text)
             return response
         except RequestException as ex:
             logger.exception("Exception while requesting URL: %s\nException: %r", url, ex)
