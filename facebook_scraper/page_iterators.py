@@ -5,6 +5,7 @@ import textwrap
 from typing import Iterator, Optional, Union
 
 from requests.exceptions import HTTPError
+import warnings
 
 from . import utils
 from .constants import FB_MOBILE_BASE_URL
@@ -33,7 +34,11 @@ def generic_iter_pages(start_url, page_parser_cls, request_fn: RequestFunction, 
 
     while next_url:
         logger.debug("Requesting page from: %s", next_url)
-        response = request_fn(next_url)
+        try:
+            response = request_fn(next_url)
+        except HTTPError as e:
+            warnings.warn(e)
+            return []
 
         logger.debug("Parsing page response")
         parser = page_parser_cls(response)
