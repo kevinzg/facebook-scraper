@@ -13,6 +13,7 @@ from .constants import DEFAULT_PAGE_LIMIT, FB_BASE_URL, FB_MOBILE_BASE_URL, FB_W
 from .extractors import extract_group_post, extract_post
 from .fb_types import Post, Profile
 from .page_iterators import iter_group_pages, iter_pages
+from . import exceptions
 
 
 logger = logging.getLogger(__name__)
@@ -231,9 +232,13 @@ class FacebookScraper:
             response.raise_for_status()
             self.check_locale(response)
             title = response.html.find("title", first=True)
-            error_states = ["page not found", "content not found", "you can't use this feature at the moment", "you’re temporarily blocked"]
-            if title and title.text.lower() in error_states:
-                warnings.warn(title.text)
+            not_found_titles = ["page not found", "content not found"]
+            temp_ban_titles = ["you can't use this feature at the moment", "you’re temporarily blocked"]
+            if title:
+                if title.text.lower() in not_found_titles:
+                    raise exceptions.NotFound(title.text)
+                elif title.text.lower() in temp_ban_titles:
+                    raise exceptions.TemporarilyBanned(title.text)
             return response
         except RequestException as ex:
             logger.exception("Exception while requesting URL: %s\nException: %r", url, ex)

@@ -10,6 +10,7 @@ import warnings
 from . import utils
 from .constants import FB_MOBILE_BASE_URL
 from .fb_types import URL, Page, RawPage, RequestFunction, Response
+from . import exceptions
 
 
 logger = logging.getLogger(__name__)
@@ -37,8 +38,7 @@ def generic_iter_pages(start_url, page_parser_cls, request_fn: RequestFunction, 
         try:
             response = request_fn(next_url)
         except HTTPError as e:
-            warnings.warn(e)
-            return []
+            raise exceptions.NotFound(e) from None
 
         logger.debug("Parsing page response")
         parser = page_parser_cls(response)
