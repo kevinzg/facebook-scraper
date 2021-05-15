@@ -60,28 +60,31 @@ class FacebookScraper:
 
     def get_posts_by_url(self, post_urls, options={}, remove_source=True) -> Iterator[Post]:
         for post_url in post_urls:
-            post_url = str(post_url)
-            if post_url.startswith(FB_BASE_URL):
-                post_url = post_url.replace(FB_BASE_URL, FB_MOBILE_BASE_URL)
-            if post_url.startswith(FB_W3_BASE_URL):
-                post_url = post_url.replace(FB_W3_BASE_URL, FB_MOBILE_BASE_URL)
-            if not post_url.startswith(FB_MOBILE_BASE_URL):
-                post_url = utils.urljoin(FB_MOBILE_BASE_URL, post_url)
-            logger.debug(f"Requesting page from: {post_url}")
-            response = self.get(post_url)
+            url = str(post_url)
+            if url.startswith(FB_BASE_URL):
+                url = url.replace(FB_BASE_URL, FB_MOBILE_BASE_URL)
+            if url.startswith(FB_W3_BASE_URL):
+                url = url.replace(FB_W3_BASE_URL, FB_MOBILE_BASE_URL)
+            if not url.startswith(FB_MOBILE_BASE_URL):
+                url = utils.urljoin(FB_MOBILE_BASE_URL, url)
+            post = {
+                "original_request_url": post_url,
+                "post_url": url
+            }
+            logger.debug(f"Requesting page from: {url}")
+            response = self.get(url)
             elem = response.html.find('article[data-ft],div.async_like[data-ft]', first=True)
             if not elem:
                 logger.warning("No raw posts (<article> elements) were found in this page.")
-                yield {}
+                yield post
             comments_area = response.html.find('div[data-sigil="m-mentions-expand"]', first=True)
             if comments_area:
+                # Makes likes/shares regexes work
                 elem = utils.make_html_element(elem.html.replace("</footer>", comments_area.html + "</footer>"))
-            if post_url.startswith(utils.urljoin(FB_MOBILE_BASE_URL, "/groups/")):
-                post = extract_group_post(elem, request_fn=self.get, options=options)
+            if url.startswith(utils.urljoin(FB_MOBILE_BASE_URL, "/groups/")):
+                post.update(extract_group_post(elem, request_fn=self.get, options=options))
             else:
-                post = extract_post(elem, request_fn=self.get, options=options)
-            if not post.get("post_url"):
-                post["post_url"] = post_url
+                post.update(extract_post(elem, request_fn=self.get, options=options))
             if remove_source:
                 post.pop('source', None)
             yield post
