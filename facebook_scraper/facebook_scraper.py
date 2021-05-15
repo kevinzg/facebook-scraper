@@ -239,6 +239,8 @@ class FacebookScraper:
                     raise exceptions.NotFound(title.text)
                 elif title.text.lower() in temp_ban_titles:
                     raise exceptions.TemporarilyBanned(title.text)
+                elif ">Your Account Has Been Disabled<" in response.html.html:
+                    raise exceptions.AccountDisabled()
             return response
         except RequestException as ex:
             logger.exception("Exception while requesting URL: %s\nException: %r", url, ex)

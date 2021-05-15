@@ -3,3 +3,6 @@ class NotFound(Exception):
 
 class TemporarilyBanned(Exception):
     pass
+
+class AccountDisabled(Exception):
+    pass
