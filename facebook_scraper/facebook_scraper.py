@@ -78,6 +78,7 @@ class FacebookScraper:
             if not elem:
                 logger.warning("No raw posts (<article> elements) were found in this page.")
                 yield post
+                continue
             comments_area = response.html.find('div[data-sigil="m-mentions-expand"]', first=True)
             if comments_area:
                 # Makes likes/shares regexes work
