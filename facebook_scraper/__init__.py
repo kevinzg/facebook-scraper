@@ -24,7 +24,7 @@ def set_cookies(cookies):
     elif isinstance(cookies, dict):
         cookies = cookiejar_from_dict(cookies)
     if cookies is not None:
-        missing_cookies = [c for c in ['c_user', 'datr', 'fr', 'm_pixel_ratio', 'sb', 'wd', 'xs'] if c not in cookies]
+        missing_cookies = [c for c in ['c_user', 'datr', 'fr', 'sb', 'wd', 'xs'] if c not in cookies]
         if missing_cookies:
             raise exceptions.InvalidCookies(f"Missing cookies with name(s): {missing_cookies}")
         _scraper.session.cookies = cookies
