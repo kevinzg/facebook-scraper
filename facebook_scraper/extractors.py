@@ -736,7 +736,7 @@ class PostExtractor:
 
         # Comment limiting and progress
         limit = 5000 # Default
-        if more.attrs.get("data-ajaxify-href"):
+        if more and more.attrs.get("data-ajaxify-href"):
             parsed = parse_qs(urlparse(more.attrs.get("data-ajaxify-href")).query)
             count = int(parsed.get("count")[0])
             if count < limit:

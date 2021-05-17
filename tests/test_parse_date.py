@@ -38,6 +38,7 @@ class TestParseDate:
         '2 yrs',
         '1 mth',
         '4 mths',
+        'last Tue'
     ]
 
     def test_all_dates(self):
