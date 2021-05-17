@@ -7,6 +7,7 @@ from datetime import datetime
 from json import JSONDecodeError
 from typing import Any, Dict, Optional
 from urllib.parse import parse_qs, urlparse
+from tqdm import tqdm
 
 from . import utils
 from .constants import FB_BASE_URL, FB_MOBILE_BASE_URL
@@ -337,6 +338,7 @@ class PostExtractor:
 
             if post_match:
                 path = utils.filter_query_params(href, whitelist=query_params)
+                break
 
             elif video_post_match:
                 video_post_id = video_post_match.group(1)
@@ -725,23 +727,43 @@ class PostExtractor:
             logger.warning("No comments found on page")
             return
         comments = list(elem.find('div[data-sigil="comment"]'))
-        limit = 5000
-        comments_opt = self.options.get('comments')
-        if type(comments_opt) in [int, float]:
-            limit = comments_opt
+
         direction = "View more comments"
         more = elem.find("a", containing=direction, first=True)
         if not more:
             direction = "View previous comments"
             more = elem.find("a", containing=direction, first=True)
+
+        # Comment limiting and progress
+        limit = 5000 # Default
+        if more.attrs.get("data-ajaxify-href"):
+            parsed = parse_qs(urlparse(more.attrs.get("data-ajaxify-href")).query)
+            count = int(parsed.get("count")[0])
+            if count < limit:
+                limit = count
+        comments_opt = self.options.get('comments')
+        if type(comments_opt) in [int, float] and comments_opt < limit:
+            limit = comments_opt
+        logger.debug(f"Fetching up to {limit} comments")
+
+        if self.options.get("progress"):
+            pbar = tqdm(total=limit)
+
         visited_urls = []
-        while more and len(comments) < limit:
+        while more and len(comments) <= limit:
             url = utils.urljoin(FB_MOBILE_BASE_URL, more.attrs.get("href"))
             if url in visited_urls:
                 logger.debug("cycle detected, break")
                 break
-            logger.debug(f"Fetching {url}")
-            response = self.request(url)
+            if self.options.get("progress"):
+                pbar.update(30)
+            else:
+                logger.debug(f"Fetching {url}")
+            try:
+                response = self.request(url)
+            except Exception as e:
+                logger.error(e)
+                break
             visited_urls.append(url)
             elem = response.html.find('div[data-sigil="m-mentions-expand"]', first=True)
             if not elem:
@@ -753,14 +775,23 @@ class PostExtractor:
 
         logger.debug(f"Found {len(comments)} comments")
         results = []
+        if self.options.get("progress"):
+            pbar.close()
+            pbar = tqdm(total=len(comments))
         for comment in comments:
             result = self.parse_comment(comment)
             replies = comment.find("div.async_elem[data-sigil='replies-see-more'] a[href]", first=True)
+            if self.options.get("progress"):
+                pbar.update(1)
             if replies:
-                logger.debug(f"{result['comment_id']} has replies")
                 url = utils.urljoin(FB_MOBILE_BASE_URL, replies.attrs["href"])
-                logger.debug(f"Fetching {url}")
-                response = self.request(url)
+                if not self.options.get("progress"):
+                    logger.debug(f"Fetching {url}")
+                try:
+                    response = self.request(url)
+                except Exception as e:
+                    logger.error(e)
+                    continue
                 replies = response.html.find('div[data-sigil="comment"]')
                 result["replies"] = [self.parse_comment(reply) for reply in replies[1:]] # Skip first element, as it will be this comment itself
             results.append(result)
