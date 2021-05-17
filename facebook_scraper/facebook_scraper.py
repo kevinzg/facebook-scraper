@@ -10,7 +10,7 @@ from requests_html import HTMLSession
 
 from . import utils
 from .constants import DEFAULT_PAGE_LIMIT, FB_BASE_URL, FB_MOBILE_BASE_URL, FB_W3_BASE_URL
-from .extractors import extract_group_post, extract_post
+from .extractors import extract_group_post, extract_post, extract_photo_post
 from .fb_types import Post, Profile
 from .page_iterators import iter_group_pages, iter_pages
 from . import exceptions
@@ -75,20 +75,28 @@ class FacebookScraper:
             logger.debug(f"Requesting page from: {url}")
             response = self.get(url)
             elem = response.html.find('article[data-ft],div.async_like[data-ft]', first=True)
+            photo_post = False
+            if response.html.find("div.msg", first=True):
+                photo_post = True
+                elem = response.html
             if not elem:
                 logger.warning("No raw posts (<article> elements) were found in this page.")
-                yield post
-                continue
-            comments_area = response.html.find('div[data-sigil="m-mentions-expand"]', first=True)
-            if comments_area:
-                # Makes likes/shares regexes work
-                elem = utils.make_html_element(elem.html.replace("</footer>", comments_area.html + "</footer>"))
-            if url.startswith(utils.urljoin(FB_MOBILE_BASE_URL, "/groups/")):
-                post.update(extract_group_post(elem, request_fn=self.get, options=options))
             else:
-                post.update(extract_post(elem, request_fn=self.get, options=options))
-            if remove_source:
-                post.pop('source', None)
+                comments_area = response.html.find('div[data-sigil="m-mentions-expand"]', first=True)
+                if comments_area:
+                    # Makes likes/shares regexes work
+                    elem = utils.make_html_element(elem.html.replace("</footer>", comments_area.html + "</footer>"))
+
+                if photo_post:
+                    post.update(extract_photo_post(elem, request_fn=self.get, options=options))
+                elif url.startswith(utils.urljoin(FB_MOBILE_BASE_URL, "/groups/")):
+                    post.update(extract_group_post(elem, request_fn=self.get, options=options))
+                else:
+                    post.update(extract_post(elem, request_fn=self.get, options=options))
+                if not post.get("post_url"):
+                    post["post_url"] = url
+                if remove_source:
+                    post.pop('source', None)
             yield post
 
     def get_profile(self, account, **kwargs) -> Profile:

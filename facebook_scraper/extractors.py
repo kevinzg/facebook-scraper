@@ -1,5 +1,6 @@
 import itertools
 import json
+import demjson
 import logging
 import re
 from datetime import datetime
@@ -31,6 +32,9 @@ def extract_post(raw_post: RawPost, options: Options, request_fn: RequestFunctio
 
 def extract_group_post(raw_post: RawPost, options: Options, request_fn: RequestFunction) -> Post:
     return GroupPostExtractor(raw_post, options, request_fn).extract_post()
+
+def extract_photo_post(raw_post: RawPost, options: Options, request_fn: RequestFunction) -> Post:
+    return PhotoPostExtractor(raw_post, options, request_fn).extract_post()
 
 
 class PostExtractor:
@@ -70,6 +74,7 @@ class PostExtractor:
 
         self._data_ft = None
         self._full_post_html = None
+        self._live_data = None
 
     # TODO: This is getting ugly, create a dataclass for Post
     def make_new_post(self) -> Post:
@@ -191,7 +196,7 @@ class PostExtractor:
         return {'post_id': self.data_ft.get('top_level_post_id')}
 
     def extract_username(self) -> PartialPost:
-        elem = self.element.find('h3 strong a', first=True)
+        elem = self.element.find('h3 strong a,a.actor-link', first=True)
         if elem:
             url = elem.attrs.get("href")
             if url:
@@ -283,21 +288,26 @@ class PostExtractor:
         return {'user_id': self.data_ft['content_owner_id_new']}
 
     def extract_image_lq(self) -> PartialPost:
-        elems = self.element.find('div.story_body_container>div .img:not(.profpic):not([style*="static.xx.fbcdn.net"])')
+        elems = self.element.find('div.story_body_container>div .img:not(.profpic)')
+        if not elems:
+            elems = self.element.find('#root .img:not(.profpic)')
         images = []
         descriptions = []
         for elem in elems:
+            url = None
             if elem.attrs.get('src'):
-                images.append(elem.attrs.get('src'))
+                url = elem.attrs.get('src')
             elif elem.attrs.get('style'):
                 match = self.image_regex_lq.search(elem.attrs.get('style'))
                 if match:
-                    src = utils.decode_css_url(match.groups()[0])
-                    images.append(src)
-            descriptions.append(elem.attrs.get("aria-label") or elem.attrs.get("alt"))
+                    url = utils.decode_css_url(match.groups()[0])
+            if url and "static.xx.fbcdn.net" not in url:
+                images.append(url)
+                descriptions.append(elem.attrs.get("aria-label") or elem.attrs.get("alt"))
 
         image = images[0] if images else None
         result = {"image_lowquality": image, "images_lowquality": images, "images_lowquality_description": descriptions}
+        # Link to high resolution external image embedded in low quality image url
         if image and "safe_image.php" in image and not self.post.get("image"):
             url = parse_qs(urlparse(image).query).get("url")
             if url:
@@ -372,9 +382,9 @@ class PostExtractor:
             or 0,
         }
 
-    def extract_photo_link_HQ(self, response: Response) -> URL:
+    def extract_photo_link_HQ(self, html: str) -> URL:
         # Find a link that says "View Full Size"
-        match = self.image_regex.search(response.text)
+        match = self.image_regex.search(html)
         if match:
             url = match.groups()[0].replace("&amp;", "&")
             if not url.startswith("http"):
@@ -412,7 +422,7 @@ class PostExtractor:
             url = utils.urljoin(FB_MOBILE_BASE_URL, url)
             logger.debug(f"Fetching {url}")
             response = self.request(url)
-            images.append(self.extract_photo_link_HQ(response))
+            images.append(self.extract_photo_link_HQ(response.text))
             elem = response.html.find(".img[data-sigil='photo-image']", first=True)
             descriptions.append(elem.attrs.get("alt") or elem.attrs.get("aria-label"))
 
@@ -423,7 +433,7 @@ class PostExtractor:
                 url = utils.urljoin(FB_MOBILE_BASE_URL, url)
             logger.debug(f"Fetching {url}")
             response = self.request(url)
-            images.append(self.extract_photo_link_HQ(response))
+            images.append(self.extract_photo_link_HQ(response.text))
             elem = response.html.find(".img[data-sigil='photo-image']", first=True)
             descriptions.append(elem.attrs.get("alt") or elem.attrs.get("aria-label"))
         image = images[0] if images else None
@@ -783,8 +793,43 @@ class PostExtractor:
         else:
             return None
 
+    @property
+    def live_data(self):
+        if self._live_data is not None:
+            return self._live_data
+        match = re.search(r'({ft_ent_identifier.+?timestamp[^}]+})', self.element.html)
+        if match:
+            # Use demjson to load JS, as unquoted keys is not valid JSON
+            self._live_data = demjson.decode(match.group(1))
+            logger.debug(self._live_data)
+            return self._live_data
+
+
 
 class GroupPostExtractor(PostExtractor):
     """Class for extracting posts from Facebook Groups rather than Pages"""
     post_url_regex = re.compile(r'https://m.facebook.com/groups/[^/]+/permalink/')
     post_story_regex = re.compile(r'href="(https://m.facebook.com/groups/[^/]+/permalink/\d+/)')
+
+class PhotoPostExtractor(PostExtractor):
+    def extract_text(self) -> PartialPost:
+        text = self.element.find("div.msg", first=True).text
+        return {"text": text, "post_text": text}
+
+    def extract_photo_link(self) -> PartialPost:
+        image = self.extract_photo_link_HQ(self.element.html)
+        return {"image": image, "images": [image]}
+
+    def extract_user_id(self) -> PartialPost:
+        match = re.search(r'entity_id:(\d+),', self.element.html)
+        if match:
+            return {"user_id": match.group(1)}
+
+    def extract_post_id(self) -> PartialPost:
+        return {"post_id": str(self.live_data["ft_ent_identifier"])}
+
+    def extract_likes(self) -> PartialPost:
+        return {"likes": self.live_data["like_count"]}
+
+    def extract_comments(self) -> PartialPost:
+        return {"comments": self.live_data["comment_count"]}
