@@ -6,7 +6,6 @@ import pathlib
 import sys
 import warnings
 from typing import Any, Dict, Iterator, Optional, Set, Union
-from requests import exceptions
 
 from requests.cookies import cookiejar_from_dict
 
@@ -14,6 +13,7 @@ from .constants import DEFAULT_REQUESTS_TIMEOUT
 from .facebook_scraper import FacebookScraper
 from .fb_types import Credentials, Post, RawPost, Profile
 from .utils import html_element_to_string, parse_cookie_file
+from . import exceptions
 
 
 _scraper = FacebookScraper()
