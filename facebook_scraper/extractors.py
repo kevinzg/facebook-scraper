@@ -394,9 +394,11 @@ class PostExtractor:
             if url.startswith(utils.urljoin(FB_MOBILE_BASE_URL, "/photo/view_full_size/")):
                 # Try resolve redirect
                 logger.debug(f"Fetching {url}")
-                redirect_response = self.request(url)
-                if not redirect_response.url.startswith(utils.urljoin(FB_MOBILE_BASE_URL, "login.php")):
+                try:
+                    redirect_response = self.request(url)
                     url = redirect_response.html.find("a", first=True).attrs.get("href").replace("&amp;", "&")
+                except Exception as e:
+                    logger.error(e)
             return url
         else:
             return None

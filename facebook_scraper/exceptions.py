@@ -13,3 +13,7 @@ class AccountDisabled(Exception):
 class InvalidCookies(Exception):
     '''Cookies file passed but missing cookies'''
     pass
+
+class LoginRequired(Exception):
+    '''Facebook requires a login to see this'''
+    pass

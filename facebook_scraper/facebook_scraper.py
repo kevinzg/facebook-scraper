@@ -1,5 +1,6 @@
 import itertools
 import logging
+from urllib.parse import urljoin
 import warnings
 import re
 from functools import partial
@@ -212,10 +213,12 @@ class FacebookScraper:
         result["members"] = utils.parse_int(members.text)
         url = members.find("a", first=True).attrs.get("href")
         logger.debug(f"Requesting page from: {url}")
-        resp = self.get(url).html
-        if "login.php" not in resp.url:
+        try:
+            resp = self.get(url).html
             admins = resp.find("div:first-child>div.touchable a:not(.touchable)")
             result["admins"] = [{"name": e.text, "link": e.attrs["href"]} for e in admins]
+        except Exception as e:
+            pass
         return result
 
     def get_group_posts(self, group: Union[str, int], **kwargs) -> Iterator[Post]:
@@ -250,6 +253,8 @@ class FacebookScraper:
                     raise exceptions.TemporarilyBanned(title.text)
                 elif ">Your Account Has Been Disabled<" in response.html.html:
                     raise exceptions.AccountDisabled("Your Account Has Been Disabled")
+                elif title.text == "Log in to Facebook | Facebook" or response.url.startswith(utils.urljoin(FB_MOBILE_BASE_URL, "login")):
+                    raise exceptions.LoginRequired("A login (cookies) is required to see this page")
             return response
         except RequestException as ex:
             logger.exception("Exception while requesting URL: %s\nException: %r", url, ex)
@@ -279,8 +284,11 @@ class FacebookScraper:
             warnings.warn('login unsuccessful')
 
     def is_logged_in(self) -> bool:
-        response = self.get('https://m.facebook.com/settings')
-        return not response.url.startswith('https://m.facebook.com/login.php')
+        try:
+            self.get('https://m.facebook.com/settings')
+            return True
+        except exceptions.LoginRequired:
+            return False
 
     def _generic_get_posts(
         self,
