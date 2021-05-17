@@ -865,6 +865,9 @@ class PhotoPostExtractor(PostExtractor):
         if match:
             return {"user_id": match.group(1)}
 
+    def extract_post_url(self) -> PartialPost:
+        return {"post_url": utils.urljoin(FB_MOBILE_BASE_URL, str(self.live_data["ft_ent_identifier"]))}
+
     def extract_post_id(self) -> PartialPost:
         return {"post_id": str(self.live_data["ft_ent_identifier"])}
 
