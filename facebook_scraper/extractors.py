@@ -729,7 +729,11 @@ class PostExtractor:
         comments_opt = self.options.get('comments')
         if type(comments_opt) in [int, float]:
             limit = comments_opt
-        more = elem.find("a", containing="View more comments", first=True)
+        direction = "View more comments"
+        more = elem.find("a", containing=direction, first=True)
+        if not more:
+            direction = "View previous comments"
+            more = elem.find("a", containing=direction, first=True)
         while more and len(comments) < limit:
             url = utils.urljoin(FB_MOBILE_BASE_URL, more.attrs.get("href"))
             logger.debug(f"Fetching {url}")
@@ -740,7 +744,7 @@ class PostExtractor:
                 break
             more_comments = elem.find('div[data-sigil="comment"]')
             comments.extend(more_comments)
-            more = response.html.find("a", containing="View more comments", first=True)
+            more = response.html.find("a", containing=direction, first=True)
 
         logger.debug(f"Found {len(comments)} comments")
         results = []
