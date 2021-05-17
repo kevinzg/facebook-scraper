@@ -734,17 +734,22 @@ class PostExtractor:
         if not more:
             direction = "View previous comments"
             more = elem.find("a", containing=direction, first=True)
+        visited_urls = []
         while more and len(comments) < limit:
             url = utils.urljoin(FB_MOBILE_BASE_URL, more.attrs.get("href"))
+            if url in visited_urls:
+                logger.debug("cycle detected, break")
+                break
             logger.debug(f"Fetching {url}")
             response = self.request(url)
+            visited_urls.append(url)
             elem = response.html.find('div[data-sigil="m-mentions-expand"]', first=True)
             if not elem:
                 logger.warning("No comments found on page")
                 break
             more_comments = elem.find('div[data-sigil="comment"]')
             comments.extend(more_comments)
-            more = response.html.find("a", containing=direction, first=True)
+            more = elem.find("a", containing=direction, first=True)
 
         logger.debug(f"Found {len(comments)} comments")
         results = []
