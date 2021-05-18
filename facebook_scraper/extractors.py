@@ -7,7 +7,7 @@ from datetime import datetime
 from json import JSONDecodeError
 from typing import Any, Dict, Optional
 from urllib.parse import parse_qs, urlparse
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from . import utils
 from .constants import FB_BASE_URL, FB_MOBILE_BASE_URL
