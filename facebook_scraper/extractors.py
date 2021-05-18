@@ -461,38 +461,31 @@ class PostExtractor:
             print(more_info_post)
         ```
         """
+        reactions = {}
+
+        reaction_lookup = self.get_jsmod("UFIReactionTypes").get("reactions")
+        for k,v in self.live_data.get("reactioncountmap").items():
+            if v["default"]:
+                name = reaction_lookup[k]["display_name"].lower()
+                reactions[name] = v["default"]
+
         url = self.post.get('post_url')
         post_id = self.post.get('post_id')
         w3_fb_url = url and utils.urlparse(url)._replace(netloc='www.facebook.com').geturl()
 
-        reaction_url = f'https://m.facebook.com/ufi/reaction/profile/browser/?ft_ent_identifier={post_id}'
-        response = self.request(reaction_url)
-        reactions = {}
-
-        # Dict mapping class names to human readable reaction names. Prepopulated in case FB doesn't include them
-        reaction_lookup = {
-            'sx_cbd149': 'Like',
-            'sx_202991': 'Love',
-            'sx_41edbc': 'Care',
-            'sx_0d839a': 'Haha',
-            'sx_2b1a8e': 'Wow',
-            'sx_454e38': 'Angry',
-            'sx_1a0b4b': 'Sad'
-        }
-
-        for span in response.html.find("span[aria-label]"):
-            label = span.attrs.get("aria-label", "")
-            if " people reacted with " in label:
-                reaction_count, reaction_type = label.split(" people reacted with ")
-                reactions[reaction_type.lower()] = utils.convert_numeric_abbr(reaction_count)
-                if self.options.get("reactors"):
-                    emoji_class = span.find("i", first=True).attrs.get("class")[-1]
-                    reaction_lookup[emoji_class] = reaction_type
-
         reactors = []
-
         reactors_opt = self.options.get("reactors")
         if reactors_opt:
+            reaction_url = f'https://m.facebook.com/ufi/reaction/profile/browser/?ft_ent_identifier={post_id}'
+            response = self.request(reaction_url)
+            emoji_class_lookup = {}
+            spriteMapCssClass = "sp_E24l_TeOlgh"
+            for k, v in self.get_jsmod("UFIReactionIcons").items():
+                name = reaction_lookup[k]["display_name"].lower()
+                for item in v.values():
+                    emoji_class_lookup[item["spriteCssClass"]] = name
+                    spriteMapCssClass = item["spriteMapCssClass"]
+
             """Fetch people reacting to an existing post obtained by `get_posts`.
             Note that this method may raise one more http request per post to get all reactors"""
             limit = 3000
@@ -516,13 +509,13 @@ class PostExtractor:
                         elems.extend(more_elems)
             logger.debug(f"Found {len(elems)} reactors")
             for elem in elems:
-                emoji_class = elem.find("div>i:not(.nub)", first=True).attrs.get("class")[-1]
-                if not reaction_lookup.get(emoji_class):
+                emoji_class = elem.find(f"div>i.{spriteMapCssClass}", first=True).attrs.get("class")[-1]
+                if not emoji_class_lookup.get(emoji_class):
                     logger.error(f"Don't know {emoji_class}")
                 reactors.append({
                     "name": elem.find("strong", first=True).text,
                     "link": utils.urljoin(FB_BASE_URL, elem.find("a", first=True).attrs.get("href")),
-                    "type": reaction_lookup.get(emoji_class)
+                    "type": emoji_class_lookup.get(emoji_class)
                 })
 
         if reactions:
@@ -844,13 +837,14 @@ class PostExtractor:
     def live_data(self):
         if self._live_data is not None:
             return self._live_data
-        match = re.search(r'({ft_ent_identifier.+?timestamp[^}]+})', self.full_post_html.html)
+        self._live_data = self.get_jsmod("MLiveData")
+        return self._live_data
+
+    def get_jsmod(self, name):
+        match = re.search(name + r'[^{]+({.+?})(?:\]|,\d)', self.full_post_html.html)
         if match:
             # Use demjson to load JS, as unquoted keys is not valid JSON
-            self._live_data = demjson.decode(match.group(1))
-            logger.debug(self._live_data)
-            return self._live_data
-
+            return demjson.decode(match.group(1))
 
 
 class GroupPostExtractor(PostExtractor):
