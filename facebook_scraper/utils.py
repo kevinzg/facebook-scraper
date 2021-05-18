@@ -164,7 +164,8 @@ def parse_cookie_file(filename: str) -> RequestsCookieJar:
                         expires = int(expires)
                     if "Name raw" in c:
                         # Cookie Quick Manager JSON format
-                        jar.set(c["Name raw"], c["Content raw"], domain=c["Host raw"], path=c["Path raw"], expires=expires)
+                        host = c["Host raw"].replace("https://", "").strip("/")
+                        jar.set(c["Name raw"], c["Content raw"], domain=host, path=c["Path raw"], expires=expires)
                     else:
                         # EditThisCookie JSON format
                         jar.set(c["name"], c["value"], domain=c["domain"], path=c["path"], secure=c["secure"], expires=expires)
