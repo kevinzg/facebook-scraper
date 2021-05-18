@@ -1,6 +1,7 @@
 import codecs
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
+import calendar
 from typing import Optional
 from urllib.parse import parse_qsl, unquote, urlencode, urljoin, urlparse, urlunparse
 
@@ -109,7 +110,8 @@ relative_time_hours = r"\b\d{1,2} ?h(?:rs?)?"
 relative_time_mins = r"\b\d{1,2} ?mins?"
 relative_time = f"{relative_time_years}|{relative_time_months}|{relative_time_weeks}|{relative_time_hours}|{relative_time_mins}"
 
-datetime_regex = re.compile(fr"({exact_time}|{relative_time}|{day_of_week})", re.IGNORECASE)
+datetime_regex = re.compile(fr"({exact_time}|{relative_time})", re.IGNORECASE)
+day_of_week_regex = re.compile(fr"({day_of_week})", re.IGNORECASE)
 
 def parse_datetime(text: str, search=True) -> Optional[datetime]:
     """Looks for a string that looks like a date and parses it into a datetime object.
@@ -126,8 +128,15 @@ def parse_datetime(text: str, search=True) -> Optional[datetime]:
     """
     if search:
         time_match = datetime_regex.search(text)
+        dow_match = day_of_week_regex.search(text)
         if time_match:
             text = time_match.group(0)
+        elif dow_match:
+            text = dow_match.group(0)
+            today = calendar.day_abbr[datetime.today().weekday()]
+            if text == today:
+                # Fix for dateparser misinterpreting "last Monday" as today if today is Monday
+                return dateparser.parse(text) - timedelta(days=7)
         else:
             return None
 
