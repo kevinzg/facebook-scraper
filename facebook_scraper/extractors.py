@@ -707,7 +707,9 @@ class PostExtractor:
         # Try to extract from the abbr element
         date_element = comment.find('abbr', first=True)
         if date_element:
-            date = utils.parse_datetime(date_element.text, search=False)
+            date = utils.parse_datetime(date_element.text, search=True)
+            if not date:
+                logger.debug(f"Unable to parse {date_element.text}")
         else:
             date = None
 

@@ -82,7 +82,7 @@ month = (
     r"Nov(?:ember)?|"
     r"Dec(?:ember)?"
 )
-day = (
+day_of_week = (
     r"Mon|"
     r"Tue|"
     r"Wed|"
@@ -94,8 +94,6 @@ day = (
 day_of_month = r"\d{1,2}"
 specific_date_md = f"(?:{month}) {day_of_month}" + r"(?:,? \d{4})?"
 specific_date_dm = f"{day_of_month} (?:{month})" + r"(?:,? \d{4})?"
-day_of_week = f"on ({day})"
-last_day_of_week = f"(last {day})"
 
 date = f"{specific_date_md}|{specific_date_dm}|Today|Yesterday"
 
@@ -104,14 +102,14 @@ minute = r"\d{2}"
 period = r"AM|PM|"
 
 exact_time = f"(?:{date}) at {hour}:{minute} ?(?:{period})"
-relative_time_years = r'\b\d{1,2} yrs?'
-relative_time_months = r'\b\d{1,2} mths?'
-relative_time_weeks = r'\b\d{1,2} wks?'
+relative_time_years = r'\b\d{1,2} yr'
+relative_time_months = r'\b\d{1,2} (?:mth|mo)'
+relative_time_weeks = r'\b\d{1,2} wk'
 relative_time_hours = r"\b\d{1,2} ?h(?:rs?)?"
 relative_time_mins = r"\b\d{1,2} ?mins?"
 relative_time = f"{relative_time_years}|{relative_time_months}|{relative_time_weeks}|{relative_time_hours}|{relative_time_mins}"
 
-datetime_regex = re.compile(fr"({exact_time}|{relative_time}|{day_of_week}|{last_day_of_week})", re.IGNORECASE)
+datetime_regex = re.compile(fr"({exact_time}|{relative_time}|{day_of_week})", re.IGNORECASE)
 
 def parse_datetime(text: str, search=True) -> Optional[datetime]:
     """Looks for a string that looks like a date and parses it into a datetime object.
@@ -129,7 +127,7 @@ def parse_datetime(text: str, search=True) -> Optional[datetime]:
     if search:
         time_match = datetime_regex.search(text)
         if time_match:
-            text = time_match.group(0).replace("wk", "week").replace("mth", "month").replace("yr", "year")
+            text = time_match.group(0)
         else:
             return None
 
