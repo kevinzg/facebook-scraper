@@ -75,7 +75,7 @@ class PostExtractor:
 
         self._data_ft = None
         self._full_post_html = None
-        self._live_data = None
+        self._live_data = {}
 
     # TODO: This is getting ugly, create a dataclass for Post
     def make_new_post(self) -> Post:
@@ -365,6 +365,7 @@ class PostExtractor:
             'likes': utils.find_and_search(
                 self.element, 'footer', self.likes_regex, utils.convert_numeric_abbr
             )
+            or self.live_data.get("like_count")
             or self.live_data.get("reactioncount")
             or 0,
         }
@@ -463,11 +464,13 @@ class PostExtractor:
         """
         reactions = {}
 
-        reaction_lookup = self.get_jsmod("UFIReactionTypes").get("reactions")
-        for k,v in self.live_data.get("reactioncountmap").items():
-            if v["default"]:
-                name = reaction_lookup[k]["display_name"].lower()
-                reactions[name] = v["default"]
+        reaction_lookup = self.get_jsmod("UFIReactionTypes")
+        if reaction_lookup:
+            reaction_lookup = reaction_lookup.get("reactions")
+            for k,v in self.live_data.get("reactioncountmap").items():
+                if v["default"]:
+                    name = reaction_lookup[k]["display_name"].lower()
+                    reactions[name] = v["default"]
 
         url = self.post.get('post_url')
         post_id = self.post.get('post_id')
@@ -835,13 +838,16 @@ class PostExtractor:
 
     @property
     def live_data(self):
-        if self._live_data is not None:
+        if self._live_data:
             return self._live_data
-        self._live_data = self.get_jsmod("MLiveData")
+        try:
+            self._live_data = self.get_jsmod("MLiveData")
+        except Exception as e:
+            logger.error(e)
         return self._live_data
 
     def get_jsmod(self, name):
-        match = re.search(name + r'[^{]+({.+?})(?:\]|,\d)', self.full_post_html.html)
+        match = re.search(name + r'[^{]+({.+?})(?:\]\]|,\d)', self.full_post_html.html)
         if match:
             # Use demjson to load JS, as unquoted keys is not valid JSON
             return demjson.decode(match.group(1))
