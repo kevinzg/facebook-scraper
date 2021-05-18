@@ -365,6 +365,7 @@ class PostExtractor:
             'likes': utils.find_and_search(
                 self.element, 'footer', self.likes_regex, utils.convert_numeric_abbr
             )
+            or self.live_data.get("reactioncount")
             or 0,
         }
 
@@ -373,6 +374,7 @@ class PostExtractor:
             'comments': utils.find_and_search(
                 self.element, 'footer', self.comments_regex, utils.convert_numeric_abbr
             )
+            or self.live_data.get("comment_count")
             or 0,
         }
 
@@ -381,6 +383,7 @@ class PostExtractor:
             'shares': utils.find_and_search(
                 self.element, 'footer', self.shares_regex, utils.convert_numeric_abbr
             )
+            or self.live_data.get("share_count")
             or 0,
         }
 
@@ -841,7 +844,7 @@ class PostExtractor:
     def live_data(self):
         if self._live_data is not None:
             return self._live_data
-        match = re.search(r'({ft_ent_identifier.+?timestamp[^}]+})', self.element.html)
+        match = re.search(r'({ft_ent_identifier.+?timestamp[^}]+})', self.full_post_html.html)
         if match:
             # Use demjson to load JS, as unquoted keys is not valid JSON
             self._live_data = demjson.decode(match.group(1))
