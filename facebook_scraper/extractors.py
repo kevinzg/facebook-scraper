@@ -827,7 +827,7 @@ class PostExtractor:
         if self._full_post_html is not None:
             return self._full_post_html
 
-        if self.options.get("allow_extra_requests", True):
+        if self.options.get("allow_extra_requests", True) and self.post.get('post_url'):
             url = self.post.get('post_url').replace(FB_BASE_URL, FB_MOBILE_BASE_URL)
             logger.debug(f"Fetching {url}")
             response = self.request(url)
@@ -847,7 +847,10 @@ class PostExtractor:
         return self._live_data
 
     def get_jsmod(self, name):
-        match = re.search(name + r'[^{]+({.+?})(?:\]\]|,\d)', self.full_post_html.html)
+        if self.full_post_html:
+            match = re.search(name + r'[^{]+({.+?})(?:\]\]|,\d)', self.full_post_html.html)
+        else:
+            match = re.search(name + r'[^{]+({.+?})(?:\]\]|,\d)', self.element.html)
         if match:
             # Use demjson to load JS, as unquoted keys is not valid JSON
             return demjson.decode(match.group(1))
@@ -877,9 +880,3 @@ class PhotoPostExtractor(PostExtractor):
 
     def extract_post_id(self) -> PartialPost:
         return {"post_id": str(self.live_data["ft_ent_identifier"])}
-
-    def extract_likes(self) -> PartialPost:
-        return {"likes": self.live_data["like_count"]}
-
-    def extract_comments(self) -> PartialPost:
-        return {"comments": self.live_data["comment_count"]}
