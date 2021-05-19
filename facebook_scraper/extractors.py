@@ -41,7 +41,7 @@ def extract_photo_post(raw_post: RawPost, options: Options, request_fn: RequestF
 class PostExtractor:
     """Class for Extracting fields from a FacebookPost"""
 
-    likes_regex = re.compile(r'([\d.KM]+)\s+(Like|left reaction)', re.IGNORECASE)
+    likes_regex = re.compile(r'([\d,.KM]+)\s+(Like|left reaction)', re.IGNORECASE)
     comments_regex = re.compile(r'([\d,.KM]+)\s+comment', re.IGNORECASE)
     shares_regex = re.compile(r'([\d,.KM]+)\s+Share', re.IGNORECASE)
     live_regex = re.compile(r'.+(is live).+')
