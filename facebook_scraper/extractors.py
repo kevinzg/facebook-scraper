@@ -120,6 +120,8 @@ class PostExtractor:
             'comments_full': None,
             'reactors': None,
             'w3_fb_url': None,
+            'reactions': None,
+            'reaction_count': None,
         }
 
     def extract_post(self) -> Post:
@@ -525,6 +527,7 @@ class PostExtractor:
             return {
                 'likes': reactions.get("like"),
                 'reactions': reactions,
+                'reaction_count': self.live_data.get("reactioncount"),
                 'reactors': reactors,
                 'fetched_time': datetime.now(),
                 'w3_fb_url': w3_fb_url,
