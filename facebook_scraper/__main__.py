@@ -16,6 +16,9 @@ def run():
     parser.add_argument('-p', '--pages', type=int, help="Number of pages to download", default=10)
     parser.add_argument('-g', '--group', action='store_true', help="Use group scraper")
     parser.add_argument('-v', '--verbose', action='count', help="Enable logging", default=0)
+    parser.add_argument('-c', '--cookies', type=str, help="Path to a cookies file")
+    parser.add_argument('-r', '--reactions', action='store_true', help="Extract reactions")
+    parser.add_argument('-r', '--reactors', action='store_true', help="Extract reactors")
     parser.add_argument(
         '--dump',
         type=pathlib.Path,
@@ -34,7 +37,7 @@ def run():
 
     # Choose the right argument to pass to write_posts_to_csv (group or account)
     account_type = 'group' if args.group else 'account'
-    kwargs = {account_type: args.account}
+    kwargs = {account_type: args.account, "cookies": args.cookies, "options": {"reactions": args.reactions, "reactors": args.reactors}}
 
     # Enable logging
     if args.verbose > 0:
