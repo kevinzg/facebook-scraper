@@ -18,7 +18,7 @@ def run():
     parser.add_argument('-v', '--verbose', action='count', help="Enable logging", default=0)
     parser.add_argument('-c', '--cookies', type=str, help="Path to a cookies file")
     parser.add_argument('-r', '--reactions', action='store_true', help="Extract reactions")
-    parser.add_argument('-r', '--reactors', action='store_true', help="Extract reactors")
+    parser.add_argument('-rs', '--reactors', action='store_true', help="Extract reactors")
     parser.add_argument(
         '--dump',
         type=pathlib.Path,
