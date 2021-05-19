@@ -118,7 +118,8 @@ def get_posts(
         kwargs['page_limit'] = kwargs.pop('pages')
 
     # TODO: Deprecate `extra_info` in favor of `options`
-    options['reactions'] = kwargs.pop('extra_info', False)
+    if "reactions" not in options:
+        options['reactions'] = kwargs.pop('extra_info', False)
     options['youtube_dl'] = kwargs.pop('youtube_dl', False)
 
     if credentials is not None:
