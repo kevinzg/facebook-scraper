@@ -253,7 +253,9 @@ class FacebookScraper:
                     raise exceptions.TemporarilyBanned(title.text)
                 elif ">Your Account Has Been Disabled<" in response.html.html:
                     raise exceptions.AccountDisabled("Your Account Has Been Disabled")
-                elif title.text == "Log in to Facebook | Facebook" or response.url.startswith(utils.urljoin(FB_MOBILE_BASE_URL, "login")):
+                elif (title.text == "Log in to Facebook | Facebook" or
+                      response.url.startswith(utils.urljoin(FB_MOBILE_BASE_URL, "login")) or
+                      ", log in to Facebook." in response.text):
                     raise exceptions.LoginRequired("A login (cookies) is required to see this page")
             return response
         except RequestException as ex:
