@@ -28,6 +28,8 @@ def set_cookies(cookies):
         if missing_cookies:
             raise exceptions.InvalidCookies(f"Missing cookies with name(s): {missing_cookies}")
         _scraper.session.cookies = cookies
+        if not _scraper.is_logged_in():
+            raise exceptions.InvalidCookies(f"Cookies are not valid")
 
 def set_proxy(proxy):
     _scraper.set_proxy(proxy)
