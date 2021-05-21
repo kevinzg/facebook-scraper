@@ -262,28 +262,40 @@ class FacebookScraper:
             logger.exception("Exception while requesting URL: %s\nException: %r", url, ex)
             raise
 
-    def login(self, email: str, password: str):
-        login_page = self.get(self.base_url)
-        login_action = login_page.html.find('#login_form', first=True).attrs.get('action')
-
-        elems = login_page.html.find('#login_form > input[name][value]')
+    def submit_form(self, response, extra_data = {}):
+        action = response.html.find("form", first=True).attrs.get('action')
+        url = utils.urljoin(self.base_url, action)
+        elems = response.html.find("input[name][value]")
         data = { elem.attrs['name']: elem.attrs['value'] for elem in elems }
-        data["email"] = email
-        data["pass"] = password
+        data.update(extra_data)
+        response = self.session.post(url, data=data)
+        return response
 
-        response = self.session.post(
-            utils.urljoin(self.base_url, login_action), data=data
-        )
-        response_text = response.html.find('#viewport', first=True).text
-
-        logger.debug("Login response text: %s", response_text)
+    def login(self, email: str, password: str):
+        response = self.get(self.base_url)
+        response = self.submit_form(response, {"email": email, "pass": password})
 
         login_error = response.html.find('#login_error', first=True)
         if login_error:
-            logger.error("Login error: %s", login_error.text)
+            raise exceptions.LoginError(login_error.text)
+
+        if "Enter login code to continue" in response.text:
+            token = input("Enter 2FA token: ")
+            response = self.submit_form(response, {"approvals_code": token})
+            strong = response.html.find("strong", first=True)
+            if strong and strong.text.startswith("The login code you entered doesn't match"):
+                raise exceptions.LoginError(strong.text)
+            # Remember Browser
+            response = self.submit_form(response, {"name_action_selected": "save_device"})
+            if "Review recent login" in response.text:
+                response = self.submit_form(response)
+                # Login near {location} from {browser} on {OS} ({time}). Unset "This wasn't me", leaving "This was me" set.
+                response = self.submit_form(response, {"submit[This wasn't me]": None})
+                # Remember Browser. Please save the browser that you just verified. You won't have to enter a code when you log in from browsers that you've saved.
+                response = self.submit_form(response, {"name_action_selected": "save_device"})
 
         if 'c_user' not in self.session.cookies:
-            warnings.warn('login unsuccessful')
+            raise exceptions.LoginError("Login unsuccessful")
 
     def is_logged_in(self) -> bool:
         try:

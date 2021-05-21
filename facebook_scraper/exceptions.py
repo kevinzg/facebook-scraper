@@ -17,3 +17,7 @@ class InvalidCookies(Exception):
 class LoginRequired(Exception):
     '''Facebook requires a login to see this'''
     pass
+
+class LoginError(Exception):
+    '''Failed to log in'''
+    pass
