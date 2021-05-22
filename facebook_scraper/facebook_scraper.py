@@ -255,7 +255,8 @@ class FacebookScraper:
                     raise exceptions.AccountDisabled("Your Account Has Been Disabled")
                 elif (title.text == "Log in to Facebook | Facebook" or
                       response.url.startswith(utils.urljoin(FB_MOBILE_BASE_URL, "login")) or
-                      ", log in to Facebook." in response.text):
+                      (", log in to Facebook." in response.text and not response.html.find("article[data-ft],div.async_like[data-ft]"))
+                      ):
                     raise exceptions.LoginRequired("A login (cookies) is required to see this page")
             return response
         except RequestException as ex:
