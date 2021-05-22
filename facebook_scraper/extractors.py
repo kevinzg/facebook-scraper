@@ -431,10 +431,14 @@ class PostExtractor:
 
             url = utils.urljoin(FB_MOBILE_BASE_URL, url)
             logger.debug(f"Fetching {url}")
-            response = self.request(url)
-            images.append(self.extract_photo_link_HQ(response.text))
-            elem = response.html.find(".img[data-sigil='photo-image']", first=True)
-            descriptions.append(elem.attrs.get("alt") or elem.attrs.get("aria-label"))
+            try:
+                response = self.request(url)
+                images.append(self.extract_photo_link_HQ(response.text))
+                elem = response.html.find(".img[data-sigil='photo-image']", first=True)
+                descriptions.append(elem.attrs.get("alt") or elem.attrs.get("aria-label"))
+            except Exception as e:
+                logger.error(e)
+                total_photos_in_gallery -= 1
 
         while len(images) < total_photos_in_gallery:
             # More photos to fetch. Follow the left arrow link of the last image we were on
