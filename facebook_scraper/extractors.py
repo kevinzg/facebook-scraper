@@ -417,7 +417,7 @@ class PostExtractor:
         photo_links = self.element.find("div.story_body_container>div a[href*='photo.php'], div.story_body_container>div a[href*='/photos/']")
         total_photos_in_gallery = len(photo_links)
         if len(photo_links) in [4,5] and photo_links[-1].text:
-            total_photos_in_gallery = 4 + int(photo_links[-1].text.strip("+")) - 1
+            total_photos_in_gallery = len(photo_links) + int(photo_links[-1].text.strip("+")) - 1
             logger.debug(f"{total_photos_in_gallery} total photos in gallery")
 
         # This gets up to 4 images in gallery
@@ -447,7 +447,7 @@ class PostExtractor:
             elem = response.html.find(".img[data-sigil='photo-image']", first=True)
             descriptions.append(elem.attrs.get("alt") or elem.attrs.get("aria-label"))
         image = images[0] if images else None
-        return {"image": image, "images": images, "images_description": descriptions}
+        return {"image": image, "images": set(images), "images_description": descriptions}
 
     def extract_reactions(self) -> PartialPost:
         """Fetch share and reactions information with a existing post obtained by `get_posts`.
