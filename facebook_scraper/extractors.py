@@ -416,7 +416,7 @@ class PostExtractor:
         descriptions = []
         photo_links = self.element.find("div.story_body_container>div a[href*='photo.php'], div.story_body_container>div a[href*='/photos/']")
         total_photos_in_gallery = len(photo_links)
-        if len(photo_links) == 4 and photo_links[-1].text:
+        if len(photo_links) in [4,5] and photo_links[-1].text:
             total_photos_in_gallery = 4 + int(photo_links[-1].text.strip("+")) - 1
             logger.debug(f"{total_photos_in_gallery} total photos in gallery")
 
