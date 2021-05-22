@@ -859,6 +859,8 @@ class PostExtractor:
         if match:
             # Use demjson to load JS, as unquoted keys is not valid JSON
             return demjson.decode(match.group(1))
+        else:
+            return {}
 
 
 class GroupPostExtractor(PostExtractor):
