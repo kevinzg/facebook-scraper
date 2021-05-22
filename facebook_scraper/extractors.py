@@ -567,6 +567,7 @@ class PostExtractor:
             logger.debug(f"Fetching {video_id}")
             response = self.request(video_id)
             video_post = PostExtractor(response.html, self.options, self.request, full_post_html=response.html)
+            video_post.post = {"post_id": video_id}
             return {
                 "video_id": video_id,
                 "video": video_post.extract_video().get("video"),
