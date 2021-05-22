@@ -443,11 +443,13 @@ class PostExtractor:
                 url = utils.urljoin(FB_MOBILE_BASE_URL, url)
             logger.debug(f"Fetching {url}")
             response = self.request(url)
-            images.append(self.extract_photo_link_HQ(response.text))
-            elem = response.html.find(".img[data-sigil='photo-image']", first=True)
-            descriptions.append(elem.attrs.get("alt") or elem.attrs.get("aria-label"))
+            photo_link = self.extract_photo_link_HQ(response.text)
+            if photo_link not in images:
+                images.append(photo_link)
+                elem = response.html.find(".img[data-sigil='photo-image']", first=True)
+                descriptions.append(elem.attrs.get("alt") or elem.attrs.get("aria-label"))
         image = images[0] if images else None
-        return {"image": image, "images": set(images), "images_description": descriptions}
+        return {"image": image, "images": images, "images_description": descriptions}
 
     def extract_reactions(self) -> PartialPost:
         """Fetch share and reactions information with a existing post obtained by `get_posts`.
