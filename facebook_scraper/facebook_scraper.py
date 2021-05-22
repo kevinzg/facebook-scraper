@@ -89,11 +89,11 @@ class FacebookScraper:
                     elem = utils.make_html_element(elem.html.replace("</footer>", comments_area.html + "</footer>"))
 
                 if photo_post:
-                    post.update(extract_photo_post(elem, request_fn=self.get, options=options))
+                    post.update(extract_photo_post(elem, request_fn=self.get, options=options, full_post_html=response.html))
                 elif url.startswith(utils.urljoin(FB_MOBILE_BASE_URL, "/groups/")):
-                    post.update(extract_group_post(elem, request_fn=self.get, options=options))
+                    post.update(extract_group_post(elem, request_fn=self.get, options=options, full_post_html=response.html))
                 else:
-                    post.update(extract_post(elem, request_fn=self.get, options=options))
+                    post.update(extract_post(elem, request_fn=self.get, options=options, full_post_html=response.html))
                 if not post.get("post_url"):
                     post["post_url"] = url
                 if remove_source:

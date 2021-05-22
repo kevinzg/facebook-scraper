@@ -27,15 +27,14 @@ logger = logging.getLogger(__name__)
 PartialPost = Optional[Dict[str, Any]]
 
 
-def extract_post(raw_post: RawPost, options: Options, request_fn: RequestFunction) -> Post:
-    return PostExtractor(raw_post, options, request_fn).extract_post()
+def extract_post(raw_post: RawPost, options: Options, request_fn: RequestFunction, full_post_html = None) -> Post:
+    return PostExtractor(raw_post, options, request_fn, full_post_html).extract_post()
 
+def extract_group_post(raw_post: RawPost, options: Options, request_fn: RequestFunction, full_post_html = None) -> Post:
+    return GroupPostExtractor(raw_post, options, request_fn, full_post_html).extract_post()
 
-def extract_group_post(raw_post: RawPost, options: Options, request_fn: RequestFunction) -> Post:
-    return GroupPostExtractor(raw_post, options, request_fn).extract_post()
-
-def extract_photo_post(raw_post: RawPost, options: Options, request_fn: RequestFunction) -> Post:
-    return PhotoPostExtractor(raw_post, options, request_fn).extract_post()
+def extract_photo_post(raw_post: RawPost, options: Options, request_fn: RequestFunction, full_post_html) -> Post:
+    return PhotoPostExtractor(raw_post, options, request_fn, full_post_html).extract_post()
 
 
 class PostExtractor:
@@ -68,13 +67,13 @@ class PostExtractor:
     more_url_regex = re.compile(r'(?<=…\s)<a href="([^"]+)')
     post_story_regex = re.compile(r'href="(\/story[^"]+)" aria')
 
-    def __init__(self, element, options, request_fn):
+    def __init__(self, element, options, request_fn, full_post_html = None):
         self.element = element
         self.options = options
         self.request = request_fn
 
         self._data_ft = None
-        self._full_post_html = None
+        self._full_post_html = full_post_html
         self._live_data = {}
 
     # TODO: This is getting ugly, create a dataclass for Post
@@ -561,6 +560,19 @@ class PostExtractor:
 
     def extract_video(self):
         video_data_element = self.element.find('[data-sigil="inlineVideo"]', first=True)
+        photoset_link = self.element.find("a[href*='photoset_token']", first=True)
+        if photoset_link and photoset_link.find("i[aria-label='video']"):
+            query = parse_qs(urlparse(photoset_link.attrs.get("href")).query)
+            video_id = query["photo"][0]
+            logger.debug(f"Fetching {video_id}")
+            response = self.request(video_id)
+            video_post = PostExtractor(response.html, self.options, self.request, full_post_html=response.html)
+            return {
+                "video_id": video_id,
+                "video": video_post.extract_video().get("video"),
+                **video_post.extract_video_meta()
+            }
+
         if video_data_element is None:
             return None
         if self.options.get('youtube_dl'):
