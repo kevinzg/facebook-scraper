@@ -753,11 +753,12 @@ class PostExtractor:
             return
         comments = list(elem.find('div[data-sigil="comment"]'))
 
+        more_selector = f"a[href*='{self.post.get('post_id')}']"
         direction = "View more comments"
-        more = elem.find("a", containing=direction, first=True)
+        more = elem.find(more_selector, containing=direction, first=True)
         if not more:
             direction = "View previous comments"
-            more = elem.find("a", containing=direction, first=True)
+            more = elem.find(more_selector, containing=direction, first=True)
 
         # Comment limiting and progress
         limit = 5000 # Default
@@ -796,7 +797,7 @@ class PostExtractor:
                 break
             more_comments = elem.find('div[data-sigil="comment"]')
             comments.extend(more_comments)
-            more = elem.find("a", containing=direction, first=True)
+            more = elem.find(more_selector, containing=direction, first=True)
 
         logger.debug(f"Found {len(comments)} comments")
         results = []
