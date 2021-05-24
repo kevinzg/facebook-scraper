@@ -424,10 +424,31 @@ class PostExtractor:
             url = link.attrs["href"]
             if "photoset_token" in url:
                 query = parse_qs(urlparse(url).query)
-                photo_id = query["photo"][0]
                 profile_id = query["profileid"][0]
-                url = f"/photo.php?fbid={photo_id}&profileid={profile_id}"
-
+                token = query["photoset_token"][0]
+                url = f"{profile_id}/posts/{token}"
+                logger.debug(f"Fetching {url}")
+                response = self.request(url)
+                results = self.get_jsmod("mtouch_snowflake_paged_query", response.html)
+                results = list(results["query_results"].values())[0]["media"]
+                video_ids = []
+                videos = []
+                for item in results["edges"]:
+                    node = item["node"]
+                    if node["is_playable"]:
+                        video_ids.append(node["id"])
+                        videos.append(node["playable_url_hd"] or node["playable_url"])
+                    images.append(node["full_width_image"]["uri"])
+                    descriptions.append(node["accessibility_caption"])
+                return {
+                    "image": images[0] if images else None,
+                    "images": images,
+                    "images_description": descriptions,
+                    "video": videos[0] if videos else None,
+                    "video_id": video_ids[0] if video_ids else None,
+                    "video_ids": video_ids,
+                    "videos": videos
+                }
             url = utils.urljoin(FB_MOBILE_BASE_URL, url)
             logger.debug(f"Fetching {url}")
             try:
@@ -568,10 +589,11 @@ class PostExtractor:
             response = self.request(video_id)
             video_post = PostExtractor(response.html, self.options, self.request, full_post_html=response.html)
             video_post.post = {"post_id": video_id}
+            meta = video_post.extract_video_meta() or {}
             return {
                 "video_id": video_id,
                 "video": video_post.extract_video().get("video"),
-                **video_post.extract_video_meta()
+                **meta
             }
 
         if video_data_element is None:
@@ -869,11 +891,13 @@ class PostExtractor:
             logger.error(e)
         return self._live_data
 
-    def get_jsmod(self, name):
-        if self.full_post_html:
-            match = re.search(name + r'[^{]+({.+?})(?:\]\]|,\d)', self.full_post_html.html)
-        else:
-            match = re.search(name + r'[^{]+({.+?})(?:\]\]|,\d)', self.element.html)
+    def get_jsmod(self, name, element = None):
+        if not element:
+            if self.full_post_html:
+                element = self.full_post_html
+            else:
+                element = self.element
+        match = re.search(name + r'[^{]+({.+?})(?:\]\]|,\d)', element.html)
         if match:
             # Use demjson to load JS, as unquoted keys is not valid JSON
             return demjson.decode(match.group(1))
