@@ -99,7 +99,7 @@ class PageParser:
 
         self._parse()
 
-    def get_page(self, selection, selection_name) -> Page:
+    def get_page(self) -> Page:
         # Select only elements that have the data-ft attribute
         return self._get_page('article[data-ft],div.async_like[data-ft]', 'article')
 
