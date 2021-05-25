@@ -42,7 +42,12 @@ def iter_photos(account: str, request_fn: RequestFunction, **kwargs) -> Iterator
 def generic_iter_pages(start_url, page_parser_cls, request_fn: RequestFunction, **kwargs) -> Iterator[Page]:
     next_url = start_url
 
+    request_url_callback = kwargs.get('request_url_callback')
     while next_url:
+        # Execute callback of starting a new URL request
+        if request_url_callback:
+            request_url_callback(next_url)
+
         RETRY_LIMIT = 5
         for retry in range(1, RETRY_LIMIT + 1):
             try:
