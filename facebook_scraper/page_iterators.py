@@ -187,13 +187,12 @@ class PhotosPageParser(PageParser):
         return super()._get_page('div._5v64', "div._5v64")
 
     def get_next_page(self) -> Optional[URL]:
-        assert self.cursor_blob is not None
+        if self.cursor_blob is not None:
+            match = self.cursor_regex.search(self.cursor_blob)
+            if match:
+                return match.groups()[0]
 
-        match = self.cursor_regex.search(self.cursor_blob)
-        if match:
-            return match.groups()[0]
-
-        match = self.cursor_regex_2.search(self.cursor_blob)
-        if match:
-            value = match.groups()[0]
-            return value.encode('utf-8').decode('unicode_escape').replace('\\/', '/')
+            match = self.cursor_regex_2.search(self.cursor_blob)
+            if match:
+                value = match.groups()[0]
+                return value.encode('utf-8').decode('unicode_escape').replace('\\/', '/')
