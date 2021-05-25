@@ -53,7 +53,7 @@ class FacebookScraper:
                 'https': proxy
             }
         })
-        ip = self.get("http://ifconfig.co", headers={"Accept": "application/json"}).json()
+        ip = self.get("http://ipinfo.io", headers={"Accept": "application/json"}).json()
         logger.debug(f"Proxy details: {ip}")
 
     def get_posts(self, account: str, **kwargs) -> Iterator[Post]:
