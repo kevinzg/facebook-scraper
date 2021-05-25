@@ -13,7 +13,7 @@ from . import utils
 from .constants import DEFAULT_PAGE_LIMIT, FB_BASE_URL, FB_MOBILE_BASE_URL, FB_W3_BASE_URL
 from .extractors import extract_group_post, extract_post, extract_photo_post
 from .fb_types import Post, Profile
-from .page_iterators import iter_group_pages, iter_pages
+from .page_iterators import iter_group_pages, iter_pages, iter_photos
 from . import exceptions
 
 
@@ -58,6 +58,10 @@ class FacebookScraper:
 
     def get_posts(self, account: str, **kwargs) -> Iterator[Post]:
         iter_pages_fn = partial(iter_pages, account=account, request_fn=self.get, **kwargs)
+        return self._generic_get_posts(extract_post, iter_pages_fn, **kwargs)
+
+    def get_photos(self, account: str, **kwargs) -> Iterator[Post]:
+        iter_pages_fn = partial(iter_photos, account=account, request_fn=self.get, **kwargs)
         return self._generic_get_posts(extract_post, iter_pages_fn, **kwargs)
 
     def get_posts_by_url(self, post_urls, options={}, remove_source=True) -> Iterator[Post]:

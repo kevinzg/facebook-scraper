@@ -30,6 +30,11 @@ def iter_group_pages(group: Union[str, int], request_fn: RequestFunction) -> Ite
     return generic_iter_pages(start_url, GroupPageParser, request_fn)
 
 
+def iter_photos(account: str, request_fn: RequestFunction, **kwargs) -> Iterator[Page]:
+    start_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/photos/')
+    return generic_iter_pages(start_url, PhotosPageParser, request_fn, **kwargs)
+
+
 def generic_iter_pages(start_url, page_parser_cls, request_fn: RequestFunction, **kwargs) -> Iterator[Page]:
     next_url = start_url
 
@@ -82,25 +87,9 @@ class PageParser:
 
         self._parse()
 
-    def get_page(self) -> Page:
-        raw_page = self.get_raw_page()
-        raw_posts = raw_page.find(
-            'article[data-ft],div.async_like[data-ft]'
-        )  # Select only articles that have the data-ft attribute
-
-        if not raw_posts:
-            logger.warning("No raw posts (<article> elements) were found in this page.")
-            if logger.isEnabledFor(logging.DEBUG):
-                content = textwrap.indent(
-                    raw_page.text,
-                    prefix='| ',
-                    predicate=lambda _: True,
-                )
-                sep = '+' + '-' * 60
-                logger.debug("The page url is: %s", self.response.url)
-                logger.debug("The page content is:\n%s\n%s%s\n", sep, content, sep)
-
-        return raw_posts
+    def get_page(self, selection, selection_name) -> Page:
+        # Select only elements that have the data-ft attribute
+        return self._get_page('article[data-ft],div.async_like[data-ft]', 'article')
 
     def get_raw_page(self) -> RawPage:
         return self.html
@@ -149,8 +138,24 @@ class PageParser:
                 self.cursor_blob = action['code']
 
         assert self.html is not None
-        assert self.cursor_blob is not None
 
+    def _get_page(self, selection, selection_name) -> Page:
+        raw_page = self.get_raw_page()
+        raw_posts = raw_page.find(selection)
+
+        if not raw_posts:
+            logger.warning("No raw posts (<%s> elements) were found in this page." % selection_name)
+            if logger.isEnabledFor(logging.DEBUG):
+                content = textwrap.indent(
+                    raw_page.text,
+                    prefix='| ',
+                    predicate=lambda _: True,
+                )
+                sep = '+' + '-' * 60
+                logger.debug("The page url is: %s", self.response.url)
+                logger.debug("The page content is:\n%s\n%s%s\n", sep, content, sep)
+
+        return raw_posts
 
 class GroupPageParser(PageParser):
     """Class for parsing a single page of a group"""
@@ -173,3 +178,22 @@ class GroupPageParser(PageParser):
 
     def _parse(self):
         self._parse_html()
+
+class PhotosPageParser(PageParser):
+    cursor_regex = re.compile(r'href:"(/photos/pandora/[^"]+)"')
+    cursor_regex_2 = re.compile(r'href":"(\\/photos\\/pandora\\/[^"]+)"')
+
+    def get_page(self) -> Page:
+        return super()._get_page('div._5v64', "div._5v64")
+
+    def get_next_page(self) -> Optional[URL]:
+        assert self.cursor_blob is not None
+
+        match = self.cursor_regex.search(self.cursor_blob)
+        if match:
+            return match.groups()[0]
+
+        match = self.cursor_regex_2.search(self.cursor_blob)
+        if match:
+            value = match.groups()[0]
+            return value.encode('utf-8').decode('unicode_escape').replace('\\/', '/')
