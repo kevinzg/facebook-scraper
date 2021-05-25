@@ -628,13 +628,8 @@ class PostExtractor:
             ydl_opts['quiet'] = False
 
         try:
-            post_id = self.post.get('post_id')
-            if post_id is None:
-                return None
-
-            video_page = 'https://www.facebook.com/' + post_id
             with YoutubeDL(ydl_opts) as ydl:
-                url = ydl.extract_info(video_page, download=False)['url']
+                url = ydl.extract_info(self.post.get("post_url"), download=False)['url']
                 return {'video': url}
         except ExtractorError as ex:
             logger.error("Error extracting video with youtube-dl: %r", ex)
