@@ -2,7 +2,7 @@ import datetime
 
 import pytest
 
-from facebook_scraper import get_posts
+from facebook_scraper import get_posts, get_photos
 
 
 @pytest.mark.vcr()
@@ -123,6 +123,8 @@ class TestGetPosts:
             assert 'w3_fb_url' in post
             assert 'fetched_time' in post
 
+    def test_smoketest(self):
+        list(get_posts(account='Nintendo', pages=2))
 
 @pytest.mark.vcr()
 class TestGetGroupPosts:
@@ -168,3 +170,11 @@ class TestGetGroupPosts:
         post = next(get_posts(group=117507531664134))
 
         assert post == expected_post
+
+    def test_smoketest(self):
+        list(get_posts(group=117507531664134, pages=2))
+
+@pytest.mark.vcr()
+class TestGetPhotos:
+    def test_smoketest(self):
+        list(get_photos(account='Nintendo', pages=2))
