@@ -3,6 +3,7 @@ import logging
 import re
 import textwrap
 from typing import Iterator, Optional, Union
+import time
 
 from requests.exceptions import HTTPError
 import warnings
@@ -34,11 +35,19 @@ def generic_iter_pages(start_url, page_parser_cls, request_fn: RequestFunction, 
     next_url = start_url
 
     while next_url:
-        logger.debug("Requesting page from: %s", next_url)
-        try:
-            response = request_fn(next_url)
-        except HTTPError as e:
-            raise exceptions.NotFound(e) from None
+        RETRY_LIMIT = 5
+        for retry in range(1, RETRY_LIMIT + 1):
+            try:
+                logger.debug("Requesting page from: %s", next_url)
+                response = request_fn(next_url)
+                break
+            except HTTPError as e:
+                if e.response.status_code == 500 and retry < RETRY_LIMIT:
+                    sleep_duration = retry * 2
+                    logger.debug(f"Caught exception, retry number {retry}. Sleeping for {sleep_duration}")
+                    time.sleep(sleep_duration)
+                else:
+                    raise
 
         logger.debug("Parsing page response")
         parser = page_parser_cls(response)
