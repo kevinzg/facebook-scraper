@@ -44,7 +44,7 @@ def generic_iter_pages(start_url, page_parser_cls, request_fn: RequestFunction, 
             except HTTPError as e:
                 if e.response.status_code == 500 and retry < RETRY_LIMIT:
                     sleep_duration = retry * 2
-                    logger.debug(f"Caught exception, retry number {retry}. Sleeping for {sleep_duration}")
+                    logger.debug(f"Caught exception, retry number {retry}. Sleeping for {sleep_duration}s")
                     time.sleep(sleep_duration)
                 else:
                     raise
