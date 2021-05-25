@@ -315,6 +315,7 @@ class FacebookScraper:
         page_limit=DEFAULT_PAGE_LIMIT,
         options=None,
         remove_source=True,
+        **kwargs
     ):
         counter = itertools.count(0) if page_limit is None else range(page_limit)
 
