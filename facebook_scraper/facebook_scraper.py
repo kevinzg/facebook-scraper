@@ -296,6 +296,8 @@ class FacebookScraper:
                 # Remember Browser. Please save the browser that you just verified. You won't have to enter a code when you log in from browsers that you've saved.
                 response = self.submit_form(response, {"name_action_selected": "save_device"})
 
+        if "Login approval needed" in response.text or "checkpoint" in response.url:
+            raise exceptions.LoginError("Login approval needed")
         if 'c_user' not in self.session.cookies:
             raise exceptions.LoginError("Login unsuccessful")
 
