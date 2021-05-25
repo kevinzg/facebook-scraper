@@ -18,11 +18,14 @@ logger = logging.getLogger(__name__)
 
 
 def iter_pages(account: str, request_fn: RequestFunction, **kwargs) -> Iterator[Page]:
-    start_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/posts/')
-    try:
-        request_fn(start_url)
-    except HTTPError as ex:
-        start_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/')
+    if kwargs.get("start_url"):
+        start_url = kwargs.pop("start_url")
+    else:
+        start_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/posts/')
+        try:
+            request_fn(start_url)
+        except HTTPError as ex:
+            start_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/')
     return generic_iter_pages(start_url, PageParser, request_fn, **kwargs)
 
 
