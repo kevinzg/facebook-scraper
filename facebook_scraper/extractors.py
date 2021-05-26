@@ -218,7 +218,7 @@ class PostExtractor:
             element = self.full_post_html.find('.story_body_container', first=True)
 
         nodes = element.find('p, header, span[role=presentation]')
-        if nodes:
+        if nodes and len(nodes) > 1:
             post_text = []
             shared_text = []
             ended = False
@@ -252,7 +252,7 @@ class PostExtractor:
                 'shared_text': shared_text,
             }
         else:
-            text = element.find(".story_body_container>div").text
+            text = element.find(".story_body_container>div", first=True).text
             return {
                 'text': text,
                 'post_text': text
