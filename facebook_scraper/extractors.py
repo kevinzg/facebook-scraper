@@ -49,7 +49,7 @@ class PostExtractor:
     photo_link = re.compile(r'href=\"(/[^\"]+/photos/[^\"]+?)\"')
     photo_link_2 = re.compile(r'href=\"(/photo.php[^\"]+?)\"')
     image_regex = re.compile(
-        r'<a href=\"([^\"]+?)\" target=\"_blank\" class=\"sec\">View Full Size<\/a>',
+        r'<a href=\"([^\"]+?)\" target=\"_blank\" class=\"sec\">',
         re.IGNORECASE,
     )
     image_regex_lq = re.compile(r"background-image: url\('(.+)'\)")
