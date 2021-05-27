@@ -147,6 +147,7 @@ class PostExtractor:
             self.extract_factcheck,
             self.extract_share_information,
             self.extract_availability,
+            self.extract_listing
         ]
 
         post = self.make_new_post()
@@ -856,6 +857,16 @@ class PostExtractor:
         for bad_json in bad_jsons:
             good_json = self.bad_json_key_regex.sub(r'\g<prefix>"\g<key>":', bad_json)
             yield json.loads(good_json)
+
+    def extract_listing(self) -> PartialPost:
+        # Marketplace listings
+        divs = self.element.find("div[data-ft='{\"tn\":\"H\"}']>div>div")
+        if len(divs) >= 3:
+            return {
+                "listing_title": divs[0].find("span")[-1].text,
+                "listing_price": divs[1].text,
+                "listing_location": divs[2].text
+            }
 
     @property
     def data_ft(self) -> dict:
