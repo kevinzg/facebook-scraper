@@ -21,3 +21,7 @@ class LoginRequired(Exception):
 class LoginError(Exception):
     '''Failed to log in'''
     pass
+
+class UnexpectedResponse(Exception):
+    '''Facebook served something weird'''
+    pass

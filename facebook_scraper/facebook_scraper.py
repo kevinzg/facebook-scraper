@@ -247,6 +247,8 @@ class FacebookScraper:
             response.html.html = response.html.html.replace('<!--', '').replace('-->', '')
             response.raise_for_status()
             self.check_locale(response)
+            if "<noscript>" not in response.html.html:
+                raise exceptions.UnexpectedResponse(f"Facebook served mbasic/noscript content unexpectedly on {response.url}")
             title = response.html.find("title", first=True)
             not_found_titles = ["page not found", "content not found"]
             temp_ban_titles = ["you can't use this feature at the moment", "you’re temporarily blocked"]
@@ -279,7 +281,7 @@ class FacebookScraper:
 
     def login(self, email: str, password: str):
         response = self.get(self.base_url)
-        response = self.submit_form(response, {"email": email, "pass": password})
+        response = self.submit_form(response, {"email": email, "pass": password, "_fb_noscript": None})
 
         login_error = response.html.find('#login_error', first=True)
         if login_error:
