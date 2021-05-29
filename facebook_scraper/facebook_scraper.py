@@ -247,7 +247,7 @@ class FacebookScraper:
             response.html.html = response.html.html.replace('<!--', '').replace('-->', '')
             response.raise_for_status()
             self.check_locale(response)
-            if "<noscript>" not in response.html.html:
+            if "noscript" not in response.html.html:
                 raise exceptions.UnexpectedResponse(f"Facebook served mbasic/noscript content unexpectedly on {response.url}")
             title = response.html.find("title", first=True)
             not_found_titles = ["page not found", "content not found"]
