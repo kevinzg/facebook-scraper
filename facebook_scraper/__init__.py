@@ -250,7 +250,11 @@ def write_posts_to_csv(
             except Exception:
                 logger.exception("Error writing post to disk")
 
-    keys = list_of_posts[0].keys()
+    keys = list(list_of_posts[0].keys())
+    for post in list_of_posts:
+        for key in post.keys():
+            if key not in keys:
+                keys.append(key)
 
     if filename is None:
         filename = str(account or group) + "_posts.csv"
