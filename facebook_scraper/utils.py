@@ -130,7 +130,7 @@ def parse_datetime(text: str, search=True) -> Optional[datetime]:
         time_match = datetime_regex.search(text)
         dow_match = day_of_week_regex.search(text)
         if time_match:
-            text = time_match.group(0)
+            text = time_match.group(0).replace("mth", "month")
         elif dow_match:
             text = dow_match.group(0)
             today = calendar.day_abbr[datetime.today().weekday()]
