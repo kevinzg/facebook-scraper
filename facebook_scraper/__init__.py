@@ -27,7 +27,7 @@ def set_cookies(cookies):
         missing_cookies = [c for c in ['c_user', 'xs'] if c not in cookies]
         if missing_cookies:
             raise exceptions.InvalidCookies(f"Missing cookies with name(s): {missing_cookies}")
-        _scraper.session.cookies = cookies
+        _scraper.session.cookies.update(cookies)
         if not _scraper.is_logged_in():
             raise exceptions.InvalidCookies(f"Cookies are not valid")
 
@@ -36,6 +36,9 @@ def set_proxy(proxy):
 
 def set_user_agent(user_agent):
     _scraper.set_user_agent(user_agent)
+
+def set_noscript(noscript):
+    _scraper.set_noscript(noscript)
 
 def get_profile(
     account: str,

@@ -49,6 +49,12 @@ class FacebookScraper:
     def set_user_agent(self, user_agent):
         self.session.headers["User-Agent"] = user_agent
 
+    def set_noscript(self, noscript):
+        if noscript:
+            self.session.cookies.set("noscript", "1")
+        else:
+            self.session.cookies.set("noscript", "0")
+
     def set_proxy(self, proxy):
         self.requests_kwargs.update({
             'proxies': {
@@ -60,6 +66,7 @@ class FacebookScraper:
         logger.debug(f"Proxy details: {ip}")
 
     def get_posts(self, account: str, **kwargs) -> Iterator[Post]:
+        kwargs["scraper"] = self
         iter_pages_fn = partial(iter_pages, account=account, request_fn=self.get, **kwargs)
         return self._generic_get_posts(extract_post, iter_pages_fn, **kwargs)
 
@@ -251,7 +258,7 @@ class FacebookScraper:
             response.raise_for_status()
             self.check_locale(response)
             if "noscript" not in response.html.html:
-                raise exceptions.UnexpectedResponse(f"Facebook served mbasic/noscript content unexpectedly on {response.url}")
+                warnings.warn(f"Facebook served mbasic/noscript content unexpectedly on {response.url}")
             title = response.html.find("title", first=True)
             not_found_titles = ["page not found", "content not found"]
             temp_ban_titles = ["you can't use this feature at the moment", "you’re temporarily blocked"]

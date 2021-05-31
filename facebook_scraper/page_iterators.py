@@ -48,7 +48,7 @@ def generic_iter_pages(start_url, page_parser_cls, request_fn: RequestFunction, 
         if request_url_callback:
             request_url_callback(next_url)
 
-        RETRY_LIMIT = 5
+        RETRY_LIMIT = 6
         for retry in range(1, RETRY_LIMIT + 1):
             try:
                 logger.debug("Requesting page from: %s", next_url)
@@ -58,6 +58,9 @@ def generic_iter_pages(start_url, page_parser_cls, request_fn: RequestFunction, 
                 if e.response.status_code == 500 and retry < RETRY_LIMIT:
                     sleep_duration = retry * 2
                     logger.debug(f"Caught exception, retry number {retry}. Sleeping for {sleep_duration}s")
+                    if retry == (RETRY_LIMIT / 2):
+                        logger.debug("Requesting noscript")
+                        kwargs["scraper"].set_noscript(True)
                     time.sleep(sleep_duration)
                 else:
                     raise

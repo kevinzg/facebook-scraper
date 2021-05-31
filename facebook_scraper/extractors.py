@@ -252,8 +252,14 @@ class PostExtractor:
                 'post_text': post_text,
                 'shared_text': shared_text,
             }
-        else:
+        elif element.find(".story_body_container>div", first=True):
             text = element.find(".story_body_container>div", first=True).text
+            return {
+                'text': text,
+                'post_text': text
+            }
+        elif len(nodes) == 1:
+            text = nodes[0].text
             return {
                 'text': text,
                 'post_text': text
