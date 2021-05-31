@@ -34,6 +34,9 @@ def set_cookies(cookies):
 def set_proxy(proxy):
     _scraper.set_proxy(proxy)
 
+def set_user_agent(user_agent):
+    _scraper.set_user_agent(user_agent)
+
 def get_profile(
     account: str,
     **kwargs,

@@ -88,8 +88,8 @@ class PageParser:
 
     json_prefix = 'for (;;);'
 
-    cursor_regex = re.compile(r'href:"(/page_content[^"]+)"')  # First request
-    cursor_regex_2 = re.compile(r'href":"(\\/page_content[^"]+)"')  # Other requests
+    cursor_regex = re.compile(r'href[:=]"(/page_content[^"]+)"')  # First request
+    cursor_regex_2 = re.compile(r'href"[:=]"(\\/page_content[^"]+)"')  # Other requests
     cursor_regex_3 = re.compile(
         r'href:"(/profile/timeline/stream/\?cursor[^"]+)"'
     )  # scroll/cursor based, first request
@@ -106,7 +106,7 @@ class PageParser:
 
     def get_page(self) -> Page:
         # Select only elements that have the data-ft attribute
-        return self._get_page('article[data-ft],div.async_like[data-ft]', 'article')
+        return self._get_page('[data-ft*="top_level_post_id"]', 'article')
 
     def get_raw_page(self) -> RawPage:
         return self.html
@@ -148,9 +148,10 @@ class PageParser:
         prefix_length = len(self.json_prefix)
         data = json.loads(self.response.text[prefix_length:])  # Strip 'for (;;);'
 
-        for action in data['payload']['actions']:
+        for action in data.get('payload', data)['actions']:
             if action['cmd'] == 'replace':
                 self.html = utils.make_html_element(action['html'], url=FB_MOBILE_BASE_URL)
+                self.cursor_blob = self.html.html
             elif action['cmd'] == 'script':
                 self.cursor_blob = action['code']
 
