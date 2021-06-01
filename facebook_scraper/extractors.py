@@ -758,6 +758,9 @@ class PostExtractor:
         profile_picture = comment.find(".profpic.img", first=True)
         name = profile_picture.attrs.get("alt") or profile_picture.attrs.get("aria-label")
         name = name.split(",")[0]
+        commenter_id = re.search(r'feed_story_ring(\d+)', comment.html)
+        if commenter_id:
+            commenter_id = commenter_id.group(1)
 
         url = profile_picture.element.getparent().attrib.get("href")
         if url:
@@ -787,6 +790,7 @@ class PostExtractor:
         return {
             "comment_id": comment_id,
             "comment_url": utils.urljoin(FB_BASE_URL, comment_id),
+            "commenter_id": commenter_id,
             "commenter_url": url,
             "commenter_name": name,
             "commenter_meta": commenter_meta,
