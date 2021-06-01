@@ -230,8 +230,21 @@ class FacebookScraper:
         try:
             resp = self.get(url).html
             admins = resp.find("div:first-child>div.touchable a:not(.touchable)")
-            result["admins"] = [{"name": e.text, "link": e.attrs["href"]} for e in admins]
-        except Exception as e:
+            result["admins"] = [{"name": e.text, "link": e.attrs["href"].split("?")[0]} for e in admins]
+            url = resp.find("a[href^='/browse/group/members']", first=True).attrs["href"]
+            members = []
+            while url:
+                logger.debug(f"Requesting page from: {url}")
+                resp = self.get(url).html
+                elems = resp.find("#root div.touchable a:not(.touchable)")
+                members.extend([{"name": e.text, "link": e.attrs["href"]} for e in elems])
+                more = re.search(r'"m_more_item",href:"([^"]+)', resp.text)
+                if more:
+                    url = more.group(1)
+                else:
+                    url = None
+            result["members"] = [m for m in members if m not in result["admins"]]
+        except exceptions.LoginRequired as e:
             pass
         return result
 
