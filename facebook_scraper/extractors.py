@@ -426,6 +426,7 @@ class PostExtractor:
             return None
         images = []
         descriptions = []
+        image_ids = []
         photo_links = self.element.find(
             "div.story_body_container>div a[href*='photo.php'], "
             "div.story_body_container>div a[href*='/photos/'], "
@@ -457,11 +458,14 @@ class PostExtractor:
                         video_ids.append(node["id"])
                         videos.append(node["playable_url_hd"] or node["playable_url"])
                     images.append(node["full_width_image"]["uri"])
+                    image_ids.append(node["id"])
                     descriptions.append(node["accessibility_caption"])
                 return {
                     "image": images[0] if images else None,
                     "images": images,
                     "images_description": descriptions,
+                    "image_id": image_ids[0] if image_ids else None,
+                    "image_ids": image_ids,
                     "video": videos[0] if videos else None,
                     "video_id": video_ids[0] if video_ids else None,
                     "video_ids": video_ids,
@@ -474,13 +478,18 @@ class PostExtractor:
                 images.append(self.extract_photo_link_HQ(response.text))
                 elem = response.html.find(".img[data-sigil='photo-image']", first=True)
                 descriptions.append(elem.attrs.get("alt") or elem.attrs.get("aria-label"))
+                image_ids.append(re.search(r'[=/](\d+)', url).group(1))
             except Exception as e:
                 logger.error(e)
                 total_photos_in_gallery -= 1
 
         while len(images) < total_photos_in_gallery:
             # More photos to fetch. Follow the left arrow link of the last image we were on
-            url = response.html.find('a.touchable[data-gt=\'{"tn":"+>"}\']', first=True).attrs["href"]
+            direction = '{"tn":"+>"}'
+            if response.html.find("a", containing="Photos from", first=True):
+                # Right arrow link
+                direction = '{"tn":"+="}'
+            url = response.html.find(f"a.touchable[data-gt='{direction}']", first=True).attrs["href"]
             if not url.startswith("http"):
                 url = utils.urljoin(FB_MOBILE_BASE_URL, url)
             logger.debug(f"Fetching {url}")
@@ -490,8 +499,10 @@ class PostExtractor:
                 images.append(photo_link)
                 elem = response.html.find(".img[data-sigil='photo-image']", first=True)
                 descriptions.append(elem.attrs.get("alt") or elem.attrs.get("aria-label"))
+                image_ids.append(re.search(r'[=/](\d+)', url).group(1))
         image = images[0] if images else None
-        return {"image": image, "images": images, "images_description": descriptions}
+        image_id = image_ids[0] if image_ids else None
+        return {"image": image, "images": images, "images_description": descriptions, "image_id": image_id, "image_ids": image_ids}
 
     def extract_reactions(self) -> PartialPost:
         """Fetch share and reactions information with a existing post obtained by `get_posts`.
