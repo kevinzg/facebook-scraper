@@ -780,6 +780,10 @@ class PostExtractor:
         else:
             date = None
 
+        image_url = comment.find('[data-sigil="comment-body"] + div a[href]', first=True)
+        if image_url and image_url.attrs["href"].startswith("https://lm.facebook.com/l.php"):
+            image_url = parse_qs(urlparse(image_url.attrs["href"]).query).get("u")
+
         return {
             "comment_id": comment_id,
             "comment_url": utils.urljoin(FB_BASE_URL, comment_id),
@@ -788,6 +792,7 @@ class PostExtractor:
             "commenter_meta": commenter_meta,
             "comment_text": text,
             "comment_time": date,
+            "comment_image": image_url
         }
 
     def extract_comments_full(self):
