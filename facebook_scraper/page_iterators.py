@@ -124,7 +124,7 @@ class PageParser:
         match = self.cursor_regex_2.search(self.cursor_blob)
         if match:
             value = match.groups()[0]
-            return value.encode('utf-8').decode('unicode_escape').replace('\\/', '/')
+            return utils.unquote(value.encode('utf-8').decode('unicode_escape').replace('\\/', '/'))
 
         match = self.cursor_regex_3.search(self.cursor_blob)
         if match:
