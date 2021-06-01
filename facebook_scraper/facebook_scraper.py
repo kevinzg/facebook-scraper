@@ -282,6 +282,8 @@ class FacebookScraper:
                     raise exceptions.TemporarilyBanned(title.text)
                 elif ">Your Account Has Been Disabled<" in response.html.html:
                     raise exceptions.AccountDisabled("Your Account Has Been Disabled")
+                elif ">We saw unusual activity on your account. This may mean that someone has used your account without your knowledge.<" in response.html.html:
+                    raise exceptions.AccountDisabled("Your Account Has Been Locked")
                 elif (title.text == "Log in to Facebook | Facebook" or
                       response.url.startswith(utils.urljoin(FB_MOBILE_BASE_URL, "login")) or
                       response.url.startswith(utils.urljoin(FB_W3_BASE_URL, "login")) or
