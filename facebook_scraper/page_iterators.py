@@ -119,7 +119,7 @@ class PageParser:
 
         match = self.cursor_regex.search(self.cursor_blob)
         if match:
-            return match.groups()[0]
+            return utils.unquote(match.groups()[0]).replace("&amp;", "&")
 
         match = self.cursor_regex_2.search(self.cursor_blob)
         if match:
