@@ -24,14 +24,10 @@ class FacebookScraper:
     """Class for creating FacebookScraper Iterators"""
 
     base_url = FB_MOBILE_BASE_URL
-    user_agent = (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/76.0.3809.87 Safari/537.36"
-    )
     default_headers = {
-        'User-Agent': user_agent,
         'Accept-Language': 'en-US,en;q=0.5',
+        "Sec-Fetch-User": "?1",
+        "User-Agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Mobile Safari/537.36"
     }
     have_checked_locale = False
 
