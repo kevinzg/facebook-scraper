@@ -483,6 +483,7 @@ class PostExtractor:
                 logger.error(e)
                 total_photos_in_gallery -= 1
 
+        errors = 0
         while len(images) < total_photos_in_gallery:
             # More photos to fetch. Follow the left arrow link of the last image we were on
             direction = '{"tn":"+>"}'
@@ -500,6 +501,11 @@ class PostExtractor:
                 elem = response.html.find(".img[data-sigil='photo-image']", first=True)
                 descriptions.append(elem.attrs.get("alt") or elem.attrs.get("aria-label"))
                 image_ids.append(re.search(r'[=/](\d+)', url).group(1))
+            else:
+                errors += 1
+                if errors > 5:
+                    logger.error("Reached image error limit")
+                    break
         image = images[0] if images else None
         image_id = image_ids[0] if image_ids else None
         return {"image": image, "images": images, "images_description": descriptions, "image_id": image_id, "image_ids": image_ids}
