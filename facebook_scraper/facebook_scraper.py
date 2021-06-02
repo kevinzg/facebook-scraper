@@ -245,7 +245,7 @@ class FacebookScraper:
         return result
 
     def get_group_posts(self, group: Union[str, int], **kwargs) -> Iterator[Post]:
-        iter_pages_fn = partial(iter_group_pages, group=group, request_fn=self.get)
+        iter_pages_fn = partial(iter_group_pages, group=group, request_fn=self.get, **kwargs)
         return self._generic_get_posts(extract_group_post, iter_pages_fn, **kwargs)
 
     def check_locale(self, response):
