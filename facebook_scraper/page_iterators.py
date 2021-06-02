@@ -30,9 +30,11 @@ def iter_pages(account: str, request_fn: RequestFunction, **kwargs) -> Iterator[
     return generic_iter_pages(start_url, PageParser, request_fn, **kwargs)
 
 
-def iter_group_pages(group: Union[str, int], request_fn: RequestFunction) -> Iterator[Page]:
+def iter_group_pages(group: Union[str, int], request_fn: RequestFunction, **kwargs) -> Iterator[Page]:
     start_url = utils.urljoin(FB_MOBILE_BASE_URL, f'groups/{group}/')
-    return generic_iter_pages(start_url, GroupPageParser, request_fn)
+    del kwargs['start_url']
+
+    return generic_iter_pages(start_url, GroupPageParser, request_fn, **kwargs)
 
 
 def iter_photos(account: str, request_fn: RequestFunction, **kwargs) -> Iterator[Page]:
