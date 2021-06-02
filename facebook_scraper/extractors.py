@@ -784,8 +784,11 @@ class PostExtractor:
             date = None
 
         image_url = comment.find('[data-sigil="comment-body"] + div a[href]', first=True)
-        if image_url and image_url.attrs["href"].startswith("https://lm.facebook.com/l.php"):
-            image_url = parse_qs(urlparse(image_url.attrs["href"]).query).get("u")
+        if image_url:
+            if image_url.attrs["href"].startswith("https://lm.facebook.com/l.php"):
+                image_url = parse_qs(urlparse(image_url.attrs["href"]).query).get("u")
+            else:
+                image_url = image_url.attrs["href"]
 
         return {
             "comment_id": comment_id,
