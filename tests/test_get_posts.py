@@ -171,6 +171,8 @@ class TestGetGroupPosts:
 
         assert post == expected_post
 
+    # todo: add a case with requesting a group post with start_url=None
+
     def test_smoketest(self):
         list(get_posts(group=117507531664134, pages=2))
 
