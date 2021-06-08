@@ -789,12 +789,15 @@ class PostExtractor:
         else:
             date = None
 
-        image_url = comment.find('[data-sigil="comment-body"] + div a[href]', first=True)
+        image_url = comment.find('a[href^="https://lm.facebook.com/l.php"]', first=True)
         if image_url:
-            if image_url.attrs["href"].startswith("https://lm.facebook.com/l.php"):
-                image_url = parse_qs(urlparse(image_url.attrs["href"]).query).get("u")
-            else:
-                image_url = image_url.attrs["href"]
+            image_url = parse_qs(urlparse(image_url.attrs["href"]).query).get("u")[0]
+        else:
+            image_url = comment.find('i.img:not(.profpic)[style]', first=True)
+            if image_url:
+                match = self.image_regex_lq.search(image_url.attrs["style"])
+                if match:
+                    image_url = utils.decode_css_url(match.groups()[0])
 
         return {
             "comment_id": comment_id,
