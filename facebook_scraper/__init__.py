@@ -30,6 +30,9 @@ def set_cookies(cookies):
         _scraper.session.cookies.update(cookies)
         if not _scraper.is_logged_in():
             raise exceptions.InvalidCookies(f"Cookies are not valid")
+    else:
+        # Explicitly unset cookies to return to unauthenticated requests
+        _scraper.session.cookies = cookiejar_from_dict({})
 
 def set_proxy(proxy):
     _scraper.set_proxy(proxy)
