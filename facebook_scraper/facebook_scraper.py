@@ -5,6 +5,7 @@ import warnings
 import re
 from functools import partial
 from typing import Iterator, Union
+import json
 
 from requests import RequestException
 from requests_html import HTMLSession
@@ -206,6 +207,25 @@ class FacebookScraper:
                     "tagline": tagline
                 })
             result["Friends"] = friends
+        return result
+
+    def get_page_info(self, page, **kwargs) -> Profile:
+        sample_post = next(self.get_posts(page, **kwargs))
+        resp = self.get(sample_post["post_id"])
+        elem = resp.html.find("script[type='application/ld+json']", first=True)
+        if not elem:
+            return None
+        meta = json.loads(elem.text)
+        result = meta["author"]
+        result["type"] = result.pop("@type")
+        desc = resp.html.find("meta[name='description']", first=True)
+        if desc:
+            match = re.search(r'([\d,]+)\s+likes', desc.attrs["content"])
+            if match:
+                result["likes"] = utils.parse_int(match.groups()[0])
+        for interaction in meta["interactionStatistic"]:
+            if interaction["interactionType"] == "http://schema.org/FollowAction":
+                result["followers"] = interaction["userInteractionCount"]
         return result
 
     def get_group_info(self, group, **kwargs) -> Profile:

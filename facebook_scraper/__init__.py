@@ -55,6 +55,21 @@ def get_profile(
     set_cookies(cookies)
     return _scraper.get_profile(account, **kwargs)
 
+def get_page_info(
+    account: str,
+    **kwargs
+) -> Profile:
+    """Get a page's information
+    Args:
+        account(str): The account of the profile.
+        cookies (Union[dict, CookieJar, str]): Cookie jar to use.
+            Can also be a filename to load the cookies from a file (Netscape format).
+    """
+    _scraper.requests_kwargs['timeout'] = kwargs.pop('timeout', DEFAULT_REQUESTS_TIMEOUT)
+    cookies = kwargs.pop('cookies', None)
+    set_cookies(cookies)
+    return _scraper.get_page_info(account, **kwargs)
+
 def get_group_info(
     group: Union[str, int],
     **kwargs
