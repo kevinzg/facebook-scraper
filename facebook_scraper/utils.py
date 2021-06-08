@@ -22,6 +22,7 @@ def find_and_search(node, selector, pattern, cast=str):
 def parse_int(value: str) -> int:
     return int(''.join(filter(lambda c: c.isdigit(), value)))
 
+
 def convert_numeric_abbr(s):
     mapping = {'k': 1000, 'm': 1e6}
     s = s.replace(",", "")
@@ -29,11 +30,12 @@ def convert_numeric_abbr(s):
         return int(float(s[:-1]) * mapping[s[-1].lower()])
     return int(s)
 
+
 def parse_duration(s) -> int:
     match = re.search('T(?P<hours>\d+H)?(?P<minutes>\d+M)?(?P<seconds>\d+S)', s)
     if match:
         result = 0
-        for k,v in match.groupdict().items():
+        for k, v in match.groupdict().items():
             if v:
                 if k == 'hours':
                     result += int(v.strip("H")) * 60 * 60
@@ -42,6 +44,7 @@ def parse_duration(s) -> int:
                 elif k == "seconds":
                     result += int(v.strip("S"))
         return result
+
 
 def decode_css_url(url: str) -> str:
     url = re.sub(r'\\(..) ', r'\\x\g<1>', url)
@@ -83,15 +86,7 @@ month = (
     r"Nov(?:ember)?|"
     r"Dec(?:ember)?"
 )
-day_of_week = (
-    r"Mon|"
-    r"Tue|"
-    r"Wed|"
-    r"Thu|"
-    r"Fri|"
-    r"Sat|"
-    r"Sun"
-)
+day_of_week = r"Mon|" r"Tue|" r"Wed|" r"Thu|" r"Fri|" r"Sat|" r"Sun"
 day_of_month = r"\d{1,2}"
 specific_date_md = f"(?:{month}) {day_of_month}" + r"(?:,? \d{4})?"
 specific_date_dm = f"{day_of_month} (?:{month})" + r"(?:,? \d{4})?"
@@ -112,6 +107,7 @@ relative_time = f"{relative_time_years}|{relative_time_months}|{relative_time_we
 
 datetime_regex = re.compile(fr"({exact_time}|{relative_time})", re.IGNORECASE)
 day_of_week_regex = re.compile(fr"({day_of_week})", re.IGNORECASE)
+
 
 def parse_datetime(text: str, search=True) -> Optional[datetime]:
     """Looks for a string that looks like a date and parses it into a datetime object.
@@ -165,10 +161,23 @@ def parse_cookie_file(filename: str) -> RequestsCookieJar:
                     if "Name raw" in c:
                         # Cookie Quick Manager JSON format
                         host = c["Host raw"].replace("https://", "").strip("/")
-                        jar.set(c["Name raw"], c["Content raw"], domain=host, path=c["Path raw"], expires=expires)
+                        jar.set(
+                            c["Name raw"],
+                            c["Content raw"],
+                            domain=host,
+                            path=c["Path raw"],
+                            expires=expires,
+                        )
                     else:
                         # EditThisCookie JSON format
-                        jar.set(c["name"], c["value"], domain=c["domain"], path=c["path"], secure=c["secure"], expires=expires)
+                        jar.set(
+                            c["name"],
+                            c["value"],
+                            domain=c["domain"],
+                            path=c["path"],
+                            secure=c["secure"],
+                            expires=expires,
+                        )
             elif type(data) is dict:
                 for k, v in data.items():
                     if type(v) is dict:

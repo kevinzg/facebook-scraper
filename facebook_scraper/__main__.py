@@ -37,7 +37,11 @@ def run():
 
     # Choose the right argument to pass to write_posts_to_csv (group or account)
     account_type = 'group' if args.group else 'account'
-    kwargs = {account_type: args.account, "cookies": args.cookies, "options": {"reactions": args.reactions, "reactors": args.reactors}}
+    kwargs = {
+        account_type: args.account,
+        "cookies": args.cookies,
+        "options": {"reactions": args.reactions, "reactors": args.reactors},
+    }
 
     # Enable logging
     if args.verbose > 0:

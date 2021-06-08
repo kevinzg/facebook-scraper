@@ -8,6 +8,9 @@
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/facebook-scraper.svg)](https://pypi.python.org/pypi/facebook-scraper/)
 [![GitHub commits since tagged version](https://img.shields.io/github/commits-since/kevinzg/facebook-scraper/v0.2.42)](https://github.com/kevinzg/facebook-scraper/commits/)
 
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
+
 Scrape Facebook public pages without an API key. Inspired by [twitter-scraper](https://github.com/kennethreitz/twitter-scraper).
 
 

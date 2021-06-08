@@ -18,6 +18,7 @@ from . import exceptions
 
 _scraper = FacebookScraper()
 
+
 def set_cookies(cookies):
     if isinstance(cookies, str):
         cookies = parse_cookie_file(cookies)
@@ -34,19 +35,23 @@ def set_cookies(cookies):
         # Explicitly unset cookies to return to unauthenticated requests
         _scraper.session.cookies = cookiejar_from_dict({})
 
+
 def set_proxy(proxy):
     _scraper.set_proxy(proxy)
+
 
 def set_user_agent(user_agent):
     _scraper.set_user_agent(user_agent)
 
+
 def set_noscript(noscript):
     _scraper.set_noscript(noscript)
+
 
 def get_profile(
     account: str,
     **kwargs,
- ) -> Profile:
+) -> Profile:
     """Get a Facebook user's profile information
     Args:
         account(str): The account of the profile.
@@ -58,10 +63,8 @@ def get_profile(
     set_cookies(cookies)
     return _scraper.get_profile(account, **kwargs)
 
-def get_page_info(
-    account: str,
-    **kwargs
-) -> Profile:
+
+def get_page_info(account: str, **kwargs) -> Profile:
     """Get a page's information
     Args:
         account(str): The account of the profile.
@@ -73,10 +76,8 @@ def get_page_info(
     set_cookies(cookies)
     return _scraper.get_page_info(account, **kwargs)
 
-def get_group_info(
-    group: Union[str, int],
-    **kwargs
-) -> Profile:
+
+def get_group_info(group: Union[str, int], **kwargs) -> Profile:
     """Get a group's profile information
     Args:
         group(str or int): The group name or ID
@@ -87,6 +88,7 @@ def get_group_info(
     cookies = kwargs.pop('cookies', None)
     set_cookies(cookies)
     return _scraper.get_group_info(group, **kwargs)
+
 
 def get_posts(
     account: Optional[str] = None,

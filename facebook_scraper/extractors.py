@@ -27,13 +27,21 @@ logger = logging.getLogger(__name__)
 PartialPost = Optional[Dict[str, Any]]
 
 
-def extract_post(raw_post: RawPost, options: Options, request_fn: RequestFunction, full_post_html = None) -> Post:
+def extract_post(
+    raw_post: RawPost, options: Options, request_fn: RequestFunction, full_post_html=None
+) -> Post:
     return PostExtractor(raw_post, options, request_fn, full_post_html).extract_post()
 
-def extract_group_post(raw_post: RawPost, options: Options, request_fn: RequestFunction, full_post_html = None) -> Post:
+
+def extract_group_post(
+    raw_post: RawPost, options: Options, request_fn: RequestFunction, full_post_html=None
+) -> Post:
     return GroupPostExtractor(raw_post, options, request_fn, full_post_html).extract_post()
 
-def extract_photo_post(raw_post: RawPost, options: Options, request_fn: RequestFunction, full_post_html) -> Post:
+
+def extract_photo_post(
+    raw_post: RawPost, options: Options, request_fn: RequestFunction, full_post_html
+) -> Post:
     return PhotoPostExtractor(raw_post, options, request_fn, full_post_html).extract_post()
 
 
@@ -67,7 +75,7 @@ class PostExtractor:
     more_url_regex = re.compile(r'(?<=…\s)<a href="([^"]+)')
     post_story_regex = re.compile(r'href="(\/story[^"]+)" aria')
 
-    def __init__(self, element, options, request_fn, full_post_html = None):
+    def __init__(self, element, options, request_fn, full_post_html=None):
         self.element = element
         self.options = options
         self.request = request_fn
@@ -147,7 +155,7 @@ class PostExtractor:
             self.extract_factcheck,
             self.extract_share_information,
             self.extract_availability,
-            self.extract_listing
+            self.extract_listing,
         ]
 
         post = self.make_new_post()
@@ -254,16 +262,10 @@ class PostExtractor:
             }
         elif element.find(".story_body_container>div", first=True):
             text = element.find(".story_body_container>div", first=True).text
-            return {
-                'text': text,
-                'post_text': text
-            }
+            return {'text': text, 'post_text': text}
         elif len(nodes) == 1:
             text = nodes[0].text
-            return {
-                'text': text,
-                'post_text': text
-            }
+            return {'text': text, 'post_text': text}
 
         return None
 
@@ -275,7 +277,9 @@ class PostExtractor:
         for page in page_insights.values():
             try:
                 timestamp = page['post_context']['publish_time']
-                logger.debug(f"Got exact timestamp from publish_time: {datetime.fromtimestamp(timestamp)}")
+                logger.debug(
+                    f"Got exact timestamp from publish_time: {datetime.fromtimestamp(timestamp)}"
+                )
                 return {
                     'time': datetime.fromtimestamp(timestamp),
                 }
@@ -321,7 +325,11 @@ class PostExtractor:
                 descriptions.append(elem.attrs.get("aria-label") or elem.attrs.get("alt"))
 
         image = images[0] if images else None
-        result = {"image_lowquality": image, "images_lowquality": images, "images_lowquality_description": descriptions}
+        result = {
+            "image_lowquality": image,
+            "images_lowquality": images,
+            "images_lowquality_description": descriptions,
+        }
         # Link to high resolution external image embedded in low quality image url
         if image and "safe_image.php" in image and not self.post.get("image"):
             url = parse_qs(urlparse(image).query).get("url")
@@ -414,7 +422,11 @@ class PostExtractor:
                 logger.debug(f"Fetching {url}")
                 try:
                     redirect_response = self.request(url)
-                    url = redirect_response.html.find("a", first=True).attrs.get("href").replace("&amp;", "&")
+                    url = (
+                        redirect_response.html.find("a", first=True)
+                        .attrs.get("href")
+                        .replace("&amp;", "&")
+                    )
                 except Exception as e:
                     logger.error(e)
             return url
@@ -434,7 +446,7 @@ class PostExtractor:
         )
 
         total_photos_in_gallery = len(photo_links)
-        if len(photo_links) in [4,5] and photo_links[-1].text:
+        if len(photo_links) in [4, 5] and photo_links[-1].text:
             total_photos_in_gallery = len(photo_links) + int(photo_links[-1].text.strip("+")) - 1
             logger.debug(f"{total_photos_in_gallery} total photos in gallery")
 
@@ -469,7 +481,7 @@ class PostExtractor:
                     "video": videos[0] if videos else None,
                     "video_id": video_ids[0] if video_ids else None,
                     "video_ids": video_ids,
-                    "videos": videos
+                    "videos": videos,
                 }
             url = utils.urljoin(FB_MOBILE_BASE_URL, url)
             logger.debug(f"Fetching {url}")
@@ -490,7 +502,9 @@ class PostExtractor:
             if response.html.find("a", containing="Photos from", first=True):
                 # Right arrow link
                 direction = '{"tn":"+="}'
-            url = response.html.find(f"a.touchable[data-gt='{direction}']", first=True).attrs["href"]
+            url = response.html.find(f"a.touchable[data-gt='{direction}']", first=True).attrs[
+                "href"
+            ]
             if not url.startswith("http"):
                 url = utils.urljoin(FB_MOBILE_BASE_URL, url)
             logger.debug(f"Fetching {url}")
@@ -508,7 +522,13 @@ class PostExtractor:
                     break
         image = images[0] if images else None
         image_id = image_ids[0] if image_ids else None
-        return {"image": image, "images": images, "images_description": descriptions, "image_id": image_id, "image_ids": image_ids}
+        return {
+            "image": image,
+            "images": images,
+            "images_description": descriptions,
+            "image_id": image_id,
+            "image_ids": image_ids,
+        }
 
     def extract_reactions(self) -> PartialPost:
         """Fetch share and reactions information with a existing post obtained by `get_posts`.
@@ -530,7 +550,7 @@ class PostExtractor:
         reaction_lookup = self.get_jsmod("UFIReactionTypes")
         if reaction_lookup:
             reaction_lookup = reaction_lookup.get("reactions")
-            for k,v in self.live_data.get("reactioncountmap").items():
+            for k, v in self.live_data.get("reactioncountmap").items():
                 if v["default"]:
                     name = reaction_lookup[k]["display_name"].lower()
                     reactions[name] = v["default"]
@@ -558,7 +578,11 @@ class PostExtractor:
             if type(reactors_opt) in [int, float] and reactors_opt < limit:
                 limit = reactors_opt
             logger.debug(f"Fetching {limit} reactors")
-            elems = list(response.html.find("div#reaction_profile_browser>div,div#reaction_profile_browser1>div"))
+            elems = list(
+                response.html.find(
+                    "div#reaction_profile_browser>div,div#reaction_profile_browser1>div"
+                )
+            )
             more = response.html.find("div#reaction_profile_pager a", first=True)
             if more and limit > 50:
                 url = utils.urljoin(FB_MOBILE_BASE_URL, more.attrs.get("href"))
@@ -570,19 +594,30 @@ class PostExtractor:
 
                 for action in data['payload']['actions']:
                     if action['cmd'] == 'append':
-                        html = utils.make_html_element(f"<div id='reaction_profile_browser'>{action['html']}</div>", url=FB_MOBILE_BASE_URL)
-                        more_elems = html.find('div#reaction_profile_browser>div,div#reaction_profile_browser1>div')
+                        html = utils.make_html_element(
+                            f"<div id='reaction_profile_browser'>{action['html']}</div>",
+                            url=FB_MOBILE_BASE_URL,
+                        )
+                        more_elems = html.find(
+                            'div#reaction_profile_browser>div,div#reaction_profile_browser1>div'
+                        )
                         elems.extend(more_elems)
             logger.debug(f"Found {len(elems)} reactors")
             for elem in elems:
-                emoji_class = elem.find(f"div>i.{spriteMapCssClass}", first=True).attrs.get("class")[-1]
+                emoji_class = elem.find(f"div>i.{spriteMapCssClass}", first=True).attrs.get(
+                    "class"
+                )[-1]
                 if not emoji_class_lookup.get(emoji_class):
                     logger.error(f"Don't know {emoji_class}")
-                reactors.append({
-                    "name": elem.find("strong", first=True).text,
-                    "link": utils.urljoin(FB_BASE_URL, elem.find("a", first=True).attrs.get("href")),
-                    "type": emoji_class_lookup.get(emoji_class)
-                })
+                reactors.append(
+                    {
+                        "name": elem.find("strong", first=True).text,
+                        "link": utils.urljoin(
+                            FB_BASE_URL, elem.find("a", first=True).attrs.get("href")
+                        ),
+                        "type": emoji_class_lookup.get(emoji_class),
+                    }
+                )
 
         if reactions:
             return {
@@ -622,13 +657,15 @@ class PostExtractor:
             video_id = query["photo"][0]
             logger.debug(f"Fetching {video_id}")
             response = self.request(video_id)
-            video_post = PostExtractor(response.html, self.options, self.request, full_post_html=response.html)
+            video_post = PostExtractor(
+                response.html, self.options, self.request, full_post_html=response.html
+            )
             video_post.post = {"post_id": video_id}
             meta = video_post.extract_video_meta() or {}
             return {
                 "video_id": video_id,
                 "video": video_post.extract_video().get("video"),
-                **meta
+                **meta,
             }
 
         if video_data_element is None:
@@ -772,7 +809,10 @@ class PostExtractor:
         if url:
             url = utils.urljoin(FB_BASE_URL, url)
 
-        first_link = comment.find("div:not([data-sigil])>a[href]:not([data-click]):not([data-store]):not([data-sigil])", first=True)
+        first_link = comment.find(
+            "div:not([data-sigil])>a[href]:not([data-click]):not([data-store]):not([data-sigil])",
+            first=True,
+        )
         comment_body_elem = comment.find('[data-sigil="comment-body"]', first=True)
         commenter_meta = None
         if first_link:
@@ -808,7 +848,7 @@ class PostExtractor:
             "commenter_meta": commenter_meta,
             "comment_text": text,
             "comment_time": date,
-            "comment_image": image_url
+            "comment_image": image_url,
         }
 
     def extract_comments_full(self):
@@ -828,7 +868,7 @@ class PostExtractor:
             more = elem.find(more_selector, containing=direction, first=True)
 
         # Comment limiting and progress
-        limit = 5000 # Default
+        limit = 5000  # Default
         if more and more.attrs.get("data-ajaxify-href"):
             parsed = parse_qs(urlparse(more.attrs.get("data-ajaxify-href")).query)
             count = int(parsed.get("count")[0])
@@ -873,7 +913,9 @@ class PostExtractor:
             pbar = tqdm(total=len(comments))
         for comment in comments:
             result = self.parse_comment(comment)
-            replies = comment.find("div.async_elem[data-sigil='replies-see-more'] a[href]", first=True)
+            replies = comment.find(
+                "div.async_elem[data-sigil='replies-see-more'] a[href]", first=True
+            )
             if self.options.get("progress"):
                 pbar.update(1)
             if replies:
@@ -886,7 +928,9 @@ class PostExtractor:
                     logger.error(e)
                     continue
                 replies = response.html.find('div[data-sigil="comment"]')
-                result["replies"] = [self.parse_comment(reply) for reply in replies[1:]] # Skip first element, as it will be this comment itself
+                result["replies"] = [
+                    self.parse_comment(reply) for reply in replies[1:]
+                ]  # Skip first element, as it will be this comment itself
             results.append(result)
         return {"comments_full": results}
 
@@ -903,7 +947,7 @@ class PostExtractor:
             return {
                 "listing_title": divs[0].find("span")[-1].text,
                 "listing_price": divs[1].text,
-                "listing_location": divs[2].text
+                "listing_location": divs[2].text,
             }
 
     @property
@@ -946,7 +990,7 @@ class PostExtractor:
             logger.error(e)
         return self._live_data
 
-    def get_jsmod(self, name, element = None):
+    def get_jsmod(self, name, element=None):
         if not element:
             if self.full_post_html:
                 element = self.full_post_html
@@ -962,8 +1006,10 @@ class PostExtractor:
 
 class GroupPostExtractor(PostExtractor):
     """Class for extracting posts from Facebook Groups rather than Pages"""
+
     post_url_regex = re.compile(r'https://m.facebook.com/groups/[^/]+/permalink/')
     post_story_regex = re.compile(r'href="(https://m.facebook.com/groups/[^/]+/permalink/\d+/)')
+
 
 class PhotoPostExtractor(PostExtractor):
     def extract_text(self) -> PartialPost:
@@ -980,7 +1026,11 @@ class PhotoPostExtractor(PostExtractor):
             return {"user_id": match.group(1)}
 
     def extract_post_url(self) -> PartialPost:
-        return {"post_url": utils.urljoin(FB_MOBILE_BASE_URL, str(self.live_data["ft_ent_identifier"]))}
+        return {
+            "post_url": utils.urljoin(
+                FB_MOBILE_BASE_URL, str(self.live_data["ft_ent_identifier"])
+            )
+        }
 
     def extract_post_id(self) -> PartialPost:
         return {"post_id": str(self.live_data["ft_ent_identifier"])}

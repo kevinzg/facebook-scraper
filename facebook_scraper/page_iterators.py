@@ -28,7 +28,9 @@ def iter_pages(account: str, request_fn: RequestFunction, **kwargs) -> Iterator[
     return generic_iter_pages(start_url, PageParser, request_fn, **kwargs)
 
 
-def iter_group_pages(group: Union[str, int], request_fn: RequestFunction, **kwargs) -> Iterator[Page]:
+def iter_group_pages(
+    group: Union[str, int], request_fn: RequestFunction, **kwargs
+) -> Iterator[Page]:
     start_url = kwargs.pop("start_url", None)
 
     if not start_url:
@@ -42,7 +44,9 @@ def iter_photos(account: str, request_fn: RequestFunction, **kwargs) -> Iterator
     return generic_iter_pages(start_url, PhotosPageParser, request_fn, **kwargs)
 
 
-def generic_iter_pages(start_url, page_parser_cls, request_fn: RequestFunction, **kwargs) -> Iterator[Page]:
+def generic_iter_pages(
+    start_url, page_parser_cls, request_fn: RequestFunction, **kwargs
+) -> Iterator[Page]:
     next_url = start_url
 
     request_url_callback = kwargs.get('request_url_callback')
@@ -60,7 +64,9 @@ def generic_iter_pages(start_url, page_parser_cls, request_fn: RequestFunction, 
             except HTTPError as e:
                 if e.response.status_code == 500 and retry < RETRY_LIMIT:
                     sleep_duration = retry * 2
-                    logger.debug(f"Caught exception, retry number {retry}. Sleeping for {sleep_duration}s")
+                    logger.debug(
+                        f"Caught exception, retry number {retry}. Sleeping for {sleep_duration}s"
+                    )
                     if retry == (RETRY_LIMIT / 2):
                         logger.debug("Requesting noscript")
                         kwargs["scraper"].set_noscript(True)
@@ -127,7 +133,9 @@ class PageParser:
         match = self.cursor_regex_2.search(self.cursor_blob)
         if match:
             value = match.groups()[0]
-            return utils.unquote(value.encode('utf-8').decode('unicode_escape').replace('\\/', '/')).replace("&amp;", "&")
+            return utils.unquote(
+                value.encode('utf-8').decode('unicode_escape').replace('\\/', '/')
+            ).replace("&amp;", "&")
 
         match = self.cursor_regex_3.search(self.cursor_blob)
         if match:
@@ -168,7 +176,9 @@ class PageParser:
         raw_posts = raw_page.find(selection)
 
         if not raw_posts:
-            logger.warning("No raw posts (<%s> elements) were found in this page." % selection_name)
+            logger.warning(
+                "No raw posts (<%s> elements) were found in this page." % selection_name
+            )
             if logger.isEnabledFor(logging.DEBUG):
                 content = textwrap.indent(
                     raw_page.text,
@@ -180,6 +190,7 @@ class PageParser:
                 logger.debug("The page content is:\n%s\n%s%s\n", sep, content, sep)
 
         return raw_posts
+
 
 class GroupPageParser(PageParser):
     """Class for parsing a single page of a group"""
@@ -202,6 +213,7 @@ class GroupPageParser(PageParser):
 
     def _parse(self):
         self._parse_html()
+
 
 class PhotosPageParser(PageParser):
     cursor_regex = re.compile(r'href:"(/photos/pandora/[^"]+)"')

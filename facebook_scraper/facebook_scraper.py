@@ -28,7 +28,7 @@ class FacebookScraper:
     default_headers = {
         'Accept-Language': 'en-US,en;q=0.5',
         "Sec-Fetch-User": "?1",
-        "User-Agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Mobile Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Mobile Safari/537.36",
     }
     have_checked_locale = False
 
@@ -53,12 +53,7 @@ class FacebookScraper:
             self.session.cookies.set("noscript", "0")
 
     def set_proxy(self, proxy):
-        self.requests_kwargs.update({
-            'proxies': {
-                'http': proxy,
-                'https': proxy
-            }
-        })
+        self.requests_kwargs.update({'proxies': {'http': proxy, 'https': proxy}})
         ip = self.get("http://ipinfo.io", headers={"Accept": "application/json"}).json()
         logger.debug(f"Proxy details: {ip}")
 
@@ -80,10 +75,7 @@ class FacebookScraper:
                 url = url.replace(FB_W3_BASE_URL, FB_MOBILE_BASE_URL)
             if not url.startswith(FB_MOBILE_BASE_URL):
                 url = utils.urljoin(FB_MOBILE_BASE_URL, url)
-            post = {
-                "original_request_url": post_url,
-                "post_url": url
-            }
+            post = {"original_request_url": post_url, "post_url": url}
             logger.debug(f"Requesting page from: {url}")
             response = self.get(url)
             elem = response.html.find('[data-ft*="top_level_post_id"]', first=True)
@@ -94,17 +86,42 @@ class FacebookScraper:
             if not elem:
                 logger.warning("No raw posts (<article> elements) were found in this page.")
             else:
-                comments_area = response.html.find('div[data-sigil="m-mentions-expand"]', first=True)
+                comments_area = response.html.find(
+                    'div[data-sigil="m-mentions-expand"]', first=True
+                )
                 if comments_area:
                     # Makes likes/shares regexes work
-                    elem = utils.make_html_element(elem.html.replace("</footer>", comments_area.html + "</footer>"))
+                    elem = utils.make_html_element(
+                        elem.html.replace("</footer>", comments_area.html + "</footer>")
+                    )
 
                 if photo_post:
-                    post.update(extract_photo_post(elem, request_fn=self.get, options=options, full_post_html=response.html))
+                    post.update(
+                        extract_photo_post(
+                            elem,
+                            request_fn=self.get,
+                            options=options,
+                            full_post_html=response.html,
+                        )
+                    )
                 elif url.startswith(utils.urljoin(FB_MOBILE_BASE_URL, "/groups/")):
-                    post.update(extract_group_post(elem, request_fn=self.get, options=options, full_post_html=response.html))
+                    post.update(
+                        extract_group_post(
+                            elem,
+                            request_fn=self.get,
+                            options=options,
+                            full_post_html=response.html,
+                        )
+                    )
                 else:
-                    post.update(extract_post(elem, request_fn=self.get, options=options, full_post_html=response.html))
+                    post.update(
+                        extract_post(
+                            elem,
+                            request_fn=self.get,
+                            options=options,
+                            full_post_html=response.html,
+                        )
+                    )
                 if not post.get("post_url"):
                     post["post_url"] = url
                 if remove_source:
@@ -129,7 +146,7 @@ class FacebookScraper:
         for card in about.find("div[data-sigil='profile-card']"):
             header = card.find("header", first=True).text
             if header.startswith("About"):
-                header = "About" # Truncate strings like "About Mark"
+                header = "About"  # Truncate strings like "About Mark"
             if header in ["Work, Education"]:
                 experience = []
                 for elem in card.find("div.experience"):
@@ -162,16 +179,14 @@ class FacebookScraper:
                     places.append(place)
                 result[header] = places
             else:
-                bits = card.text.split("\n")[1:] # Remove header
+                bits = card.text.split("\n")[1:]  # Remove header
                 if len(bits) >= 3 and header == "Relationship":
-                    result[header] = {
-                        "to": bits[0],
-                        "type": bits[1],
-                        "since": bits[2]
-                    }
+                    result[header] = {"to": bits[0], "type": bits[1], "since": bits[2]}
                 elif len(bits) == 1:
                     result[header] = bits[0]
-                elif header in ["Contact Info", "Basic info", "Other names"] and len(bits) % 2 == 0: # Divisible by two, assume pairs
+                elif (
+                    header in ["Contact Info", "Basic info", "Other names"] and len(bits) % 2 == 0
+                ):  # Divisible by two, assume pairs
                     pairs = {}
                     for i in range(0, len(bits), 2):
                         pairs[bits[i + 1]] = bits[i]
@@ -201,11 +216,9 @@ class FacebookScraper:
             for elem in elems:
                 name = elem.find("h3>a", first=True)
                 tagline = elem.find("div.notice.ellipsis", first=True).text
-                friends.append({
-                    "link": name.attrs.get("href"),
-                    "name": name.text,
-                    "tagline": tagline
-                })
+                friends.append(
+                    {"link": name.attrs.get("href"), "name": name.text, "tagline": tagline}
+                )
             result["Friends"] = friends
         return result
 
@@ -246,7 +259,9 @@ class FacebookScraper:
         try:
             resp = self.get(url).html
             admins = resp.find("div:first-child>div.touchable a:not(.touchable)")
-            result["admins"] = [{"name": e.text, "link": e.attrs["href"].split("?")[0]} for e in admins]
+            result["admins"] = [
+                {"name": e.text, "link": e.attrs["href"].split("?")[0]} for e in admins
+            ]
             url = resp.find("a[href^='/browse/group/members']", first=True).attrs["href"]
             members = []
             while url:
@@ -287,10 +302,15 @@ class FacebookScraper:
             response.raise_for_status()
             self.check_locale(response)
             if "noscript" not in response.html.html:
-                warnings.warn(f"Facebook served mbasic/noscript content unexpectedly on {response.url}")
+                warnings.warn(
+                    f"Facebook served mbasic/noscript content unexpectedly on {response.url}"
+                )
             title = response.html.find("title", first=True)
             not_found_titles = ["page not found", "content not found"]
-            temp_ban_titles = ["you can't use this feature at the moment", "you’re temporarily blocked"]
+            temp_ban_titles = [
+                "you can't use this feature at the moment",
+                "you’re temporarily blocked",
+            ]
             if title:
                 if title.text.lower() in not_found_titles:
                     raise exceptions.NotFound(title.text)
@@ -298,31 +318,44 @@ class FacebookScraper:
                     raise exceptions.TemporarilyBanned(title.text)
                 elif ">Your Account Has Been Disabled<" in response.html.html:
                     raise exceptions.AccountDisabled("Your Account Has Been Disabled")
-                elif ">We saw unusual activity on your account. This may mean that someone has used your account without your knowledge.<" in response.html.html:
+                elif (
+                    ">We saw unusual activity on your account. This may mean that someone has used your account without your knowledge.<"
+                    in response.html.html
+                ):
                     raise exceptions.AccountDisabled("Your Account Has Been Locked")
-                elif (title.text == "Log in to Facebook | Facebook" or
-                      response.url.startswith(utils.urljoin(FB_MOBILE_BASE_URL, "login")) or
-                      response.url.startswith(utils.urljoin(FB_W3_BASE_URL, "login")) or
-                      (", log in to Facebook." in response.text and not response.html.find("article[data-ft],div.async_like[data-ft],div.msg"))
-                      ):
-                    raise exceptions.LoginRequired("A login (cookies) is required to see this page")
+                elif (
+                    title.text == "Log in to Facebook | Facebook"
+                    or response.url.startswith(utils.urljoin(FB_MOBILE_BASE_URL, "login"))
+                    or response.url.startswith(utils.urljoin(FB_W3_BASE_URL, "login"))
+                    or (
+                        ", log in to Facebook." in response.text
+                        and not response.html.find(
+                            "article[data-ft],div.async_like[data-ft],div.msg"
+                        )
+                    )
+                ):
+                    raise exceptions.LoginRequired(
+                        "A login (cookies) is required to see this page"
+                    )
             return response
         except RequestException as ex:
             logger.exception("Exception while requesting URL: %s\nException: %r", url, ex)
             raise
 
-    def submit_form(self, response, extra_data = {}):
+    def submit_form(self, response, extra_data={}):
         action = response.html.find("form", first=True).attrs.get('action')
         url = utils.urljoin(self.base_url, action)
         elems = response.html.find("input[name][value]")
-        data = { elem.attrs['name']: elem.attrs['value'] for elem in elems }
+        data = {elem.attrs['name']: elem.attrs['value'] for elem in elems}
         data.update(extra_data)
         response = self.session.post(url, data=data)
         return response
 
     def login(self, email: str, password: str):
         response = self.get(self.base_url)
-        response = self.submit_form(response, {"email": email, "pass": password, "_fb_noscript": None})
+        response = self.submit_form(
+            response, {"email": email, "pass": password, "_fb_noscript": None}
+        )
 
         login_error = response.html.find('#login_error', first=True)
         if login_error:
@@ -362,7 +395,7 @@ class FacebookScraper:
         page_limit=DEFAULT_PAGE_LIMIT,
         options=None,
         remove_source=True,
-        **kwargs
+        **kwargs,
     ):
         counter = itertools.count(0) if page_limit is None else range(page_limit)
 
