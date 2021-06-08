@@ -924,8 +924,8 @@ class PostExtractor:
         if self._full_post_html is not None:
             return self._full_post_html
 
-        if self.options.get("allow_extra_requests", True) and self.post.get('post_url'):
-            url = self.post.get('post_url').replace(FB_BASE_URL, FB_MOBILE_BASE_URL)
+        if self.options.get("allow_extra_requests", True) and self.post.get('post_id'):
+            url = self.post.get('post_id')
             logger.debug(f"Fetching {url}")
             response = self.request(url)
             self._full_post_html = response.html
