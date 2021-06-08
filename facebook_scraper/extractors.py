@@ -612,7 +612,7 @@ class PostExtractor:
                         'w3_fb_url': data['url'],
                         'fetched_time': datetime.now(),
                     }
-        return None
+        return {'fetched_time': datetime.now()}
 
     def extract_video(self):
         video_data_element = self.element.find('[data-sigil="inlineVideo"]', first=True)
