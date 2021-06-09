@@ -301,7 +301,17 @@ class PostExtractor:
         if date:
             return {'time': date}
 
-        return None
+        try:
+            date_element = self.full_post_html.find("abbr[data-store*='time']", first=True)
+            time = json.loads(date_element.attrs["data-store"])["time"]
+            logger.debug(
+                f"Got exact timestamp from abbr[data-store]: {datetime.fromtimestamp(time)}"
+            )
+            return {
+                'time': datetime.fromtimestamp(time),
+            }
+        except:
+            return None
 
     def extract_user_id(self) -> PartialPost:
         return {'user_id': self.data_ft['content_owner_id_new']}
