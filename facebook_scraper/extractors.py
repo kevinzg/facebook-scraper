@@ -399,6 +399,7 @@ class PostExtractor:
             )
             or self.live_data.get("like_count")
             or self.live_data.get("reactioncount")
+            or utils.parse_int(self.element.find(".like_def", first=True).text)
             or 0,
         }
 
@@ -408,6 +409,7 @@ class PostExtractor:
                 self.element, 'footer', self.comments_regex, utils.convert_numeric_abbr
             )
             or self.live_data.get("comment_count")
+            or utils.parse_int(self.element.find(".cmt_def", first=True).text)
             or 0,
         }
 
