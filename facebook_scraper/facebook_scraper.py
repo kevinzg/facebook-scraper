@@ -233,7 +233,7 @@ class FacebookScraper:
         result["type"] = result.pop("@type")
         desc = resp.html.find("meta[name='description']", first=True)
         if desc:
-            match = re.search(r'([\d,]+)\s+likes', desc.attrs["content"])
+            match = re.search(r'(\d[\d,.]+)', desc.attrs["content"])
             if match:
                 result["likes"] = utils.parse_int(match.groups()[0])
         for interaction in meta["interactionStatistic"]:
