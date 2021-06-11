@@ -311,7 +311,7 @@ class TestGetGroupPosts:
             'w3_fb_url': None,
         }
 
-        set_cookies(None)
+        unset_cookies()
         post = next(get_posts(group=117507531664134))
 
         assert post == expected_post
