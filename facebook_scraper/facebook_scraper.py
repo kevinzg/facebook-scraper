@@ -239,6 +239,20 @@ class FacebookScraper:
         for interaction in meta["interactionStatistic"]:
             if interaction["interactionType"] == "http://schema.org/FollowAction":
                 result["followers"] = interaction["userInteractionCount"]
+
+        try:
+            about_url = f'/{page}/about/'
+            logger.debug(f"Requesting page from: {about_url}")
+            resp = self.get(about_url)
+            desc = resp.html.find("meta[name='description']", first=True)
+            if desc:
+                logger.debug(desc.attrs["content"])
+                match = re.search(r'(\d[\d,.]+)', desc.attrs["content"])
+                if match:
+                    result["likes"] = utils.parse_int(match.groups()[0])
+            result["about"] = resp.html.find('#pages_msite_body_contents', first=True).text
+        except exceptions.NotFound:
+            pass
         return result
 
     def get_group_info(self, group, **kwargs) -> Profile:
