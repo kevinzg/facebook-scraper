@@ -72,7 +72,7 @@ class PostExtractor:
     )
     bad_json_key_regex = re.compile(r'(?P<prefix>[{,])(?P<key>\w+):')
 
-    more_url_regex = re.compile(r'(?<=…\s)<a href="([^"]+)')
+    more_url_regex = re.compile(r'(?<=…\s)<a')
     post_story_regex = re.compile(r'href="(\/story[^"]+)" aria')
 
     def __init__(self, element, options, request_fn, full_post_html=None):
