@@ -259,22 +259,32 @@ class FacebookScraper:
         url = f'/groups/{group}'
         logger.debug(f"Requesting page from: {url}")
         resp = self.get(url).html
-        url = resp.find("a[href*='?view=info']", first=True).attrs["href"]
+        try:
+            url = resp.find("a[href*='?view=info']", first=True).attrs["href"]
+        except AttributeError:
+            raise exceptions.UnexpectedResponse("Unable to resolve view=info URL")
         logger.debug(f"Requesting page from: {url}")
         resp = self.get(url).html
         result = {}
         result["id"] = re.search(r'/groups/(\d+)', url).group(1)
-        result["name"] = resp.find("header h3", first=True).text
-        result["type"] = resp.find("header div", first=True).text
-        members = resp.find("div[data-testid='m_group_sections_members']", first=True)
-        result["members"] = utils.parse_int(members.text)
+        try:
+            result["name"] = resp.find("header h3", first=True).text
+            result["type"] = resp.find("header div", first=True).text
+            members = resp.find("div[data-testid='m_group_sections_members']", first=True)
+            result["members"] = utils.parse_int(members.text)
+        except AttributeError:
+            raise exceptions.UnexpectedResponse("Unable to get one of name, type, or members")
         url = members.find("a", first=True).attrs.get("href")
         logger.debug(f"Requesting page from: {url}")
         try:
             resp = self.get(url).html
             admins = resp.find("div:first-child>div.touchable a:not(.touchable)")
             result["admins"] = [
-                {"name": e.text, "link": utils.filter_query_params(e.attrs["href"], blacklist=["refid"])} for e in admins
+                {
+                    "name": e.text,
+                    "link": utils.filter_query_params(e.attrs["href"], blacklist=["refid"]),
+                }
+                for e in admins
             ]
             url = resp.find("a[href^='/browse/group/members']", first=True).attrs["href"]
             members = []
@@ -315,7 +325,10 @@ class FacebookScraper:
             response.html.html = response.html.html.replace('<!--', '').replace('-->', '')
             response.raise_for_status()
             self.check_locale(response)
-            if response.url.startswith(FB_MOBILE_BASE_URL) and "noscript" not in response.html.html:
+            if (
+                response.url.startswith(FB_MOBILE_BASE_URL)
+                and "noscript" not in response.html.html
+            ):
                 warnings.warn(
                     f"Facebook served mbasic/noscript content unexpectedly on {response.url}"
                 )
