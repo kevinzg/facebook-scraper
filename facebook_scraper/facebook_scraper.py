@@ -315,7 +315,7 @@ class FacebookScraper:
             response.html.html = response.html.html.replace('<!--', '').replace('-->', '')
             response.raise_for_status()
             self.check_locale(response)
-            if "noscript" not in response.html.html:
+            if response.url.startswith(FB_MOBILE_BASE_URL) and "noscript" not in response.html.html:
                 warnings.warn(
                     f"Facebook served mbasic/noscript content unexpectedly on {response.url}"
                 )
