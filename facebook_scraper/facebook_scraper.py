@@ -274,7 +274,7 @@ class FacebookScraper:
             resp = self.get(url).html
             admins = resp.find("div:first-child>div.touchable a:not(.touchable)")
             result["admins"] = [
-                {"name": e.text, "link": e.attrs["href"].split("?")[0]} for e in admins
+                {"name": e.text, "link": utils.filter_query_params(e.attrs["href"], blacklist=["refid"])} for e in admins
             ]
             url = resp.find("a[href^='/browse/group/members']", first=True).attrs["href"]
             members = []
@@ -288,7 +288,7 @@ class FacebookScraper:
                     url = more.group(1)
                 else:
                     url = None
-            result["members"] = [m for m in members if m not in result["admins"]]
+            result["other_members"] = [m for m in members if m not in result["admins"]]
         except exceptions.LoginRequired as e:
             pass
         return result
