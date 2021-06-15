@@ -223,26 +223,27 @@ class FacebookScraper:
         return result
 
     def get_page_info(self, page, **kwargs) -> Profile:
+        result = {}
         for post in self.get_posts(page, **kwargs):
             logger.debug(f"Fetching {post['post_id']}")
             resp = self.get(post["post_id"])
             elem = resp.html.find("script[type='application/ld+json']", first=True)
             if not elem:
-                return None
+                continue
             meta = json.loads(elem.text)
             if meta.get("creator"):
+                result = meta["creator"]
+                result["type"] = result.pop("@type")
+                desc = resp.html.find("meta[name='description']", first=True)
+                if desc:
+                    match = re.search(r'(\d[\d,.]+)', desc.attrs["content"])
+                    if match:
+                        result["likes"] = utils.parse_int(match.groups()[0])
+                for interaction in result.get("interactionStatistic", []):
+                    if interaction["interactionType"] == {"@type": "http://schema.org/FollowAction"}:
+                        result["followers"] = interaction["userInteractionCount"]
+                result.pop("interactionStatistic", None)
                 break
-        result = meta["creator"]
-        result["type"] = result.pop("@type")
-        desc = resp.html.find("meta[name='description']", first=True)
-        if desc:
-            match = re.search(r'(\d[\d,.]+)', desc.attrs["content"])
-            if match:
-                result["likes"] = utils.parse_int(match.groups()[0])
-        for interaction in result.get("interactionStatistic", []):
-            if interaction["interactionType"] == {"@type": "http://schema.org/FollowAction"}:
-                result["followers"] = interaction["userInteractionCount"]
-        result.pop("interactionStatistic", None)
 
         try:
             about_url = f'/{page}/about/'
