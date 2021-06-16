@@ -32,7 +32,7 @@ def convert_numeric_abbr(s):
 
 
 def parse_duration(s) -> int:
-    match = re.search('T(?P<hours>\d+H)?(?P<minutes>\d+M)?(?P<seconds>\d+S)', s)
+    match = re.search(r'T(?P<hours>\d+H)?(?P<minutes>\d+M)?(?P<seconds>\d+S)', s)
     if match:
         result = 0
         for k, v in match.groupdict().items():
