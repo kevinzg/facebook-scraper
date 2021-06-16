@@ -136,7 +136,10 @@ def parse_datetime(text: str, search=True) -> Optional[datetime]:
         else:
             return None
 
-    return dateparser.parse(text).replace(microsecond=0)
+    result = dateparser.parse(text)
+    if result:
+        return result.replace(microsecond=0)
+    return None
 
 
 def html_element_to_string(element: Element, pretty=False) -> str:
