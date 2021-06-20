@@ -376,9 +376,12 @@ class FacebookScraper:
             response.html.html = response.html.html.replace('<!--', '').replace('-->', '')
             response.raise_for_status()
             self.check_locale(response)
+            if "cookie/consent-page" in response.url:
+                response = self.submit_form(response)
             if (
                 response.url.startswith(FB_MOBILE_BASE_URL)
                 and "noscript" not in response.html.html
+                and self.session.cookies.get("noscript") != "1"
             ):
                 warnings.warn(
                     f"Facebook served mbasic/noscript content unexpectedly on {response.url}"
