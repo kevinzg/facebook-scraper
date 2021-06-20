@@ -12,7 +12,7 @@ from requests_html import HTMLSession
 
 from . import utils
 from .constants import DEFAULT_PAGE_LIMIT, FB_BASE_URL, FB_MOBILE_BASE_URL, FB_W3_BASE_URL
-from .extractors import extract_group_post, extract_post, extract_photo_post
+from .extractors import extract_group_post, extract_post, extract_photo_post, PostExtractor
 from .fb_types import Post, Profile
 from .page_iterators import iter_group_pages, iter_pages, iter_photos
 from . import exceptions
@@ -129,10 +129,34 @@ class FacebookScraper:
             yield post
 
     def get_profile(self, account, **kwargs) -> Profile:
+        result = {}
+
+        logger.debug(f"Requesting page from: {account}")
+        response = self.get(account)
+        match = re.search(r'entity_id:(\d+),', response.html.html)
+        if match:
+            result["id"] = match.group(1)
+        photo_links = response.html.find("a[href^='/photo.php']")
+        if photo_links:
+            cover_photo = photo_links[0]
+            result["cover_photo_text"] = cover_photo.attrs.get("title")
+            response = self.get(cover_photo.attrs.get("href"))
+            extractor = PostExtractor(response.html, kwargs, self.get)
+            result["cover_photo"] = extractor.extract_photo_link_HQ(response.html.html)
+
+            profile_photo = photo_links[1]
+            response = self.get(profile_photo.attrs.get("href"))
+            result["profile_photo"] = extractor.extract_photo_link_HQ(response.html.html)
+        else:
+            cover_photo = response.html.find("div[data-sigil='cover-photo']>i.img", first=True).attrs["style"]
+            match = re.search(r"url\('(.+)'\)", cover_photo)
+            if match:
+                result["cover_photo"] = utils.decode_css_url(match.groups()[0])
+            result["profile_photo"] = response.html.find("img.profpic", first=True).attrs["src"]
+
         about_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/about/')
         logger.debug(f"Requesting page from: {about_url}")
         response = self.get(about_url)
-        result = {}
         # Profile name is in the title
         title = response.html.find("title", first=True).text
         if " | " in title:
@@ -239,9 +263,12 @@ class FacebookScraper:
                     match = re.search(r'(\d[\d,.]+)', desc.attrs["content"])
                     if match:
                         result["likes"] = utils.parse_int(match.groups()[0])
-                for interaction in result.get("interactionStatistic", []):
-                    if interaction["interactionType"] == {"@type": "http://schema.org/FollowAction"}:
-                        result["followers"] = interaction["userInteractionCount"]
+                try:
+                    for interaction in result.get("interactionStatistic", []):
+                        if interaction["interactionType"] == {"@type": "http://schema.org/FollowAction"}:
+                            result["followers"] = interaction["userInteractionCount"]
+                except TypeError as e:
+                    logger.error(e)
                 result.pop("interactionStatistic", None)
                 break
 
@@ -256,8 +283,8 @@ class FacebookScraper:
                 if match:
                     result["likes"] = utils.parse_int(match.groups()[0])
             result["about"] = resp.html.find('#pages_msite_body_contents', first=True).text
-        except exceptions.NotFound:
-            pass
+        except Exception as e:
+            logger.error(e)
         return result
 
     def get_group_info(self, group, **kwargs) -> Profile:
