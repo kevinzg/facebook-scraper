@@ -84,7 +84,7 @@ class FacebookScraper:
             photo_post = False
             if response.html.find("div.msg", first=True):
                 photo_post = True
-                elem = response.html
+                elem = response.html.find("#root", first=True)
             if not elem:
                 logger.warning("No raw posts (<article> elements) were found in this page.")
             else:

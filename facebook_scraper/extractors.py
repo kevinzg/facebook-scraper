@@ -401,7 +401,8 @@ class PostExtractor:
             )
             or self.live_data.get("like_count")
             or self.live_data.get("reactioncount")
-            or utils.parse_int(self.element.find(".like_def", first=True).text)
+            or (self.element.find(".likes", first=True) and utils.parse_int(self.element.find(".likes", first=True).text))
+            or (self.element.find(".like_def", first=True) and utils.parse_int(self.element.find(".like_def", first=True).text))
             or 0,
         }
 
@@ -1031,8 +1032,8 @@ class PhotoPostExtractor(PostExtractor):
         return {"text": text, "post_text": text}
 
     def extract_photo_link(self) -> PartialPost:
-        image = self.extract_photo_link_HQ(self.element.html)
-        return {"image": image, "images": [image]}
+        image = self.extract_photo_link_HQ(self.full_post_html.html)
+        return {"image": image, "images": [image], "images_description": self.extract_image_lq()["images_lowquality_description"]}
 
     def extract_user_id(self) -> PartialPost:
         match = re.search(r'entity_id:(\d+),', self.element.html)
@@ -1042,9 +1043,14 @@ class PhotoPostExtractor(PostExtractor):
     def extract_post_url(self) -> PartialPost:
         return {
             "post_url": utils.urljoin(
-                FB_MOBILE_BASE_URL, str(self.live_data["ft_ent_identifier"])
+                FB_MOBILE_BASE_URL, self.extract_post_id()["post_id"]
             )
         }
 
     def extract_post_id(self) -> PartialPost:
-        return {"post_id": str(self.live_data["ft_ent_identifier"])}
+        try:
+            return {"post_id": str(self.live_data["ft_ent_identifier"])}
+        except KeyError:
+            match = re.search(r'ft_ent_identifier=(\d+)', self.full_post_html.html)
+            if match:
+                return {"post_id": match.groups()[0]}
