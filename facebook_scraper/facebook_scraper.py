@@ -54,7 +54,9 @@ class FacebookScraper:
 
     def set_proxy(self, proxy):
         self.requests_kwargs.update({'proxies': {'http': proxy, 'https': proxy}})
-        ip = self.get("http://lumtest.com/myip.json", headers={"Accept": "application/json"}).json()
+        ip = self.get(
+            "http://lumtest.com/myip.json", headers={"Accept": "application/json"}
+        ).json()
         logger.debug(f"Proxy details: {ip}")
 
     def get_posts(self, account: str, **kwargs) -> Iterator[Post]:
@@ -148,7 +150,9 @@ class FacebookScraper:
             response = self.get(profile_photo.attrs.get("href"))
             result["profile_photo"] = extractor.extract_photo_link_HQ(response.html.html)
         else:
-            cover_photo = response.html.find("div[data-sigil='cover-photo']>i.img", first=True).attrs["style"]
+            cover_photo = response.html.find(
+                "div[data-sigil='cover-photo']>i.img", first=True
+            ).attrs["style"]
             match = re.search(r"url\('(.+)'\)", cover_photo)
             if match:
                 result["cover_photo"] = utils.decode_css_url(match.groups()[0])
@@ -244,8 +248,17 @@ class FacebookScraper:
                 match = re.search(r"url\('(.+)'\)", profile_picture)
                 if match:
                     profile_picture = utils.decode_css_url(match.groups()[0])
+                user_id = json.loads(
+                    elem.find("a.touchable[data-store]", first=True).attrs["data-store"]
+                ).get("id")
                 friends.append(
-                    {"link": name.attrs.get("href"), "name": name.text, "profile_picture": profile_picture, "tagline": tagline}
+                    {
+                        "id": user_id,
+                        "link": name.attrs.get("href"),
+                        "name": name.text,
+                        "profile_picture": profile_picture,
+                        "tagline": tagline,
+                    }
                 )
             result["Friends"] = friends
         return result
@@ -269,7 +282,9 @@ class FacebookScraper:
                         result["likes"] = utils.parse_int(match.groups()[0])
                 try:
                     for interaction in result.get("interactionStatistic", []):
-                        if interaction["interactionType"] == {"@type": "http://schema.org/FollowAction"}:
+                        if interaction["interactionType"] == {
+                            "@type": "http://schema.org/FollowAction"
+                        }:
                             result["followers"] = interaction["userInteractionCount"]
                 except TypeError as e:
                     logger.error(e)

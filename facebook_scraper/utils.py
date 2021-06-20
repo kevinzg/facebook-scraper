@@ -66,6 +66,7 @@ def filter_query_params(url, whitelist=None, blacklist=None) -> str:
     query_string = urlencode([(k, v) for k, v in query_params if is_valid_param(k)])
     return urlunparse(parsed_url._replace(query=query_string))
 
+
 def remove_control_characters(html):
     # type: (t.Text) -> t.Text
     """
@@ -85,18 +86,30 @@ def remove_control_characters(html):
     def strip_illegal_xml_characters(s, default, base=10):
         # Compare the "invalid XML character range" numerically
         n = int(s, base)
-        if n in (0xb, 0xc, 0xFFFE, 0xFFFF) or 0x0 <= n <= 0x8 or 0xe <= n <= 0x1F or 0xD800 <= n <= 0xDFFF:
+        if (
+            n in (0xB, 0xC, 0xFFFE, 0xFFFF)
+            or 0x0 <= n <= 0x8
+            or 0xE <= n <= 0x1F
+            or 0xD800 <= n <= 0xDFFF
+        ):
             return ""
         return default
 
     # We encode all non-ascii characters to XML char-refs, so for example "💖" becomes: "&#x1F496;"
     # Otherwise we'd remove emojis by mistake on narrow-unicode builds of Python
     html = html.encode("ascii", "xmlcharrefreplace").decode("utf-8")
-    html = re.sub(r"&#(\d+);?", lambda c: strip_illegal_xml_characters(c.group(1), c.group(0)), html)
-    html = re.sub(r"&#[xX]([0-9a-fA-F]+);?", lambda c: strip_illegal_xml_characters(c.group(1), c.group(0), base=16), html)
+    html = re.sub(
+        r"&#(\d+);?", lambda c: strip_illegal_xml_characters(c.group(1), c.group(0)), html
+    )
+    html = re.sub(
+        r"&#[xX]([0-9a-fA-F]+);?",
+        lambda c: strip_illegal_xml_characters(c.group(1), c.group(0), base=16),
+        html,
+    )
     # A regex matching the "invalid XML character range"
     html = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1F\uD800-\uDFFF\uFFFE\uFFFF]").sub("", html)
     return html
+
 
 def make_html_element(html: str, url=DEFAULT_URL) -> Element:
     html = remove_control_characters(html)
