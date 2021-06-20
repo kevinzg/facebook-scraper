@@ -240,8 +240,12 @@ class FacebookScraper:
             for elem in elems:
                 name = elem.find("h3>a", first=True)
                 tagline = elem.find("div.notice.ellipsis", first=True).text
+                profile_picture = elem.find("i.profpic", first=True).attrs.get("style")
+                match = re.search(r"url\('(.+)'\)", profile_picture)
+                if match:
+                    profile_picture = utils.decode_css_url(match.groups()[0])
                 friends.append(
-                    {"link": name.attrs.get("href"), "name": name.text, "tagline": tagline}
+                    {"link": name.attrs.get("href"), "name": name.text, "profile_picture": profile_picture, "tagline": tagline}
                 )
             result["Friends"] = friends
         return result
