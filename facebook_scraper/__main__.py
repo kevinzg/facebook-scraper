@@ -14,6 +14,7 @@ def run():
     parser.add_argument('account', type=str, help="Facebook account or group")
     parser.add_argument('-f', '--filename', type=str, help="Output filename")
     parser.add_argument('-p', '--pages', type=int, help="Number of pages to download", default=10)
+    parser.add_argument('-t', '--timeout', type=int, help="How long to wait in seconds for Facebook servers before aborting", default=10)
     parser.add_argument('-g', '--group', action='store_true', help="Use group scraper")
     parser.add_argument('-v', '--verbose', action='count', help="Enable logging", default=0)
     parser.add_argument('-c', '--cookies', type=str, help="Path to a cookies file")
@@ -41,6 +42,7 @@ def run():
     kwargs = {
         account_type: args.account,
         "cookies": args.cookies,
+        "timeout": args.timeout,
         "options": {"reactions": args.reactions, "reactors": args.reactors, "comments": args.comments},
     }
 
