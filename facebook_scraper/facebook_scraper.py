@@ -148,7 +148,7 @@ class FacebookScraper:
 
             profile_photo = photo_links[1]
             response = self.get(profile_photo.attrs.get("href"))
-            result["profile_photo"] = extractor.extract_photo_link_HQ(response.html.html)
+            result["profile_picture"] = extractor.extract_photo_link_HQ(response.html.html)
         else:
             cover_photo = response.html.find(
                 "div[data-sigil='cover-photo']>i.img", first=True
@@ -156,7 +156,7 @@ class FacebookScraper:
             match = re.search(r"url\('(.+)'\)", cover_photo)
             if match:
                 result["cover_photo"] = utils.decode_css_url(match.groups()[0])
-            result["profile_photo"] = response.html.find("img.profpic", first=True).attrs["src"]
+            result["profile_picture"] = response.html.find("img.profpic", first=True).attrs["src"]
 
         about_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/about/')
         logger.debug(f"Requesting page from: {about_url}")
