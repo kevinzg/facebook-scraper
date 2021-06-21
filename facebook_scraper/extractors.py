@@ -321,7 +321,7 @@ class PostExtractor:
     def extract_image_lq(self) -> PartialPost:
         elems = self.element.find('div.story_body_container>div .img:not(.profpic)')
         if not elems:
-            elems = self.element.find('#root .img:not(.profpic)')
+            elems = self.element.find('.img:not(.profpic), img:not(.profpic)')
         images = []
         descriptions = []
         for elem in elems:
