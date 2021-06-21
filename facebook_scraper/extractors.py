@@ -813,28 +813,35 @@ class PostExtractor:
     def parse_comment(self, comment):
         comment_id = comment.attrs.get("id")
 
-        profile_picture = comment.find(".profpic.img", first=True)
-        name = profile_picture.attrs.get("alt") or profile_picture.attrs.get("aria-label")
-        name = name.split(",")[0]
-        commenter_id = re.search(r'feed_story_ring(\d+)', comment.html)
-        if commenter_id:
-            commenter_id = commenter_id.group(1)
+        try:
+            profile_picture = comment.find(".profpic.img", first=True)
+            name = profile_picture.attrs.get("alt") or profile_picture.attrs.get("aria-label")
+            name = name.split(",")[0]
+            commenter_id = re.search(r'feed_story_ring(\d+)', comment.html)
+            if commenter_id:
+                commenter_id = commenter_id.group(1)
 
-        url = profile_picture.element.getparent().attrib.get("href")
-        if url:
-            url = utils.urljoin(FB_BASE_URL, url)
-
+            url = profile_picture.element.getparent().attrib.get("href")
+            if url:
+                url = utils.urljoin(FB_BASE_URL, url)
+        except AttributeError:
+            name = comment.find("h3", first=True).text
+            commenter_id = None
+            url = None
         first_link = comment.find(
             "div:not([data-sigil])>a[href]:not([data-click]):not([data-store]):not([data-sigil])",
             first=True,
         )
-        comment_body_elem = comment.find('[data-sigil="comment-body"]', first=True)
+        comment_body_elem = comment.find('[data-sigil="comment-body"],div._14ye,div.bl', first=True)
+        if comment_body_elem:
+            text = comment_body_elem.text
+        else:
+            text = comment.text
         commenter_meta = None
         if first_link:
             if "\n" in first_link.text:
                 commenter_meta = first_link.text.split("\n")[0]
 
-        text = comment_body_elem.text
         # Try to extract from the abbr element
         date_element = comment.find('abbr', first=True)
         if date_element:
@@ -869,11 +876,13 @@ class PostExtractor:
     def extract_comments_full(self):
         """Fetch comments for an existing post obtained by `get_posts`.
         Note that this method may raise multiple http requests per post to get all comments"""
-        elem = self.full_post_html.find('div[data-sigil="m-mentions-expand"]', first=True)
-        if not elem:
+        comments_area_selector = 'div.ufi>div:last-child'
+        elem = self.full_post_html.find(comments_area_selector, first=True)
+        comments_selector = 'div[data-sigil="comment"],div._55wr'
+        comments = list(elem.find(comments_selector))
+        if not comments:
             logger.warning("No comments found on page")
             return
-        comments = list(elem.find('div[data-sigil="comment"]'))
 
         more_selector = f"a[href*='{self.post.get('post_id')}']"
         direction = "View more comments"
@@ -913,11 +922,11 @@ class PostExtractor:
                 logger.error(e)
                 break
             visited_urls.append(url)
-            elem = response.html.find('div[data-sigil="m-mentions-expand"]', first=True)
-            if not elem:
+            elem = response.html.find(comments_area_selector, first=True)
+            more_comments = elem.find(comments_selector)
+            if not more_comments:
                 logger.warning("No comments found on page")
                 break
-            more_comments = elem.find('div[data-sigil="comment"]')
             comments.extend(more_comments)
             more = elem.find(more_selector, containing=direction, first=True)
 
@@ -927,9 +936,13 @@ class PostExtractor:
             pbar.close()
             pbar = tqdm(total=len(comments))
         for comment in comments:
-            result = self.parse_comment(comment)
+            try:
+                result = self.parse_comment(comment)
+            except Exception as e:
+                logger.error(f"Unable to parse comment {comment}: {e}")
+                continue
             replies = comment.find(
-                "div.async_elem[data-sigil='replies-see-more'] a[href]", first=True
+                "div.async_elem[data-sigil='replies-see-more'] a[href],div[id*='comment_replies_more'] a[href]", first=True
             )
             if self.options.get("progress"):
                 pbar.update(1)
@@ -942,10 +955,15 @@ class PostExtractor:
                 except Exception as e:
                     logger.error(e)
                     continue
-                replies = response.html.find('div[data-sigil="comment"]')
-                result["replies"] = [
-                    self.parse_comment(reply) for reply in replies[1:]
-                ]  # Skip first element, as it will be this comment itself
+                # Skip first element, as it will be this comment itself
+                replies = response.html.find('div[data-sigil="comment"],#root div[id]')[1:]
+                try:
+                    result["replies"] = [
+                        self.parse_comment(reply) for reply in replies
+                    ]
+                except Exception as e:
+                    logger.error(f"Unable to parse comment {result['comment_id']} replies {replies}: {e}")
+                    continue
             results.append(result)
         return {"comments_full": results}
 
