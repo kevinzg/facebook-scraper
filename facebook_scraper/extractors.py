@@ -62,7 +62,7 @@ class PostExtractor:
         r'<a href=\"([^\"]+?)\" target=\"_blank\" class=\"sec\">',
         re.IGNORECASE,
     )
-    image_regex_lq = re.compile(r"background-image: url\('(.+)'\)")
+    image_regex_lq = re.compile(r"url\('(.+)'\)")
     video_thumbnail_regex = re.compile(r"background: url\('(.+)'\)")
     post_url_regex = re.compile(r'/story.php\?story_fbid=')
     video_post_url_regex = re.compile(r'/.+/videos/.+/(.+)/.+')
