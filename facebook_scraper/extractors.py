@@ -877,7 +877,7 @@ class PostExtractor:
     def extract_comments_full(self):
         """Fetch comments for an existing post obtained by `get_posts`.
         Note that this method may raise multiple http requests per post to get all comments"""
-        comments_area_selector = 'div.ufi>div:last-child'
+        comments_area_selector = 'div.ufi'
         elem = self.full_post_html.find(comments_area_selector, first=True)
         comments_selector = 'div[data-sigil="comment"],div._55wr'
         comments = list(elem.find(comments_selector))
