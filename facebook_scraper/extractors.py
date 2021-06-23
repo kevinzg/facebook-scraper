@@ -670,18 +670,19 @@ class PostExtractor:
         if photoset_link and photoset_link.find("i[aria-label='video']"):
             query = parse_qs(urlparse(photoset_link.attrs.get("href")).query)
             video_id = query["photo"][0]
-            logger.debug(f"Fetching {video_id}")
-            response = self.request(video_id)
-            video_post = PostExtractor(
-                response.html, self.options, self.request, full_post_html=response.html
-            )
-            video_post.post = {"post_id": video_id}
-            meta = video_post.extract_video_meta() or {}
-            return {
-                "video_id": video_id,
-                "video": video_post.extract_video().get("video"),
-                **meta,
-            }
+            if video_id != self.post["post_id"]:
+                logger.debug(f"Fetching {video_id}")
+                response = self.request(video_id)
+                video_post = PostExtractor(
+                    response.html, self.options, self.request, full_post_html=response.html
+                )
+                video_post.post = {"post_id": video_id}
+                meta = video_post.extract_video_meta() or {}
+                return {
+                    "video_id": video_id,
+                    "video": video_post.extract_video().get("video"),
+                    **meta,
+                }
 
         if video_data_element is None:
             return None
