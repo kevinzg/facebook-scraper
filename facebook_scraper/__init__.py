@@ -21,7 +21,10 @@ _scraper = FacebookScraper()
 
 def set_cookies(cookies):
     if isinstance(cookies, str):
-        cookies = parse_cookie_file(cookies)
+        try:
+            cookies = parse_cookie_file(cookies)
+        except ValueError as e:
+            raise exceptions.InvalidCookies(f"Cookies are in an invalid format: {e}")
     elif isinstance(cookies, dict):
         cookies = cookiejar_from_dict(cookies)
     if cookies is not None:

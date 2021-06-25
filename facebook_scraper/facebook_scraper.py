@@ -88,9 +88,7 @@ class FacebookScraper:
             if not elem:
                 logger.warning("No raw posts (<article> elements) were found in this page.")
             else:
-                comments_area = response.html.find(
-                    'div.ufi', first=True
-                )
+                comments_area = response.html.find('div.ufi', first=True)
                 if comments_area:
                     # Makes likes/shares regexes work
                     elem = utils.make_html_element(

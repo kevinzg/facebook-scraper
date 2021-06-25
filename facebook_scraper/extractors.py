@@ -401,8 +401,14 @@ class PostExtractor:
             )
             or self.live_data.get("like_count")
             or self.live_data.get("reactioncount")
-            or (self.element.find(".likes", first=True) and utils.parse_int(self.element.find(".likes", first=True).text))
-            or (self.element.find(".like_def", first=True) and utils.parse_int(self.element.find(".like_def", first=True).text))
+            or (
+                self.element.find(".likes", first=True)
+                and utils.parse_int(self.element.find(".likes", first=True).text)
+            )
+            or (
+                self.element.find(".like_def", first=True)
+                and utils.parse_int(self.element.find(".like_def", first=True).text)
+            )
             or 0,
         }
 
@@ -412,7 +418,10 @@ class PostExtractor:
                 self.element, 'footer', self.comments_regex, utils.convert_numeric_abbr
             )
             or self.live_data.get("comment_count")
-            or (self.element.find(".cmt_def", first=True) and utils.parse_int(self.element.find(".cmt_def", first=True).text))
+            or (
+                self.element.find(".cmt_def", first=True)
+                and utils.parse_int(self.element.find(".cmt_def", first=True).text)
+            )
             or 0,
         }
 
@@ -833,7 +842,9 @@ class PostExtractor:
             "div:not([data-sigil])>a[href]:not([data-click]):not([data-store]):not([data-sigil])",
             first=True,
         )
-        comment_body_elem = comment.find('[data-sigil="comment-body"],div._14ye,div.bl', first=True)
+        comment_body_elem = comment.find(
+            '[data-sigil="comment-body"],div._14ye,div.bl', first=True
+        )
         if comment_body_elem:
             text = comment_body_elem.text
         else:
@@ -943,7 +954,8 @@ class PostExtractor:
                 logger.error(f"Unable to parse comment {comment}: {e}")
                 continue
             replies = comment.find(
-                "div.async_elem[data-sigil='replies-see-more'] a[href],div[id*='comment_replies_more'] a[href]", first=True
+                "div.async_elem[data-sigil='replies-see-more'] a[href],div[id*='comment_replies_more'] a[href]",
+                first=True,
             )
             if self.options.get("progress"):
                 pbar.update(1)
@@ -959,11 +971,11 @@ class PostExtractor:
                 # Skip first element, as it will be this comment itself
                 replies = response.html.find('div[data-sigil="comment"],#root div[id]')[1:]
                 try:
-                    result["replies"] = [
-                        self.parse_comment(reply) for reply in replies
-                    ]
+                    result["replies"] = [self.parse_comment(reply) for reply in replies]
                 except Exception as e:
-                    logger.error(f"Unable to parse comment {result['comment_id']} replies {replies}: {e}")
+                    logger.error(
+                        f"Unable to parse comment {result['comment_id']} replies {replies}: {e}"
+                    )
                     continue
             results.append(result)
         return {"comments_full": results}
@@ -1052,7 +1064,11 @@ class PhotoPostExtractor(PostExtractor):
 
     def extract_photo_link(self) -> PartialPost:
         image = self.extract_photo_link_HQ(self.full_post_html.html)
-        return {"image": image, "images": [image], "images_description": self.extract_image_lq()["images_lowquality_description"]}
+        return {
+            "image": image,
+            "images": [image],
+            "images_description": self.extract_image_lq()["images_lowquality_description"],
+        }
 
     def extract_user_id(self) -> PartialPost:
         match = re.search(r'entity_id:(\d+),', self.element.html)
@@ -1060,11 +1076,7 @@ class PhotoPostExtractor(PostExtractor):
             return {"user_id": match.group(1)}
 
     def extract_post_url(self) -> PartialPost:
-        return {
-            "post_url": utils.urljoin(
-                FB_MOBILE_BASE_URL, self.extract_post_id()["post_id"]
-            )
-        }
+        return {"post_url": utils.urljoin(FB_MOBILE_BASE_URL, self.extract_post_id()["post_id"])}
 
     def extract_post_id(self) -> PartialPost:
         try:

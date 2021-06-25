@@ -198,51 +198,52 @@ def parse_cookie_file(filename: str) -> RequestsCookieJar:
     jar = RequestsCookieJar()
 
     with open(filename, mode='rt') as file:
+        data = file.read()
 
-        if filename.endswith(".json"):
-            data = json.load(file)
-            if type(data) is list:
-                for c in data:
-                    expires = c.get("expirationDate") or c.get("Expires raw")
-                    if expires:
-                        expires = int(expires)
-                    if "Name raw" in c:
-                        # Cookie Quick Manager JSON format
-                        host = c["Host raw"].replace("https://", "").strip("/")
-                        jar.set(
-                            c["Name raw"],
-                            c["Content raw"],
-                            domain=host,
-                            path=c["Path raw"],
-                            expires=expires,
-                        )
-                    else:
-                        # EditThisCookie JSON format
-                        jar.set(
-                            c["name"],
-                            c["value"],
-                            domain=c["domain"],
-                            path=c["path"],
-                            secure=c["secure"],
-                            expires=expires,
-                        )
-            elif type(data) is dict:
-                for k, v in data.items():
-                    if type(v) is dict:
-                        jar.set(k, v["value"])
-                    else:
-                        jar.set(k, v)
-        else:
-            # Netscape format
-            for line in file:
-                line = line.strip()
-                if line == "" or line.startswith('#'):
-                    continue
+    try:
+        data = json.loads(data)
+        if type(data) is list:
+            for c in data:
+                expires = c.get("expirationDate") or c.get("Expires raw")
+                if expires:
+                    expires = int(expires)
+                if "Name raw" in c:
+                    # Cookie Quick Manager JSON format
+                    host = c["Host raw"].replace("https://", "").strip("/")
+                    jar.set(
+                        c["Name raw"],
+                        c["Content raw"],
+                        domain=host,
+                        path=c["Path raw"],
+                        expires=expires,
+                    )
+                else:
+                    # EditThisCookie JSON format
+                    jar.set(
+                        c["name"],
+                        c["value"],
+                        domain=c["domain"],
+                        path=c["path"],
+                        secure=c["secure"],
+                        expires=expires,
+                    )
+        elif type(data) is dict:
+            for k, v in data.items():
+                if type(v) is dict:
+                    jar.set(k, v["value"])
+                else:
+                    jar.set(k, v)
+    except json.decoder.JSONDecodeError:
+        # Netscape format
+        for line in data.splitlines():
+            line = line.strip()
+            if line == "" or line.startswith('#'):
+                continue
 
-                domain, _, path, secure, expires, name, value = line.split('\t')
-                secure = secure.lower() == 'true'
-                expires = None if expires == '0' else int(expires)
+            domain, _, path, secure, expires, name, value = line.split('\t')
+            secure = secure.lower() == 'true'
+            expires = None if expires == '0' else int(expires)
 
-                jar.set(name, value, domain=domain, path=path, secure=secure, expires=expires)
+            jar.set(name, value, domain=domain, path=path, secure=secure, expires=expires)
 
     return jar
