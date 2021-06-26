@@ -890,7 +890,9 @@ class PostExtractor:
         Note that this method may raise multiple http requests per post to get all comments"""
         comments_area_selector = 'div.ufi'
         elem = self.full_post_html.find(comments_area_selector, first=True)
-        comments_selector = 'div[data-sigil="comment"],div._55wr'
+        comments_selector = 'div[data-sigil="comment"]'
+        if self.options.get("noscript"):
+            comments_selector = "div._55wr"
         comments = list(elem.find(comments_selector))
         if not comments:
             logger.warning("No comments found on page")
@@ -969,7 +971,10 @@ class PostExtractor:
                     logger.error(e)
                     continue
                 # Skip first element, as it will be this comment itself
-                replies = response.html.find('div[data-sigil="comment"],#root div[id]')[1:]
+                reply_selector = 'div[data-sigil="comment"]'
+                if self.options.get("noscript"):
+                    reply_selector = '#root div[id]'
+                replies = response.html.find(reply_selector)[1:]
                 try:
                     result["replies"] = [self.parse_comment(reply) for reply in replies]
                 except Exception as e:

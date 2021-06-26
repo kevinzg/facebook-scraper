@@ -483,6 +483,8 @@ class FacebookScraper:
         elif isinstance(options, set):
             warnings.warn("The options argument should be a dictionary.", stacklevel=3)
             options = {k: True for k in options}
+        if self.session.cookies.get("noscript") == "1":
+            options["noscript"] = True
 
         if page_limit and page_limit <= 2:
             warnings.warn(
