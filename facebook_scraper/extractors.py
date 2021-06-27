@@ -898,12 +898,11 @@ class PostExtractor:
             logger.warning("No comments found on page")
             return
 
-        more_selector = f"a[href*='{self.post.get('post_id')}']"
-        direction = "View more comments"
-        more = elem.find(more_selector, containing=direction, first=True)
+        more_selector = f"div#see_next_{self.post.get('post_id')} a"
+        more = elem.find(more_selector, first=True)
         if not more:
-            direction = "View previous comments"
-            more = elem.find(more_selector, containing=direction, first=True)
+            more_selector = f"div#see_prev_{self.post.get('post_id')} a"
+            more = elem.find(more_selector, first=True)
 
         # Comment limiting and progress
         limit = 5000  # Default
@@ -942,7 +941,7 @@ class PostExtractor:
                 logger.warning("No comments found on page")
                 break
             comments.extend(more_comments)
-            more = elem.find(more_selector, containing=direction, first=True)
+            more = elem.find(more_selector, first=True)
 
         logger.debug(f"Found {len(comments)} comments")
         results = []
