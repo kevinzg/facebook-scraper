@@ -150,10 +150,11 @@ class FacebookScraper:
         else:
             cover_photo = response.html.find(
                 "div[data-sigil='cover-photo']>i.img", first=True
-            ).attrs["style"]
-            match = re.search(r"url\('(.+)'\)", cover_photo)
-            if match:
-                result["cover_photo"] = utils.decode_css_url(match.groups()[0])
+            )
+            if cover_photo:
+                match = re.search(r"url\('(.+)'\)", cover_photo.attrs["style"])
+                if match:
+                    result["cover_photo"] = utils.decode_css_url(match.groups()[0])
             result["profile_picture"] = response.html.find("img.profpic", first=True).attrs["src"]
 
         about_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/about/')
