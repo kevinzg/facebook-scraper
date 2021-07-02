@@ -155,7 +155,9 @@ class FacebookScraper:
                 match = re.search(r"url\('(.+)'\)", cover_photo.attrs["style"])
                 if match:
                     result["cover_photo"] = utils.decode_css_url(match.groups()[0])
-            result["profile_picture"] = response.html.find("img.profpic", first=True).attrs["src"]
+            profpic = response.html.find("img.profpic", first=True)
+            if profpic:
+                result["profile_picture"] = profpic.attrs["src"]
 
         about_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/about/')
         logger.debug(f"Requesting page from: {about_url}")
