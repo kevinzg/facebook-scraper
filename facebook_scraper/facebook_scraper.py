@@ -391,6 +391,7 @@ class FacebookScraper:
             not_found_titles = ["page not found", "content not found"]
             temp_ban_titles = [
                 "you can't use this feature at the moment",
+                "you can't use this feature right now",
                 "you’re temporarily blocked",
             ]
             if title:
