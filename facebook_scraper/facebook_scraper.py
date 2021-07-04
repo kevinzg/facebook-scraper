@@ -131,37 +131,38 @@ class FacebookScraper:
     def get_profile(self, account, **kwargs) -> Profile:
         result = {}
 
-        logger.debug(f"Requesting page from: {account}")
-        response = self.get(account)
-        match = re.search(r'entity_id:(\d+),', response.html.html)
-        if match:
-            result["id"] = match.group(1)
-        photo_links = response.html.find("a[href^='/photo.php']")
-        if photo_links:
-            cover_photo = photo_links[0]
-            result["cover_photo_text"] = cover_photo.attrs.get("title")
-            response = self.get(cover_photo.attrs.get("href"))
-            extractor = PostExtractor(response.html, kwargs, self.get)
-            result["cover_photo"] = extractor.extract_photo_link_HQ(response.html.html)
+        if kwargs.get("allow_extra_requests", True):
+            logger.debug(f"Requesting page from: {account}")
+            response = self.get(account)
+            photo_links = response.html.find("a[href^='/photo.php']")
+            if photo_links:
+                cover_photo = photo_links[0]
+                result["cover_photo_text"] = cover_photo.attrs.get("title")
+                response = self.get(cover_photo.attrs.get("href"))
+                extractor = PostExtractor(response.html, kwargs, self.get)
+                result["cover_photo"] = extractor.extract_photo_link_HQ(response.html.html)
 
-            profile_photo = photo_links[1]
-            response = self.get(profile_photo.attrs.get("href"))
-            result["profile_picture"] = extractor.extract_photo_link_HQ(response.html.html)
-        else:
-            cover_photo = response.html.find(
-                "div[data-sigil='cover-photo']>i.img", first=True
-            )
-            if cover_photo:
-                match = re.search(r"url\('(.+)'\)", cover_photo.attrs["style"])
-                if match:
-                    result["cover_photo"] = utils.decode_css_url(match.groups()[0])
-            profpic = response.html.find("img.profpic", first=True)
-            if profpic:
-                result["profile_picture"] = profpic.attrs["src"]
+                profile_photo = photo_links[1]
+                response = self.get(profile_photo.attrs.get("href"))
+                result["profile_picture"] = extractor.extract_photo_link_HQ(response.html.html)
+            else:
+                cover_photo = response.html.find(
+                    "div[data-sigil='cover-photo']>i.img", first=True
+                )
+                if cover_photo:
+                    match = re.search(r"url\('(.+)'\)", cover_photo.attrs["style"])
+                    if match:
+                        result["cover_photo"] = utils.decode_css_url(match.groups()[0])
+                profpic = response.html.find("img.profpic", first=True)
+                if profpic:
+                    result["profile_picture"] = profpic.attrs["src"]
 
         about_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/about/')
         logger.debug(f"Requesting page from: {about_url}")
         response = self.get(about_url)
+        match = re.search(r'entity_id:(\d+),', response.html.html)
+        if match:
+            result["id"] = match.group(1)
         # Profile name is in the title
         title = response.html.find("title", first=True).text
         if " | " in title:
