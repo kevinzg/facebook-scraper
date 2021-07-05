@@ -11,7 +11,7 @@ from requests import RequestException
 from requests_html import HTMLSession
 
 from . import utils
-from .constants import DEFAULT_PAGE_LIMIT, FB_BASE_URL, FB_MOBILE_BASE_URL, FB_W3_BASE_URL
+from .constants import DEFAULT_PAGE_LIMIT, FB_BASE_URL, FB_MOBILE_BASE_URL, FB_W3_BASE_URL, FB_MBASIC_BASE_URL
 from .extractors import extract_group_post, extract_post, extract_photo_post, PostExtractor
 from .fb_types import Post, Profile
 from .page_iterators import iter_group_pages, iter_pages, iter_photos
@@ -356,6 +356,33 @@ class FacebookScraper:
             pass
         return result
 
+    def get_shop(self, page, **kwargs) -> Iterator[Post]:
+        self.set_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/603.3.8 (KHTML, like Gecko) Version/10.1.2 Safari/603.3.8")
+        self.set_noscript(True)
+        url = f"{page}/shop/"
+        logger.debug(f"Fetching {url}")
+        resp = self.get(url)
+        more_links = resp.html.find("a[href]", containing="See More")
+        url = more_links[-1].attrs["href"]
+        logger.debug(f"Fetching {url}")
+        resp = self.get(url)
+        items = resp.html.find("div.be")
+        results = []
+        for item in items:
+            link_elem = item.find("div.bk.bl a", first=True)
+            name = link_elem.text
+            link = link_elem.attrs["href"]
+            image = item.find("img", first=True).attrs["src"]
+            price = item.find("div.bk.bl")[-1].text
+            result = {
+                "name": name,
+                "link": link,
+                "image": image,
+                "price": price
+            }
+            results.append(result)
+        return results
+
     def get_group_posts(self, group: Union[str, int], **kwargs) -> Iterator[Post]:
         iter_pages_fn = partial(iter_group_pages, group=group, request_fn=self.get, **kwargs)
         return self._generic_get_posts(extract_group_post, iter_pages_fn, **kwargs)
@@ -398,6 +425,8 @@ class FacebookScraper:
             if title:
                 if title.text.lower() in not_found_titles:
                     raise exceptions.NotFound(title.text)
+                elif title.text.lower() == "error":
+                    raise exceptions.UnexpectedResponse("Your request couldn't be processed")
                 elif title.text.lower() in temp_ban_titles:
                     raise exceptions.TemporarilyBanned(title.text)
                 elif ">Your Account Has Been Disabled<" in response.html.html:
