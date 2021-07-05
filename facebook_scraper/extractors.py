@@ -954,6 +954,8 @@ class PostExtractor:
             except Exception as e:
                 logger.error(f"Unable to parse comment {comment}: {e}")
                 continue
+            inline_replies = comment.find("div[data-sigil='comment inline-reply']")
+            result["replies"] = [self.parse_comment(reply) for reply in inline_replies]
             replies = comment.find(
                 "div.async_elem[data-sigil='replies-see-more'] a[href],div[id*='comment_replies_more'] a[href]",
                 first=True,
@@ -975,7 +977,7 @@ class PostExtractor:
                     reply_selector = '#root div[id]'
                 replies = response.html.find(reply_selector)[1:]
                 try:
-                    result["replies"] = [self.parse_comment(reply) for reply in replies]
+                    result["replies"].extend([self.parse_comment(reply) for reply in replies])
                 except Exception as e:
                     logger.error(
                         f"Unable to parse comment {result['comment_id']} replies {replies}: {e}"
