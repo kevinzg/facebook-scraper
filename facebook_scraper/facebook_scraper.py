@@ -128,6 +128,50 @@ class FacebookScraper:
                     post.pop('source', None)
             yield post
 
+    def get_friends(self, account, **kwargs) -> Iterator[Profile]:
+        friend_opt = kwargs.get("friends")
+        limit = None
+        if type(friend_opt) in [int, float]:
+            limit = friend_opt
+        friend_url = kwargs.pop("start_url", None)
+        if not friend_url:
+            friend_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/friends/')
+        request_url_callback = kwargs.get('request_url_callback')
+        friends_found = 0
+        while friend_url:
+            logger.debug(f"Requesting page from: {friend_url}")
+            response = self.get(friend_url)
+            elems = response.html.find('div[data-sigil="undoable-action"]')
+            logger.debug(f"Found {len(elems)} friends")
+            for elem in elems:
+                name = elem.find("h3>a", first=True)
+                tagline = elem.find("div.notice.ellipsis", first=True).text
+                profile_picture = elem.find("i.profpic", first=True).attrs.get("style")
+                match = re.search(r"url\('(.+)'\)", profile_picture)
+                if match:
+                    profile_picture = utils.decode_css_url(match.groups()[0])
+                user_id = json.loads(
+                    elem.find("a.touchable[data-store]", first=True).attrs["data-store"]
+                ).get("id")
+                friend = {
+                    "id": user_id,
+                    "link": name.attrs.get("href"),
+                    "name": name.text,
+                    "profile_picture": profile_picture,
+                    "tagline": tagline,
+                }
+                yield friend
+                friends_found += 1
+            if limit and friends_found > limit:
+                return
+            more = re.search(r'href:"(/[^/]+/friends[^"]+)"', response.text)
+            if more:
+                friend_url = utils.urljoin(FB_MOBILE_BASE_URL, more.group(1))
+                if request_url_callback:
+                    request_url_callback(friend_url)
+            else:
+                return
+
     def get_profile(self, account, **kwargs) -> Profile:
         result = {}
 
@@ -223,46 +267,8 @@ class FacebookScraper:
                     result[header] = pairs
                 else:
                     result[header] = "\n".join(bits)
-        friend_opt = kwargs.get("friends")
-        if friend_opt:
-            limit = None
-            if type(friend_opt) in [int, float]:
-                limit = friend_opt
-            friend_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/friends/')
-            elems = []
-            while friend_url:
-                logger.debug(f"Requesting page from: {friend_url}")
-                response = self.get(friend_url)
-                elems.extend(response.html.find('div[data-sigil="undoable-action"]'))
-                if limit and len(elems) > limit:
-                    break
-                more = re.search(r'href:"(/[^/]+/friends[^"]+)"', response.text)
-                if more:
-                    friend_url = utils.urljoin(FB_MOBILE_BASE_URL, more.group(1))
-                else:
-                    break
-            logger.debug(f"Found {len(elems)} friends")
-            friends = []
-            for elem in elems:
-                name = elem.find("h3>a", first=True)
-                tagline = elem.find("div.notice.ellipsis", first=True).text
-                profile_picture = elem.find("i.profpic", first=True).attrs.get("style")
-                match = re.search(r"url\('(.+)'\)", profile_picture)
-                if match:
-                    profile_picture = utils.decode_css_url(match.groups()[0])
-                user_id = json.loads(
-                    elem.find("a.touchable[data-store]", first=True).attrs["data-store"]
-                ).get("id")
-                friends.append(
-                    {
-                        "id": user_id,
-                        "link": name.attrs.get("href"),
-                        "name": name.text,
-                        "profile_picture": profile_picture,
-                        "tagline": tagline,
-                    }
-                )
-            result["Friends"] = friends
+        if kwargs.get("friends"):
+            result["Friends"] = list(self.get_friends(account, **kwargs))
         return result
 
     def get_page_info(self, page, **kwargs) -> Profile:
