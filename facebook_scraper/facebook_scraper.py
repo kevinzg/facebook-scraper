@@ -309,6 +309,7 @@ class FacebookScraper:
         return result
 
     def get_group_info(self, group, **kwargs) -> Profile:
+        self.set_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/603.3.8 (KHTML, like Gecko) Version/10.1.2 Safari/603.3.8")
         url = f'/groups/{group}'
         logger.debug(f"Requesting page from: {url}")
         resp = self.get(url).html
@@ -339,19 +340,23 @@ class FacebookScraper:
                 }
                 for e in admins
             ]
-            url = resp.find("a[href^='/browse/group/members']", first=True).attrs["href"]
-            members = []
-            while url:
-                logger.debug(f"Requesting page from: {url}")
-                resp = self.get(url).html
-                elems = resp.find("#root div.touchable a:not(.touchable)")
-                members.extend([{"name": e.text, "link": e.attrs["href"]} for e in elems])
-                more = re.search(r'"m_more_item",href:"([^"]+)', resp.text)
-                if more:
-                    url = more.group(1)
-                else:
-                    url = None
-            result["other_members"] = [m for m in members if m not in result["admins"]]
+            url = resp.find("a[href^='/browse/group/members']", first=True)
+            if url:
+                url = url.attrs["href"]
+                members = []
+                while url:
+                    logger.debug(f"Requesting page from: {url}")
+                    resp = self.get(url).html
+                    elems = resp.find("#root div.touchable a:not(.touchable)")
+                    members.extend([{"name": e.text, "link": e.attrs["href"]} for e in elems])
+                    more = re.search(r'"m_more_item",href:"([^"]+)', resp.text)
+                    if more:
+                        url = more.group(1)
+                    else:
+                        url = None
+                result["other_members"] = [m for m in members if m not in result["admins"]]
+            else:
+                logger.warning("No other members listed")
         except exceptions.LoginRequired as e:
             pass
         return result
