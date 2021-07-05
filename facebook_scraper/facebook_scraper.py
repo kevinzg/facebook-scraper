@@ -11,7 +11,13 @@ from requests import RequestException
 from requests_html import HTMLSession
 
 from . import utils
-from .constants import DEFAULT_PAGE_LIMIT, FB_BASE_URL, FB_MOBILE_BASE_URL, FB_W3_BASE_URL, FB_MBASIC_BASE_URL
+from .constants import (
+    DEFAULT_PAGE_LIMIT,
+    FB_BASE_URL,
+    FB_MOBILE_BASE_URL,
+    FB_W3_BASE_URL,
+    FB_MBASIC_BASE_URL,
+)
 from .extractors import extract_group_post, extract_post, extract_photo_post, PostExtractor
 from .fb_types import Post, Profile
 from .page_iterators import iter_group_pages, iter_pages, iter_photos
@@ -315,7 +321,9 @@ class FacebookScraper:
         return result
 
     def get_group_info(self, group, **kwargs) -> Profile:
-        self.set_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/603.3.8 (KHTML, like Gecko) Version/10.1.2 Safari/603.3.8")
+        self.set_user_agent(
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/603.3.8 (KHTML, like Gecko) Version/10.1.2 Safari/603.3.8"
+        )
         url = f'/groups/{group}'
         logger.debug(f"Requesting page from: {url}")
         resp = self.get(url).html
@@ -368,7 +376,9 @@ class FacebookScraper:
         return result
 
     def get_shop(self, page, **kwargs) -> Iterator[Post]:
-        self.set_user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/603.3.8 (KHTML, like Gecko) Version/10.1.2 Safari/603.3.8")
+        self.set_user_agent(
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/603.3.8 (KHTML, like Gecko) Version/10.1.2 Safari/603.3.8"
+        )
         self.set_noscript(True)
         url = f"{page}/shop/"
         logger.debug(f"Fetching {url}")
@@ -385,12 +395,7 @@ class FacebookScraper:
             link = link_elem.attrs["href"]
             image = item.find("img", first=True).attrs["src"]
             price = item.find("div.bk.bl")[-1].text
-            result = {
-                "name": name,
-                "link": link,
-                "image": image,
-                "price": price
-            }
+            result = {"name": name, "link": link, "image": image, "price": price}
             results.append(result)
         return results
 

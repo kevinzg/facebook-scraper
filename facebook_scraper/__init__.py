@@ -68,6 +68,7 @@ def get_profile(
     set_cookies(cookies)
     return _scraper.get_profile(account, **kwargs)
 
+
 def get_friends(
     account: str,
     **kwargs,
@@ -82,6 +83,7 @@ def get_friends(
     cookies = kwargs.pop('cookies', None)
     set_cookies(cookies)
     return _scraper.get_friends(account, **kwargs)
+
 
 def get_page_info(account: str, **kwargs) -> Profile:
     """Get a page's information
@@ -107,6 +109,7 @@ def get_group_info(group: Union[str, int], **kwargs) -> Profile:
     cookies = kwargs.pop('cookies', None)
     set_cookies(cookies)
     return _scraper.get_group_info(group, **kwargs)
+
 
 def get_shop(account: str, **kwargs) -> Iterator[Post]:
     """Get a page's shop listings
