@@ -6,6 +6,7 @@ import re
 from functools import partial
 from typing import Iterator, Union
 import json
+from urllib.parse import parse_qs, urlparse
 
 from requests import RequestException
 from requests_html import HTMLSession
@@ -86,6 +87,9 @@ class FacebookScraper:
             post = {"original_request_url": post_url, "post_url": url}
             logger.debug(f"Requesting page from: {url}")
             response = self.get(url)
+            if "/watch/" in response.url:
+                video_id = parse_qs(urlparse(response.url).query).get("v")[0]
+                response = self.get(video_id)
             elem = response.html.find('[data-ft*="top_level_post_id"]', first=True)
             photo_post = False
             if response.html.find("div.msg", first=True):
