@@ -9,7 +9,7 @@ from typing import Any, Dict, Optional
 from urllib.parse import parse_qs, urlparse
 from tqdm.auto import tqdm
 
-from . import utils
+from . import utils, exceptions
 from .constants import FB_BASE_URL, FB_MOBILE_BASE_URL
 from .fb_types import Options, Post, RawPost, RequestFunction, Response, URL
 
@@ -178,6 +178,8 @@ class PostExtractor:
                     continue
 
                 post.update(partial_post)
+            except exceptions.TemporarilyBanned:
+                raise
             except Exception as ex:
                 log_warning("Exception while running %s: %r", method.__name__, ex)
 
