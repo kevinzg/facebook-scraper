@@ -273,7 +273,12 @@ class FacebookScraper:
                 ):  # Divisible by two, assume pairs
                     pairs = {}
                     for i in range(0, len(bits), 2):
-                        pairs[bits[i + 1]] = bits[i]
+                        if bits[i + 1] == "Websites":
+                            if "Websites" not in pairs:
+                                pairs["Websites"] = []
+                            pairs["Websites"].append(bits[i])
+                        else:
+                            pairs[bits[i + 1]] = bits[i]
                     result[header] = pairs
                 else:
                     result[header] = "\n".join(bits)
