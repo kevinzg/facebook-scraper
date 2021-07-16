@@ -109,7 +109,12 @@ class FacebookScraper:
                 '[data-ft*="top_level_post_id"]', first=True
             )
             photo_post = False
-            if response.html.find("div.msg", first=True):
+            import ipdb
+
+            ipdb.set_trace()
+            if response.html.find("div.msg", first=True) or response.html.find(
+                "#root", first=True
+            ):
                 photo_post = True
                 elem = response.html.find("#root", first=True)
             if not elem:
@@ -246,16 +251,18 @@ class FacebookScraper:
                 profpic = response.html.find("img.profpic", first=True)
                 if profpic:
                     result["profile_picture"] = profpic.attrs["src"]
-        about_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/about/')
-        about_url = kwargs.get('url', about_url)
-        logger.debug(f"Requesting page from: {about_url}")
-        response = self.get(about_url)
+        try:
+            about_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/about/')
+            logger.debug(f"Requesting page from: {about_url}")
+            response = self.get(about_url)
+        except exceptions.LoginRequired:
+            about_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/')
+            logger.debug(f"Requesting page from: {about_url}")
+            response = self.get(about_url)
+
         match = re.search(r'entity_id:(\d+),', response.html.html)
         if match:
             result["id"] = match.group(1)
-        # Profile name is in the title
-        url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}')
-        response = self.get(url)
         title = response.html.find("title", first=True).text
         if " | " in title:
             title = title.split(" | ")[0]
