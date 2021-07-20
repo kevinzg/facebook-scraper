@@ -556,7 +556,7 @@ class PostExtractor:
             "image_ids": image_ids,
         }
 
-    def extract_reactions(self) -> PartialPost:
+    def extract_reactions(self, post_id = None) -> PartialPost:
         """Fetch share and reactions information with a existing post obtained by `get_posts`.
         Return a merged post that has some new fields including `reactions`, `w3_fb_url`,
         `fetched_time`, and reactions fields `LIKE`, `ANGER`, `SORRY`, `WOW`, `LOVE`, `HAHA` if
@@ -582,13 +582,15 @@ class PostExtractor:
                     reactions[name] = v["default"]
 
         url = self.post.get('post_url')
-        post_id = self.post.get('post_id')
+        if not post_id:
+            post_id = self.post.get("post_id")
         w3_fb_url = url and utils.urlparse(url)._replace(netloc='www.facebook.com').geturl()
 
         reactors = []
         reactors_opt = self.options.get("reactors")
         if reactors_opt:
             reaction_url = f'https://m.facebook.com/ufi/reaction/profile/browser/?ft_ent_identifier={post_id}'
+            logger.debug(f"Fetching {reaction_url}")
             response = self.request(reaction_url)
             emoji_class_lookup = {}
             spriteMapCssClass = "sp_E24l_TeOlgh"
@@ -606,7 +608,7 @@ class PostExtractor:
             logger.debug(f"Fetching {limit} reactors")
             elems = list(
                 response.html.find(
-                    "div#reaction_profile_browser>div,div#reaction_profile_browser1>div"
+                    "div[id^='reaction_profile_browser']>div"
                 )
             )
             more = response.html.find("div#reaction_profile_pager a", first=True)
@@ -875,6 +877,12 @@ class PostExtractor:
                 if match:
                     image_url = utils.decode_css_url(match.groups()[0])
 
+        reactors = None
+        if self.options.get("reactors"):
+            reactors = comment.find('a[href^="/ufi/reaction/profile/browser/?ft_ent_identifier="] i', first=True)
+            if reactors:
+                reactors = self.extract_reactions(comment_id)["reactors"]
+
         return {
             "comment_id": comment_id,
             "comment_url": utils.urljoin(FB_BASE_URL, comment_id),
@@ -885,6 +893,7 @@ class PostExtractor:
             "comment_text": text,
             "comment_time": date,
             "comment_image": image_url,
+            "comment_reactors": reactors
         }
 
     def extract_comments_full(self):
