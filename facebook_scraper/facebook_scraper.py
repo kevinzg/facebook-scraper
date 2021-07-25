@@ -435,6 +435,7 @@ class FacebookScraper:
             if (
                 response.url.startswith(FB_MOBILE_BASE_URL)
                 and not response.html.find("script", first=True)
+                and "script" not in response.html.html
                 and self.session.cookies.get("noscript") != "1"
             ):
                 warnings.warn(
