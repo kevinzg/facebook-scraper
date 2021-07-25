@@ -49,7 +49,7 @@ We’re headed to PAX East 3/28-3/31 with new games
 
 - **group**: group id, to scrape groups instead of pages. Default is `None`.
 - **pages**: how many pages of posts to request, the first 2 pages may have no results, so try with a number greater than 2. Default is 10.
-- **timeout**: how many seconds to wait before timing out. Default is 5.
+- **timeout**: how many seconds to wait before timing out. Default is 30.
 - **credentials**: tuple of user and password to login before requesting the posts. Default is `None`.
 - **extra_info**: bool, if true the function will try to do an extra request to get the post reactions. Default is False.
 - **youtube_dl**: bool, use Youtube-DL for (high-quality) video extraction. You need to have youtube-dl installed on your environment. Default is False.
