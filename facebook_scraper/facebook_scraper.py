@@ -183,6 +183,7 @@ class FacebookScraper:
                 return
 
     def get_profile(self, account, **kwargs) -> Profile:
+        account = account.replace("profile.php?id=", "")
         result = {}
 
         if kwargs.get("allow_extra_requests", True):
