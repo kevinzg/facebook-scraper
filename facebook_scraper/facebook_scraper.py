@@ -394,17 +394,18 @@ class FacebookScraper:
         logger.debug(f"Fetching {url}")
         resp = self.get(url)
         more_links = resp.html.find("a[href]", containing="See More")
-        url = more_links[-1].attrs["href"]
-        logger.debug(f"Fetching {url}")
-        resp = self.get(url)
+        if more_links:
+            url = more_links[-1].attrs["href"]
+            logger.debug(f"Fetching {url}")
+            resp = self.get(url)
         items = resp.html.find("div.be")
         results = []
         for item in items:
-            link_elem = item.find("div.bk.bl a", first=True)
+            link_elem = item.find("div.bl a", first=True)
             name = link_elem.text
             link = link_elem.attrs["href"]
             image = item.find("img", first=True).attrs["src"]
-            price = item.find("div.bk.bl")[-1].text
+            price = item.find("div.bl")[-1].text
             result = {"name": name, "link": link, "image": image, "price": price}
             results.append(result)
         return results
