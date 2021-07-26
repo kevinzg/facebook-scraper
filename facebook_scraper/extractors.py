@@ -1021,7 +1021,7 @@ class PostExtractor:
         self._data_ft = {}
         try:
             data_ft_json = self.element.attrs['data-ft']
-            self._data_ft = json.loads(data_ft_json)
+            self._data_ft = demjson.decode(data_ft_json)
         except JSONDecodeError as ex:
             logger.error("Error parsing data-ft JSON: %r", ex)
         except KeyError:
