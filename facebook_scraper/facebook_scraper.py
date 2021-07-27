@@ -330,6 +330,24 @@ class FacebookScraper:
             logger.error(e)
         return result
 
+    #retrieve basic page info to improve request speed and reduce temporary blocking
+    def get_page_basic_info(self, page, **kwargs) -> Profile:
+        result = {}
+        try:
+            about_url = f'/{page}/about/'
+            logger.debug(f"Requesting page from: {about_url}")
+            resp = self.get(about_url)
+            desc = resp.html.find("meta[name='description']", first=True)
+            if desc:
+                logger.debug(desc.attrs["content"])
+                match = re.search(r'(\d[\d,.]+)', desc.attrs["content"])
+                if match:
+                    result["likes"] = utils.parse_int(match.groups()[0])
+            result["about"] = resp.html.find('#pages_msite_body_contents', first=True).text
+        except Exception as e:
+            logger.error(e)
+        return result
+
     def get_group_info(self, group, **kwargs) -> Profile:
         self.set_user_agent(
             "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/603.3.8 (KHTML, like Gecko) Version/10.1.2 Safari/603.3.8"
