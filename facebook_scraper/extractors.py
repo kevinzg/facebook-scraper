@@ -942,6 +942,8 @@ class PostExtractor:
                 logger.debug(f"Fetching {url}")
             try:
                 response = self.request(url)
+            except exceptions.TemporarilyBanned:
+                raise
             except Exception as e:
                 logger.error(e)
                 break
@@ -962,6 +964,8 @@ class PostExtractor:
         for comment in comments:
             try:
                 result = self.parse_comment(comment)
+            except exceptions.TemporarilyBanned:
+                raise
             except Exception as e:
                 logger.error(f"Unable to parse comment {comment}: {e}")
                 continue
@@ -979,6 +983,8 @@ class PostExtractor:
                     logger.debug(f"Fetching {url}")
                 try:
                     response = self.request(url)
+                except exceptions.TemporarilyBanned:
+                    raise
                 except Exception as e:
                     logger.error(e)
                     continue
@@ -989,6 +995,8 @@ class PostExtractor:
                 replies = response.html.find(reply_selector)[1:]
                 try:
                     result["replies"].extend([self.parse_comment(reply) for reply in replies])
+                except exceptions.TemporarilyBanned:
+                    raise
                 except Exception as e:
                     logger.error(
                         f"Unable to parse comment {result['comment_id']} replies {replies}: {e}"
