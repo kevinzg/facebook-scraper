@@ -287,10 +287,10 @@ class FacebookScraper:
             result["Friends"] = list(self.get_friends(account, **kwargs))
         return result
 
-    def get_page_info(self, page, fetch_posts, **kwargs) -> Profile:
+    def get_page_info(self, page, **kwargs) -> Profile:
         result = {}
 
-        if fetch_posts:
+        if kwargs.get("allow_extra_requests", True):
             for post in self.get_posts(page, **kwargs):
                 logger.debug(f"Fetching {post['post_id']}")
                 resp = self.get(post["post_id"])
