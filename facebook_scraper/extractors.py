@@ -556,7 +556,7 @@ class PostExtractor:
             "image_ids": image_ids,
         }
 
-    def extract_reactions(self, post_id = None) -> PartialPost:
+    def extract_reactions(self, post_id=None) -> PartialPost:
         """Fetch share and reactions information with a existing post obtained by `get_posts`.
         Return a merged post that has some new fields including `reactions`, `w3_fb_url`,
         `fetched_time`, and reactions fields `LIKE`, `ANGER`, `SORRY`, `WOW`, `LOVE`, `HAHA` if
@@ -606,11 +606,7 @@ class PostExtractor:
             if type(reactors_opt) in [int, float] and reactors_opt < limit:
                 limit = reactors_opt
             logger.debug(f"Fetching {limit} reactors")
-            elems = list(
-                response.html.find(
-                    "div[id^='reaction_profile_browser']>div"
-                )
-            )
+            elems = list(response.html.find("div[id^='reaction_profile_browser']>div"))
             more = response.html.find("div#reaction_profile_pager a", first=True)
             if more and limit > 50:
                 url = utils.urljoin(FB_MOBILE_BASE_URL, more.attrs.get("href"))
@@ -879,7 +875,9 @@ class PostExtractor:
 
         reactors = None
         if self.options.get("reactors"):
-            reactors = comment.find('a[href^="/ufi/reaction/profile/browser/?ft_ent_identifier="] i', first=True)
+            reactors = comment.find(
+                'a[href^="/ufi/reaction/profile/browser/?ft_ent_identifier="] i', first=True
+            )
             if reactors:
                 reactors = self.extract_reactions(comment_id)["reactors"]
 
@@ -893,7 +891,7 @@ class PostExtractor:
             "comment_text": text,
             "comment_time": date,
             "comment_image": image_url,
-            "comment_reactors": reactors
+            "comment_reactors": reactors,
         }
 
     def extract_comments_full(self):
