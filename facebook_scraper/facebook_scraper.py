@@ -303,7 +303,8 @@ class FacebookScraper:
                     result["type"] = result.pop("@type")
                     desc = resp.html.find("meta[name='description']", first=True)
                     if desc:
-                        match = re.search(r'(\d[\d,.]+)', desc.attrs["content"])
+                        logger.debug(desc.attrs["content"])
+                        match = re.search(r'\..+?(\d[\d,.]+)', desc.attrs["content"])
                         if match:
                             result["likes"] = utils.parse_int(match.groups()[0])
                     try:
@@ -324,7 +325,7 @@ class FacebookScraper:
             desc = resp.html.find("meta[name='description']", first=True)
             if desc:
                 logger.debug(desc.attrs["content"])
-                match = re.search(r'(\d[\d,.]+)', desc.attrs["content"])
+                match = re.search(r'\..+?(\d[\d,.]+)', desc.attrs["content"])
                 if match:
                     result["likes"] = utils.parse_int(match.groups()[0])
             result["about"] = resp.html.find('#pages_msite_body_contents', first=True).text
