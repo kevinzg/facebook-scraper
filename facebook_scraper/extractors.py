@@ -951,7 +951,8 @@ class PostExtractor:
 
         for comment in comments:
             result = self.extract_comment_with_replies(comment)
-            yield result
+            if result:
+                yield result
 
         more_selector = f"div#see_next_{self.post.get('post_id')} a"
         more = elem.find(more_selector, first=True)
@@ -1006,7 +1007,8 @@ class PostExtractor:
                 break
             for comment in more_comments:
                 result = self.extract_comment_with_replies(comment)
-                yield result
+                if result:
+                    yield result
             more = elem.find(more_selector, first=True)
             if more:
                 more_url = more.attrs.get("href")
