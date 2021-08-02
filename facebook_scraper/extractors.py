@@ -197,10 +197,12 @@ class PostExtractor:
 
         if self.options.get('comments'):
             try:
-                comments = self.extract_comments_full()
-                post.update(comments)
-                if post.get("comments_full") and not post.get("comments"):
-                    post["comments"] = len(post.get("comments_full"))
+                if self.options.get("comments") == "generator":
+                    post["comments_full"] = self.extract_comments_full()
+                else:
+                    post["comments_full"] = list(self.extract_comments_full())
+                    if post.get("comments_full") and not post.get("comments"):
+                        post["comments"] = len(post.get("comments_full"))
 
             except Exception as ex:
                 log_warning("Exception while extracting comments: %r", ex)
@@ -894,6 +896,46 @@ class PostExtractor:
             "comment_reactors": reactors,
         }
 
+    def extract_comment_with_replies(self, comment):
+        try:
+            result = self.parse_comment(comment)
+        except exceptions.TemporarilyBanned:
+            raise
+        except Exception as e:
+            logger.error(f"Unable to parse comment {comment}: {e}")
+            return
+        inline_replies = comment.find("div[data-sigil='comment inline-reply']")
+        result["replies"] = [self.parse_comment(reply) for reply in inline_replies]
+        replies = comment.find(
+            "div.async_elem[data-sigil='replies-see-more'] a[href],div[id*='comment_replies_more'] a[href]",
+            first=True,
+        )
+        if replies:
+            url = utils.urljoin(FB_MOBILE_BASE_URL, replies.attrs["href"])
+            if not self.options.get("progress"):
+                logger.debug(f"Fetching {url}")
+            try:
+                response = self.request(url)
+            except exceptions.TemporarilyBanned:
+                raise
+            except Exception as e:
+                logger.error(e)
+                return result
+            # Skip first element, as it will be this comment itself
+            reply_selector = 'div[data-sigil="comment"]'
+            if self.options.get("noscript"):
+                reply_selector = '#root div[id]'
+            replies = response.html.find(reply_selector)[1:]
+            try:
+                result["replies"].extend([self.parse_comment(reply) for reply in replies])
+            except exceptions.TemporarilyBanned:
+                raise
+            except Exception as e:
+                logger.error(
+                    f"Unable to parse comment {result['comment_id']} replies {replies}: {e}"
+                )
+        return result
+
     def extract_comments_full(self):
         """Fetch comments for an existing post obtained by `get_posts`.
         Note that this method may raise multiple http requests per post to get all comments"""
@@ -906,6 +948,10 @@ class PostExtractor:
         if not comments:
             logger.warning("No comments found on page")
             return
+
+        for comment in comments:
+            result = self.extract_comment_with_replies(comment)
+            yield result
 
         more_selector = f"div#see_next_{self.post.get('post_id')} a"
         more = elem.find(more_selector, first=True)
@@ -929,79 +975,43 @@ class PostExtractor:
             pbar = tqdm(total=limit)
 
         visited_urls = []
-        while more and len(comments) <= limit:
-            url = utils.urljoin(FB_MOBILE_BASE_URL, more.attrs.get("href"))
-            if url in visited_urls:
+        request_url_callback = self.options.get('comment_request_url_callback')
+        if more:
+            more_url = more.attrs.get("href")
+        if self.options.get("comment_start_url"):
+            more_url = self.options.get("comment_start_url")
+
+        while more_url and len(comments) <= limit:
+            if request_url_callback:
+                request_url_callback(more_url)
+            if more_url in visited_urls:
                 logger.debug("cycle detected, break")
                 break
             if self.options.get("progress"):
                 pbar.update(30)
             else:
-                logger.debug(f"Fetching {url}")
+                logger.debug(f"Fetching {more_url}")
             try:
-                response = self.request(url)
+                response = self.request(more_url)
             except exceptions.TemporarilyBanned:
                 raise
             except Exception as e:
                 logger.error(e)
                 break
-            visited_urls.append(url)
+            visited_urls.append(more_url)
             elem = response.html.find(comments_area_selector, first=True)
             more_comments = elem.find(comments_selector)
             if not more_comments:
                 logger.warning("No comments found on page")
                 break
-            comments.extend(more_comments)
+            for comment in more_comments:
+                result = self.extract_comment_with_replies(comment)
+                yield result
             more = elem.find(more_selector, first=True)
-
-        logger.debug(f"Found {len(comments)} comments")
-        results = []
-        if self.options.get("progress"):
-            pbar.close()
-            pbar = tqdm(total=len(comments))
-        for comment in comments:
-            try:
-                result = self.parse_comment(comment)
-            except exceptions.TemporarilyBanned:
-                raise
-            except Exception as e:
-                logger.error(f"Unable to parse comment {comment}: {e}")
-                continue
-            inline_replies = comment.find("div[data-sigil='comment inline-reply']")
-            result["replies"] = [self.parse_comment(reply) for reply in inline_replies]
-            replies = comment.find(
-                "div.async_elem[data-sigil='replies-see-more'] a[href],div[id*='comment_replies_more'] a[href]",
-                first=True,
-            )
-            if self.options.get("progress"):
-                pbar.update(1)
-            if replies:
-                url = utils.urljoin(FB_MOBILE_BASE_URL, replies.attrs["href"])
-                if not self.options.get("progress"):
-                    logger.debug(f"Fetching {url}")
-                try:
-                    response = self.request(url)
-                except exceptions.TemporarilyBanned:
-                    raise
-                except Exception as e:
-                    logger.error(e)
-                    continue
-                # Skip first element, as it will be this comment itself
-                reply_selector = 'div[data-sigil="comment"]'
-                if self.options.get("noscript"):
-                    reply_selector = '#root div[id]'
-                replies = response.html.find(reply_selector)[1:]
-                try:
-                    result["replies"].extend([self.parse_comment(reply) for reply in replies])
-                except exceptions.TemporarilyBanned:
-                    raise
-                except Exception as e:
-                    logger.error(
-                        f"Unable to parse comment {result['comment_id']} replies {replies}: {e}"
-                    )
-                    continue
-            results.append(result)
-        return {"comments_full": results}
+            if more:
+                more_url = more.attrs.get("href")
+            else:
+                more_url = None
 
     def parse_share_and_reactions(self, html: str):
         bad_jsons = self.shares_and_reactions_regex.findall(html)
