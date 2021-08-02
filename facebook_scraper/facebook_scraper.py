@@ -109,9 +109,6 @@ class FacebookScraper:
                 '[data-ft*="top_level_post_id"]', first=True
             )
             photo_post = False
-            import ipdb
-
-            ipdb.set_trace()
             if response.html.find("div.msg", first=True) or response.html.find(
                 "#root", first=True
             ):
