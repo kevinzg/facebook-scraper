@@ -4,6 +4,7 @@ import re
 import textwrap
 from typing import Iterator, Optional, Union
 import time
+from random import randint
 
 from requests.exceptions import HTTPError
 import warnings
@@ -85,6 +86,7 @@ def generic_iter_pages(
         yield page
 
         logger.debug("Looking for next page URL")
+        time.sleep(randint(7, 20))
         next_page = parser.get_next_page()
         if next_page:
             posts_per_page = kwargs.get("options", {}).get("posts_per_page")
