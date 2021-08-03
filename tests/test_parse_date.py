@@ -42,6 +42,7 @@ class TestParseDate:
         'last Mon',
         '11 mos',
         '1 mo',
+        'Just now'
     ]
 
     def test_all_dates(self):

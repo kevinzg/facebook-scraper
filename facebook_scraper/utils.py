@@ -178,8 +178,6 @@ def parse_datetime(text: str, search=True) -> Optional[datetime]:
             if text == today:
                 # Fix for dateparser misinterpreting "last Monday" as today if today is Monday
                 return dateparser.parse(text) - timedelta(days=7)
-        else:
-            return None
 
     result = dateparser.parse(text)
     if result:

@@ -197,10 +197,12 @@ class PostExtractor:
 
         if self.options.get('comments'):
             try:
-                if self.options.get("comments") == "generator":
-                    post["comments_full"] = self.extract_comments_full()
-                else:
-                    post["comments_full"] = list(self.extract_comments_full())
+                post["comments_full"] = self.extract_comments_full()
+                if self.options.get("comments") != "generator":
+                    # Consume both comment generator and reply generator to return lists
+                    post["comments_full"] = list(post["comments_full"])
+                    for comment in post["comments_full"]:
+                        comment["replies"] = list(comment["replies"])
                     if post.get("comments_full") and not post.get("comments"):
                         post["comments"] = len(post.get("comments_full"))
 
@@ -896,16 +898,10 @@ class PostExtractor:
             "comment_reactors": reactors,
         }
 
-    def extract_comment_with_replies(self, comment):
-        try:
-            result = self.parse_comment(comment)
-        except exceptions.TemporarilyBanned:
-            raise
-        except Exception as e:
-            logger.error(f"Unable to parse comment {comment}: {e}")
-            return
+    def extract_comment_replies(self, comment):
         inline_replies = comment.find("div[data-sigil='comment inline-reply']")
-        result["replies"] = [self.parse_comment(reply) for reply in inline_replies]
+        for reply in inline_replies:
+            yield self.parse_comment(reply)
         replies = comment.find(
             "div.async_elem[data-sigil='replies-see-more'] a[href],div[id*='comment_replies_more'] a[href]",
             first=True,
@@ -920,21 +916,31 @@ class PostExtractor:
                 raise
             except Exception as e:
                 logger.error(e)
-                return result
+                return
             # Skip first element, as it will be this comment itself
             reply_selector = 'div[data-sigil="comment"]'
             if self.options.get("noscript"):
                 reply_selector = '#root div[id]'
             replies = response.html.find(reply_selector)[1:]
             try:
-                result["replies"].extend([self.parse_comment(reply) for reply in replies])
+                for reply in replies:
+                    yield self.parse_comment(reply)
             except exceptions.TemporarilyBanned:
                 raise
             except Exception as e:
                 logger.error(
                     f"Unable to parse comment {result['comment_id']} replies {replies}: {e}"
                 )
-        return result
+
+    def extract_comment_with_replies(self, comment):
+        try:
+            result = self.parse_comment(comment)
+            result["replies"] = self.extract_comment_replies(comment)
+            return result
+        except exceptions.TemporarilyBanned:
+            raise
+        except Exception as e:
+            logger.error(f"Unable to parse comment {comment}: {e}")
 
     def extract_comments_full(self):
         """Fetch comments for an existing post obtained by `get_posts`.
