@@ -898,44 +898,45 @@ class PostExtractor:
             "comment_reactors": reactors,
         }
 
-    def extract_comment_replies(self, comment):
-        inline_replies = comment.find("div[data-sigil='comment inline-reply']")
-        for reply in inline_replies:
-            yield self.parse_comment(reply)
-        replies = comment.find(
-            "div.async_elem[data-sigil='replies-see-more'] a[href],div[id*='comment_replies_more'] a[href]",
-            first=True,
-        )
-        if replies:
-            url = utils.urljoin(FB_MOBILE_BASE_URL, replies.attrs["href"])
-            if not self.options.get("progress"):
-                logger.debug(f"Fetching {url}")
-            try:
-                response = self.request(url)
-            except exceptions.TemporarilyBanned:
-                raise
-            except Exception as e:
-                logger.error(e)
-                return
-            # Skip first element, as it will be this comment itself
-            reply_selector = 'div[data-sigil="comment"]'
-            if self.options.get("noscript"):
-                reply_selector = '#root div[id]'
-            replies = response.html.find(reply_selector)[1:]
-            try:
-                for reply in replies:
-                    yield self.parse_comment(reply)
-            except exceptions.TemporarilyBanned:
-                raise
-            except Exception as e:
-                logger.error(
-                    f"Unable to parse comment {result['comment_id']} replies {replies}: {e}"
-                )
+    def extract_comment_replies(self, replies_url):
+        if not self.options.get("progress"):
+            logger.debug(f"Fetching {replies_url}")
+        try:
+            response = self.request(replies_url)
+        except exceptions.TemporarilyBanned:
+            raise
+        except Exception as e:
+            logger.error(e)
+            return
+        # Skip first element, as it will be this comment itself
+        reply_selector = 'div[data-sigil="comment"]'
+        if self.options.get("noscript"):
+            reply_selector = '#root div[id]'
+        replies = response.html.find(reply_selector)[1:]
+        try:
+            for reply in replies:
+                yield self.parse_comment(reply)
+        except exceptions.TemporarilyBanned:
+            raise
+        except Exception as e:
+            logger.error(
+                f"Unable to parse comment {result['comment_id']} replies {replies}: {e}"
+            )
 
     def extract_comment_with_replies(self, comment):
         try:
             result = self.parse_comment(comment)
-            result["replies"] = self.extract_comment_replies(comment)
+            result["replies"] = [self.parse_comment(reply) for reply in comment.find("div[data-sigil='comment inline-reply']")]
+            replies_url = comment.find(
+                "div.async_elem[data-sigil='replies-see-more'] a[href],div[id*='comment_replies_more'] a[href]",
+                first=True,
+            )
+            if replies_url:
+                reply_generator = self.extract_comment_replies(replies_url.attrs["href"])
+                if result["replies"]:
+                    result["replies"] = itertools.chain(result["replies"], reply_generator)
+                else:
+                    result["replies"] = reply_generator
             return result
         except exceptions.TemporarilyBanned:
             raise
