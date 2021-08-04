@@ -983,6 +983,7 @@ class PostExtractor:
 
         visited_urls = []
         request_url_callback = self.options.get('comment_request_url_callback')
+        more_url = None
         if more:
             more_url = more.attrs.get("href")
         if self.options.get("comment_start_url"):
