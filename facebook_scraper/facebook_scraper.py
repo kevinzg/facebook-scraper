@@ -289,6 +289,7 @@ class FacebookScraper:
 
     def get_page_info(self, page, **kwargs) -> Profile:
         result = {}
+        desc = None
 
         if kwargs.get("allow_extra_requests", True):
             for post in self.get_posts(page, **kwargs):
@@ -302,11 +303,6 @@ class FacebookScraper:
                     result = meta["creator"]
                     result["type"] = result.pop("@type")
                     desc = resp.html.find("meta[name='description']", first=True)
-                    if desc:
-                        logger.debug(desc.attrs["content"])
-                        match = re.search(r'\..+?(\d[\d,.]+)', desc.attrs["content"])
-                        if match:
-                            result["likes"] = utils.parse_int(match.groups()[0])
                     try:
                         for interaction in result.get("interactionStatistic", []):
                             if interaction["interactionType"] == {
@@ -323,14 +319,20 @@ class FacebookScraper:
             logger.debug(f"Requesting page from: {about_url}")
             resp = self.get(about_url)
             desc = resp.html.find("meta[name='description']", first=True)
-            if desc:
-                logger.debug(desc.attrs["content"])
-                match = re.search(r'\..+?(\d[\d,.]+)', desc.attrs["content"])
-                if match:
-                    result["likes"] = utils.parse_int(match.groups()[0])
             result["about"] = resp.html.find('#pages_msite_body_contents', first=True).text
         except Exception as e:
+            url = f'/{page}/'
+            logger.debug(f"Requesting page from: {url}")
+            resp = self.get(url)
+            desc = resp.html.find("meta[name='description']", first=True)
+            result["about"] = resp.html.find('#pages_msite_body_contents>div>div:nth-child(2)', first=True).text
             logger.error(e)
+        if desc:
+            logger.debug(desc.attrs["content"])
+            match = re.search(r'\..+?(\d[\d,.]+)', desc.attrs["content"])
+            if match:
+                result["likes"] = utils.parse_int(match.groups()[0])
+
         return result
 
     def get_group_info(self, group, **kwargs) -> Profile:
