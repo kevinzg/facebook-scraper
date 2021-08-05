@@ -12,6 +12,10 @@ from requests.cookies import RequestsCookieJar
 from requests_html import DEFAULT_URL, Element, PyQuery
 import json
 
+from . import exceptions
+import logging
+
+logger = logging.getLogger(__name__)
 
 def find_and_search(node, selector, pattern, cast=str):
     container = node.find(selector, first=True)
@@ -245,3 +249,12 @@ def parse_cookie_file(filename: str) -> RequestsCookieJar:
             jar.set(name, value, domain=domain, path=path, secure=secure, expires=expires)
 
     return jar
+
+def safe_consume(generator):
+    result = []
+    try:
+        for item in generator:
+            result.append(item)
+    except Exception as e:
+        logger.error(f"Exception when consuming {generator}: {type(e)}: {str(e)}")
+    return result

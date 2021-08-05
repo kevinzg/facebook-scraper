@@ -200,9 +200,9 @@ class PostExtractor:
                 post["comments_full"] = self.extract_comments_full()
                 if self.options.get("comments") != "generator":
                     # Consume both comment generator and reply generator to return lists
-                    post["comments_full"] = list(post["comments_full"])
+                    post["comments_full"] = utils.safe_consume(post["comments_full"])
                     for comment in post["comments_full"]:
-                        comment["replies"] = list(comment["replies"])
+                        comment["replies"] = utils.safe_consume(comment["replies"])
                     if post.get("comments_full") and not post.get("comments"):
                         post["comments"] = len(post.get("comments_full"))
 
