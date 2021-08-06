@@ -1206,9 +1206,6 @@ class GroupPostExtractor(PostExtractor):
 
 class PhotoPostExtractor(PostExtractor):
     def extract_text(self) -> PartialPost:
-        import ipdb
-
-        ipdb.set_trace()
         text = self.element.find("div.msg", first=True).text
         return {"text": text, "post_text": text}
 
