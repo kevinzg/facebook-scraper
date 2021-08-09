@@ -224,21 +224,19 @@ class FacebookScraper:
             else:
                 return
 
-    def _bs_parse(self, html):
-        """
-        """
-
-        # soup = BeautifulSoup(html)
-        import ipdb
-
-        ipdb.set_trace()
-
     def get_profile(self, account, **kwargs) -> Profile:
         result = {}
         if kwargs.get("allow_extra_requests", True):
             logger.debug(f"Requesting page from: {account}")
             response = self.get(account)
-            result.update(self._bs_parse(response.html))
+            match = re.search(r'entity_id:(\d+),', response.html.html)
+            if match:
+                result["id"] = match.group(1)
+            title = response.html.find("title", first=True).text
+            if " | " in title:
+                title = title.split(" | ")[0]
+            title = title.split(' - ')[0]
+            result["Name"] = title
             photo_links = response.html.find("a[href^='/photo.php']")
             if photo_links:
                 cover_photo = photo_links[0]
@@ -269,23 +267,25 @@ class FacebookScraper:
                 profpic = response.html.find("img.profpic", first=True)
                 if profpic:
                     result["profile_picture"] = profpic.attrs["src"]
-        try:
-            about_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/about/')
-            logger.debug(f"Requesting page from: {about_url}")
-            response = self.get(about_url)
-        except exceptions.LoginRequired:
-            about_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/')
-            logger.debug(f"Requesting page from: {about_url}")
-            response = self.get(about_url)
-
-        match = re.search(r'entity_id:(\d+),', response.html.html)
-        if match:
-            result["id"] = match.group(1)
-        title = response.html.find("title", first=True).text
-        if " | " in title:
-            title = title.split(" | ")[0]
-        title = title.split(' - ')[0]
-        result["Name"] = title
+        if not 'profile.php' in account:
+            try:
+                about_url = utils.urljoin(
+                    FB_MOBILE_BASE_URL, f'/{account}/about/'
+                )
+                logger.debug(f"Requesting page from: {about_url}")
+                response = self.get(about_url)
+            except exceptions.LoginRequired:
+                about_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/')
+                logger.debug(f"Requesting page from: {about_url}")
+                response = self.get(about_url)
+            match = re.search(r'entity_id:(\d+),', response.html.html)
+            if match:
+                result["id"] = match.group(1)
+            title = response.html.find("title", first=True).text
+            if " | " in title:
+                title = title.split(" | ")[0]
+            title = title.split(' - ')[0]
+            result["Name"] = title
         about = response.html.find("div#main_column,div.aboutme", first=True)
         if not about:
             logger.warning("No about section found")
