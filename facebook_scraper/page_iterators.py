@@ -17,10 +17,15 @@ from . import exceptions
 logger = logging.getLogger(__name__)
 
 
-def iter_pages(account: str, request_fn: RequestFunction, **kwargs) -> Iterator[Page]:
+def iter_pages(
+    account: str, request_fn: RequestFunction, **kwargs
+) -> Iterator[Page]:
     start_url = kwargs.pop("start_url", None)
     if not start_url:
-        start_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/posts/')
+        if 'profile.php' in account:
+            start_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}')
+        else:
+            start_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/posts/')
         try:
             request_fn(start_url)
         except Exception as ex:
@@ -40,9 +45,13 @@ def iter_group_pages(
     return generic_iter_pages(start_url, GroupPageParser, request_fn, **kwargs)
 
 
-def iter_photos(account: str, request_fn: RequestFunction, **kwargs) -> Iterator[Page]:
+def iter_photos(
+    account: str, request_fn: RequestFunction, **kwargs
+) -> Iterator[Page]:
     start_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/photos/')
-    return generic_iter_pages(start_url, PhotosPageParser, request_fn, **kwargs)
+    return generic_iter_pages(
+        start_url, PhotosPageParser, request_fn, **kwargs
+    )
 
 
 def generic_iter_pages(
@@ -89,7 +98,9 @@ def generic_iter_pages(
         if next_page:
             posts_per_page = kwargs.get("options", {}).get("posts_per_page")
             if posts_per_page:
-                next_page = next_page.replace("num_to_fetch=4", f"num_to_fetch={posts_per_page}")
+                next_page = next_page.replace(
+                    "num_to_fetch=4", f"num_to_fetch={posts_per_page}"
+                )
             next_url = utils.urljoin(FB_MOBILE_BASE_URL, next_page)
         else:
             logger.info("Page parser did not find next page URL")
@@ -101,8 +112,12 @@ class PageParser:
 
     json_prefix = 'for (;;);'
 
-    cursor_regex = re.compile(r'href[:=]"(/page_content[^"]+)"')  # First request
-    cursor_regex_2 = re.compile(r'href"[:=]"(\\/page_content[^"]+)"')  # Other requests
+    cursor_regex = re.compile(
+        r'href[:=]"(/page_content[^"]+)"'
+    )  # First request
+    cursor_regex_2 = re.compile(
+        r'href"[:=]"(\\/page_content[^"]+)"'
+    )  # Other requests
     cursor_regex_3 = re.compile(
         r'href:"(/profile/timeline/stream/\?cursor[^"]+)"'
     )  # scroll/cursor based, first request
@@ -135,7 +150,9 @@ class PageParser:
         if match:
             value = match.groups()[0]
             return utils.unquote(
-                value.encode('utf-8').decode('unicode_escape').replace('\\/', '/')
+                value.encode('utf-8')
+                .decode('unicode_escape')
+                .replace('\\/', '/')
             ).replace("&amp;", "&")
 
         match = self.cursor_regex_3.search(self.cursor_blob)
@@ -161,11 +178,15 @@ class PageParser:
 
     def _parse_json(self):
         prefix_length = len(self.json_prefix)
-        data = json.loads(self.response.text[prefix_length:])  # Strip 'for (;;);'
+        data = json.loads(
+            self.response.text[prefix_length:]
+        )  # Strip 'for (;;);'
 
         for action in data.get('payload', data)['actions']:
             if action['cmd'] == 'replace':
-                self.html = utils.make_html_element(action['html'], url=FB_MOBILE_BASE_URL)
+                self.html = utils.make_html_element(
+                    action['html'], url=FB_MOBILE_BASE_URL
+                )
                 self.cursor_blob = self.html.html
             elif action['cmd'] == 'script':
                 self.cursor_blob = action['code']
@@ -178,17 +199,18 @@ class PageParser:
 
         if not raw_posts:
             logger.warning(
-                "No raw posts (<%s> elements) were found in this page." % selection_name
+                "No raw posts (<%s> elements) were found in this page."
+                % selection_name
             )
             if logger.isEnabledFor(logging.DEBUG):
                 content = textwrap.indent(
-                    raw_page.text,
-                    prefix='| ',
-                    predicate=lambda _: True,
+                    raw_page.text, prefix='| ', predicate=lambda _: True,
                 )
                 sep = '+' + '-' * 60
                 logger.debug("The page url is: %s", self.response.url)
-                logger.debug("The page content is:\n%s\n%s%s\n", sep, content, sep)
+                logger.debug(
+                    "The page content is:\n%s\n%s%s\n", sep, content, sep
+                )
 
         return raw_posts
 
@@ -196,7 +218,9 @@ class PageParser:
 class GroupPageParser(PageParser):
     """Class for parsing a single page of a group"""
 
-    cursor_regex_3 = re.compile(r'href[=:]"(\/groups\/[^"]+bac=[^"]+)"')  # for Group requests
+    cursor_regex_3 = re.compile(
+        r'href[=:]"(\/groups\/[^"]+bac=[^"]+)"'
+    )  # for Group requests
 
     def get_next_page(self) -> Optional[URL]:
         next_page = super().get_next_page()
@@ -208,7 +232,11 @@ class GroupPageParser(PageParser):
         match = self.cursor_regex_3.search(self.cursor_blob)
         if match:
             value = match.groups()[0]
-            return value.encode('utf-8').decode('unicode_escape').replace('\\/', '/')
+            return (
+                value.encode('utf-8')
+                .decode('unicode_escape')
+                .replace('\\/', '/')
+            )
 
         return None
 
@@ -232,4 +260,8 @@ class PhotosPageParser(PageParser):
             match = self.cursor_regex_2.search(self.cursor_blob)
             if match:
                 value = match.groups()[0]
-                return value.encode('utf-8').decode('unicode_escape').replace('\\/', '/')
+                return (
+                    value.encode('utf-8')
+                    .decode('unicode_escape')
+                    .replace('\\/', '/')
+                )

@@ -1,3 +1,4 @@
+from bs4 import BeautifulSoup
 import urllib.parse as urlparse
 from urllib.parse import parse_qs
 import itertools
@@ -223,11 +224,21 @@ class FacebookScraper:
             else:
                 return
 
+    def _bs_parse(self, html):
+        """
+        """
+
+        # soup = BeautifulSoup(html)
+        import ipdb
+
+        ipdb.set_trace()
+
     def get_profile(self, account, **kwargs) -> Profile:
         result = {}
         if kwargs.get("allow_extra_requests", True):
             logger.debug(f"Requesting page from: {account}")
             response = self.get(account)
+            result.update(self._bs_parse(response.html))
             photo_links = response.html.find("a[href^='/photo.php']")
             if photo_links:
                 cover_photo = photo_links[0]
@@ -546,7 +557,8 @@ class FacebookScraper:
             temp_ban_titles = [
                 "you can't use this feature at the moment",
                 "you can't use this feature right now",
-                "you’re temporarily blocked",
+                "esse recurso no momento" "you’re temporarily blocked",
+                "você não pode usar esse recurso no momento",
             ]
             if title:
                 if title.text.lower() in not_found_titles:
