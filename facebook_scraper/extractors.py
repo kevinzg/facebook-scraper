@@ -94,6 +94,7 @@ class PostExtractor:
             'post_text': None,
             'shared_text': None,
             'time': None,
+            'timestamp': None,
             'image': None,
             'image_lowquality': None,
             'images': None,
@@ -290,6 +291,7 @@ class PostExtractor:
                 )
                 return {
                     'time': datetime.fromtimestamp(timestamp),
+                    'timestamp': timestamp
                 }
             except (KeyError, ValueError):
                 continue
@@ -317,6 +319,7 @@ class PostExtractor:
             )
             return {
                 'time': datetime.fromtimestamp(time),
+                'timestamp': time
             }
         except:
             return None
