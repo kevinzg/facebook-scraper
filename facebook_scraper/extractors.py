@@ -923,7 +923,7 @@ class PostExtractor:
             raise
         except Exception as e:
             logger.error(
-                f"Unable to parse comment {result['comment_id']} replies {replies}: {e}"
+                f"Unable to parse comment {replies_url} replies {replies}: {e}"
             )
 
     def extract_comment_with_replies(self, comment):
