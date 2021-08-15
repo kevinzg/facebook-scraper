@@ -281,8 +281,8 @@ def write_posts_to_csv(
     """
     dump_location = kwargs.pop('dump_location', None)
 
-    list_of_posts = list(
-        get_posts(account=account, group=group, remove_source=not bool(dump_location), **kwargs)
+    list_of_posts = utils.safe_consume(
+        get_posts(account=account, group=group, remove_source=not bool(dump_location), **kwargs), kwargs.get("sleep", 0)
     )
 
     if not list_of_posts:

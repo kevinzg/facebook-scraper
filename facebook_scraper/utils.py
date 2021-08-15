@@ -14,6 +14,7 @@ import json
 
 from . import exceptions
 import logging
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -250,11 +251,12 @@ def parse_cookie_file(filename: str) -> RequestsCookieJar:
 
     return jar
 
-def safe_consume(generator):
+def safe_consume(generator, sleep = 0):
     result = []
     try:
         for item in generator:
             result.append(item)
+            time.sleep(sleep)
     except Exception as e:
         logger.error(f"Exception when consuming {generator}: {type(e)}: {str(e)}")
     return result
