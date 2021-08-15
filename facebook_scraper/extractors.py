@@ -772,6 +772,7 @@ class PostExtractor:
         if meta.get("contentSize"):
             contentSize = float(meta['contentSize'].strip("kB")) / 1000
         return {
+            "time": utils.parse_datetime(meta["datePublished"]),
             'video_duration_seconds': utils.parse_duration(meta.get("duration")),
             'video_watches': watches,
             'video_quality': meta.get('videoQuality'),
