@@ -190,7 +190,12 @@ class FacebookScraper:
             logger.debug(f"Requesting page from: {account}")
             response = self.get(account)
             photo_links = response.html.find("a[href^='/photo.php']")
-            if photo_links:
+            if len(photo_links) == 1:
+                profile_photo = photo_links[0]
+                response = self.get(profile_photo.attrs.get("href"))
+                extractor = PostExtractor(response.html, kwargs, self.get)
+                result["profile_picture"] = extractor.extract_photo_link_HQ(response.html.html)
+            elif len(photo_links) >= 2:
                 cover_photo = photo_links[0]
                 result["cover_photo_text"] = cover_photo.attrs.get("title")
                 response = self.get(cover_photo.attrs.get("href"))
