@@ -617,7 +617,6 @@ class PostExtractor:
             more = response.html.find("div#reaction_profile_pager a", first=True)
             if more and limit > 50:
                 url = utils.urljoin(FB_MOBILE_BASE_URL, more.attrs.get("href"))
-                url = url.replace("limit=50", f"limit={limit - 50}")
                 logger.debug(f"Fetching {url}")
                 response = self.request(url)
                 prefix_length = len('for (;;);')
