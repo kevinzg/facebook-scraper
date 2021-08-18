@@ -615,7 +615,7 @@ class PostExtractor:
             logger.debug(f"Fetching {limit} reactors")
             elems = list(response.html.find("div[id^='reaction_profile_browser']>div"))
             more = response.html.find("div#reaction_profile_pager a", first=True)
-            if more and limit > 50:
+            while more and len(elems) <  limit:
                 url = utils.urljoin(FB_MOBILE_BASE_URL, more.attrs.get("href"))
                 logger.debug(f"Fetching {url}")
                 response = self.request(url)
@@ -632,6 +632,12 @@ class PostExtractor:
                             'div#reaction_profile_browser>div,div#reaction_profile_browser1>div'
                         )
                         elems.extend(more_elems)
+                    elif action['cmd'] == 'replace':
+                        html = utils.make_html_element(
+                            f"<div id='reaction_profile_browser'>{action['html']}</div>",
+                            url=FB_MOBILE_BASE_URL,
+                        )
+                        more = html.find("div#reaction_profile_pager a", first=True)
             logger.debug(f"Found {len(elems)} reactors")
             for elem in elems:
                 emoji_class = elem.find(f"div>i.{spriteMapCssClass}", first=True).attrs.get(
