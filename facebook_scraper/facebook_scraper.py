@@ -326,12 +326,15 @@ class FacebookScraper:
             desc = resp.html.find("meta[name='description']", first=True)
             result["about"] = resp.html.find('#pages_msite_body_contents', first=True).text
         except Exception as e:
-            url = f'/{page}/'
-            logger.debug(f"Requesting page from: {url}")
-            resp = self.get(url)
-            desc = resp.html.find("meta[name='description']", first=True)
-            result["about"] = resp.html.find('#pages_msite_body_contents>div>div:nth-child(2)', first=True).text
             logger.error(e)
+            try:
+                url = f'/{page}/'
+                logger.debug(f"Requesting page from: {url}")
+                resp = self.get(url)
+                desc = resp.html.find("meta[name='description']", first=True)
+                result["about"] = resp.html.find('#pages_msite_body_contents>div>div:nth-child(2)', first=True).text
+            except Exception as e:
+                logger.error(e)
         if desc:
             logger.debug(desc.attrs["content"])
             match = re.search(r'\..+?(\d[\d,.]+)', desc.attrs["content"])
