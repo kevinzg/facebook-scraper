@@ -776,8 +776,12 @@ class PostExtractor:
         contentSize = None
         if meta.get("contentSize"):
             contentSize = float(meta['contentSize'].strip("kB")) / 1000
+
+        time = utils.parse_datetime(meta["datePublished"])
+        # Remove the timezone attribute to make it timezone-naive
+        time = time.astimezone().replace(tzinfo=None)
         return {
-            "time": utils.parse_datetime(meta["datePublished"]),
+            "time": time,
             'video_duration_seconds': utils.parse_duration(meta.get("duration")),
             'video_watches': watches,
             'video_quality': meta.get('videoQuality'),
