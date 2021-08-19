@@ -532,6 +532,8 @@ class FacebookScraper:
 
         if "Login approval needed" in response.text or "checkpoint" in response.url:
             raise exceptions.LoginError("Login approval needed")
+        if "The password that you entered is incorrect" in response.text:
+            raise exceptions.LoginError("The password that you entered is incorrect")
         if 'c_user' not in self.session.cookies:
             raise exceptions.LoginError("Login unsuccessful")
 
