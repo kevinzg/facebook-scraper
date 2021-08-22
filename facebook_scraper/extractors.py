@@ -115,6 +115,7 @@ class PostExtractor:
             'shares': None,
             'post_url': None,
             'link': None,
+            'links': None,
             'user_id': None,
             'username': None,
             'user_url': None,
@@ -147,7 +148,7 @@ class PostExtractor:
             self.extract_likes,
             self.extract_comments,
             self.extract_shares,
-            self.extract_link,
+            self.extract_links,
             self.extract_user_id,
             self.extract_username,
             self.extract_video,
@@ -359,11 +360,16 @@ class PostExtractor:
                 result.update({"image": url, "images": [url]})
         return result
 
-    def extract_link(self) -> PartialPost:
-        match = self.link_regex.search(self.element.html)
-        if match:
-            return {'link': utils.unquote(match.groups()[0])}
-        return None
+    def extract_links(self) -> PartialPost:
+        link = self.link_regex.search(self.element.html)
+        if link:
+            link = utils.unquote(link.groups()[0])
+        links = self.element.find(".story_body_container div p a")
+        links = [{"link": a.attrs["href"], "text": a.text} for a in links]
+        return {
+            "link": link,
+            "links": links
+        }
 
     def extract_post_url(self) -> PartialPost:
 
