@@ -535,6 +535,8 @@ class FacebookScraper:
         if "The password that you entered is incorrect" in response.text:
             raise exceptions.LoginError("The password that you entered is incorrect")
         if 'c_user' not in self.session.cookies:
+            with open("login_error.html", "w") as f:
+                f.write(response.text)
             raise exceptions.LoginError("Login unsuccessful")
 
     def is_logged_in(self) -> bool:
