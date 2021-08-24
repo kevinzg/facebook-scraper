@@ -133,6 +133,7 @@ class PostExtractor:
             'w3_fb_url': None,
             'reactions': None,
             'reaction_count': None,
+            'with': None
         }
 
     def extract_post(self) -> Post:
@@ -160,6 +161,7 @@ class PostExtractor:
             self.extract_share_information,
             self.extract_availability,
             self.extract_listing,
+            self.extract_with
         ]
 
         post = self.make_new_post()
@@ -1057,6 +1059,20 @@ class PostExtractor:
                 "listing_price": divs[1].text,
                 "listing_location": divs[2].text,
             }
+
+    def extract_with(self) -> PartialPost:
+        # Header is like "user is with other_user and n others"
+        links = self.element.find("header h3 a")[1:]
+        if links:
+            people = [{"name": links[0].text, "link": links[0].attrs["href"]}]
+            url = links[-1].attrs["href"]
+            if url.startswith("/browse/users/"):
+                logger.debug(f"Fetching {url}")
+                response = self.request(url)
+                links = response.html.find("#root .item>div>div>a:not(.touchable)")
+                for link in links:
+                    people.append({"name": link.text, "link": link.attrs["href"]})
+            return {"with": people}
 
     @property
     def data_ft(self) -> dict:
