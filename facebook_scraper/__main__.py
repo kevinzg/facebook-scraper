@@ -14,7 +14,9 @@ def run():
     parser.add_argument('account', type=str, help="Facebook account or group")
     parser.add_argument('-f', '--filename', type=str, help="Output filename")
     parser.add_argument('-p', '--pages', type=int, help="Number of pages to download", default=10)
-    parser.add_argument('-s', '--sleep', type=float, help="How long to sleep for between posts", default=0)
+    parser.add_argument(
+        '-s', '--sleep', type=float, help="How long to sleep for between posts", default=0
+    )
     parser.add_argument(
         '-t',
         '--timeout',

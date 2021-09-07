@@ -18,6 +18,7 @@ import time
 
 logger = logging.getLogger(__name__)
 
+
 def find_and_search(node, selector, pattern, cast=str):
     container = node.find(selector, first=True)
     match = container and pattern.search(container.html)
@@ -251,7 +252,8 @@ def parse_cookie_file(filename: str) -> RequestsCookieJar:
 
     return jar
 
-def safe_consume(generator, sleep = 0):
+
+def safe_consume(generator, sleep=0):
     result = []
     try:
         for item in generator:

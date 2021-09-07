@@ -133,7 +133,7 @@ class PostExtractor:
             'w3_fb_url': None,
             'reactions': None,
             'reaction_count': None,
-            'with': None
+            'with': None,
         }
 
     def extract_post(self) -> Post:
@@ -161,7 +161,7 @@ class PostExtractor:
             self.extract_share_information,
             self.extract_availability,
             self.extract_listing,
-            self.extract_with
+            self.extract_with,
         ]
 
         post = self.make_new_post()
@@ -292,10 +292,7 @@ class PostExtractor:
                 logger.debug(
                     f"Got exact timestamp from publish_time: {datetime.fromtimestamp(timestamp)}"
                 )
-                return {
-                    'time': datetime.fromtimestamp(timestamp),
-                    'timestamp': timestamp
-                }
+                return {'time': datetime.fromtimestamp(timestamp), 'timestamp': timestamp}
             except (KeyError, ValueError):
                 continue
 
@@ -320,10 +317,7 @@ class PostExtractor:
             logger.debug(
                 f"Got exact timestamp from abbr[data-store]: {datetime.fromtimestamp(time)}"
             )
-            return {
-                'time': datetime.fromtimestamp(time),
-                'timestamp': time
-            }
+            return {'time': datetime.fromtimestamp(time), 'timestamp': time}
         except:
             return None
 
@@ -368,10 +362,7 @@ class PostExtractor:
             link = utils.unquote(link.groups()[0])
         links = self.element.find(".story_body_container div p a")
         links = [{"link": a.attrs["href"], "text": a.text} for a in links]
-        return {
-            "link": link,
-            "links": links
-        }
+        return {"link": link, "links": links}
 
     def extract_post_url(self) -> PartialPost:
 
@@ -623,7 +614,7 @@ class PostExtractor:
             logger.debug(f"Fetching {limit} reactors")
             elems = list(response.html.find("div[id^='reaction_profile_browser']>div"))
             more = response.html.find("div#reaction_profile_pager a", first=True)
-            while more and len(elems) <  limit:
+            while more and len(elems) < limit:
                 url = utils.urljoin(FB_MOBILE_BASE_URL, more.attrs.get("href"))
                 logger.debug(f"Fetching {url}")
                 response = self.request(url)
@@ -940,14 +931,15 @@ class PostExtractor:
         except exceptions.TemporarilyBanned:
             raise
         except Exception as e:
-            logger.error(
-                f"Unable to parse comment {replies_url} replies {replies}: {e}"
-            )
+            logger.error(f"Unable to parse comment {replies_url} replies {replies}: {e}")
 
     def extract_comment_with_replies(self, comment):
         try:
             result = self.parse_comment(comment)
-            result["replies"] = [self.parse_comment(reply) for reply in comment.find("div[data-sigil='comment inline-reply']")]
+            result["replies"] = [
+                self.parse_comment(reply)
+                for reply in comment.find("div[data-sigil='comment inline-reply']")
+            ]
             replies_url = comment.find(
                 "div.async_elem[data-sigil='replies-see-more'] a[href],div[id*='comment_replies_more'] a[href]",
                 first=True,
