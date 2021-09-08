@@ -617,7 +617,11 @@ class PostExtractor:
             while more and len(elems) < limit:
                 url = utils.urljoin(FB_MOBILE_BASE_URL, more.attrs.get("href"))
                 logger.debug(f"Fetching {url}")
-                response = self.request(url)
+                try:
+                    response = self.request(url)
+                except Exception as e:
+                    logger.error(e)
+                    break
                 prefix_length = len('for (;;);')
                 data = json.loads(response.text[prefix_length:])  # Strip 'for (;;);'
 
