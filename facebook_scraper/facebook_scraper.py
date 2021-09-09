@@ -198,13 +198,21 @@ class FacebookScraper:
             elif len(photo_links) >= 2:
                 cover_photo = photo_links[0]
                 result["cover_photo_text"] = cover_photo.attrs.get("title")
-                response = self.get(cover_photo.attrs.get("href"))
-                extractor = PostExtractor(response.html, kwargs, self.get)
-                result["cover_photo"] = extractor.extract_photo_link_HQ(response.html.html)
+                # Check if there is a cover photo or not
+                if result["cover_photo_text"] is not None:
+                    response = self.get(cover_photo.attrs.get("href"))
+                    extractor = PostExtractor(response.html, kwargs, self.get)
+                    result["cover_photo"] = extractor.extract_photo_link_HQ(response.html.html)
 
-                profile_photo = photo_links[1]
-                response = self.get(profile_photo.attrs.get("href"))
-                result["profile_picture"] = extractor.extract_photo_link_HQ(response.html.html)
+                    profile_photo = photo_links[1]
+                    response = self.get(profile_photo.attrs.get("href"))
+                    result["profile_picture"] = extractor.extract_photo_link_HQ(response.html.html)
+                else:
+                    result["cover_photo"] = None
+                    profile_photo = photo_links[0]
+                    response = self.get(profile_photo.attrs.get("href"))
+                    extractor = PostExtractor(response.html, kwargs, self.get)
+                    result["profile_picture"] = extractor.extract_photo_link_HQ(response.html.html)
             else:
                 cover_photo = response.html.find(
                     "div[data-sigil='cover-photo']>i.img", first=True
