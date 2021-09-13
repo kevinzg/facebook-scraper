@@ -434,6 +434,9 @@ class FacebookScraper:
         return results
 
     def get_group_posts(self, group: Union[str, int], **kwargs) -> Iterator[Post]:
+        self.set_user_agent(
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/603.3.8 (KHTML, like Gecko) Version/10.1.2 Safari/603.3.8"
+        )
         iter_pages_fn = partial(iter_group_pages, group=group, request_fn=self.get, **kwargs)
         return self._generic_get_posts(extract_group_post, iter_pages_fn, **kwargs)
 
