@@ -1026,7 +1026,10 @@ class PostExtractor:
                 break
             visited_urls.append(more_url)
             elem = response.html.find(comments_area_selector, first=True)
-            more_comments = elem.find(comments_selector)
+            if not elem:
+                logger.warning("No comments found on page")
+                break
+            more_comments = more_comments.find(comments_selector)
             if not more_comments:
                 logger.warning("No comments found on page")
                 break
