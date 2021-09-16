@@ -88,8 +88,19 @@ class FacebookScraper:
             logger.debug(f"Requesting page from: {url}")
             response = self.get(url)
             if "/watch/" in response.url:
-                video_id = parse_qs(urlparse(response.url).query).get("v")[0]
-                response = self.get(video_id)
+                elem = response.html.find('[data-ft*="top_level_post_id"]', first=True)
+                url = extract_post(
+                    elem,
+                    request_fn=self.get,
+                    options={"allow_extra_requests": False},
+                    full_post_html=response.html,
+                ).get("post_url")
+                if url:
+                    url += f"&m_entstream_source=video_home&player_suborigin=entry_point&player_format=permalink"
+                else:
+                    url = parse_qs(urlparse(response.url).query).get("v")[0]
+                logger.debug(f"Fetching {url}")
+                response = self.get(url)
             elem = response.html.find('[data-ft*="top_level_post_id"]', first=True)
             photo_post = False
             if response.html.find("div.msg", first=True):
