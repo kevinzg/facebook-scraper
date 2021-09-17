@@ -53,7 +53,6 @@ class PostExtractor:
     )
     comments_regex = re.compile(r'([\d,.KM]+)\s+comment', re.IGNORECASE)
     shares_regex = re.compile(r'([\d,.KM]+)\s+Share', re.IGNORECASE)
-    live_regex = re.compile(r'.+(is live).+')
     link_regex = re.compile(r"href=\"https:\/\/lm\.facebook\.com\/l\.php\?u=(.+?)\&amp;h=")
 
     photo_link = re.compile(r'href=\"(/[^\"]+/photos/[^\"]+?)\"')
@@ -795,13 +794,10 @@ class PostExtractor:
 
     def extract_is_live(self):
         header = self.element.find('header')[0].full_text
-
-        match = self.live_regex.search(header)
-
-        if match is not None:
-            return {'is_live': True}
-
-        return {'is_live': False}
+        return {
+            'is_live': "is live" in header,
+            'was_live': "was live" in header
+        }
 
     def extract_factcheck(self):
         button = self.element.find('button[value="See Why"]', first=True)
