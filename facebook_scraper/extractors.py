@@ -1025,7 +1025,7 @@ class PostExtractor:
             if not elem:
                 logger.warning("No comments found on page")
                 break
-            more_comments = more_comments.find(comments_selector)
+            more_comments = elem.find(comments_selector)
             if not more_comments:
                 logger.warning("No comments found on page")
                 break
