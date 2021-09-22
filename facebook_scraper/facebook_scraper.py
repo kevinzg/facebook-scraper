@@ -335,6 +335,14 @@ class FacebookScraper:
             resp = self.get(about_url)
             desc = resp.html.find("meta[name='description']", first=True)
             result["about"] = resp.html.find('#pages_msite_body_contents', first=True).text
+            cover_photo = resp.html.find("#msite-pages-header-contents i.coverPhoto", first=True)
+            if cover_photo:
+                match = re.search(r"url\('(.+)'\)", cover_photo.attrs["style"])
+                if match:
+                    result["cover_photo"] = utils.decode_css_url(match.groups()[0])
+            profile_photo = resp.html.find("#msite-pages-header-contents img", first=True)
+            if profile_photo:
+                result["profile_photo"] = profile_photo.attrs["src"]
         except Exception as e:
             logger.error(e)
             try:
