@@ -323,10 +323,14 @@ def write_posts_to_csv(
     if encoding is None:
         encoding = locale.getpreferredencoding()
 
-    with open(filename, 'w', newline='', encoding=encoding) as output_file:
-        dict_writer = csv.DictWriter(output_file, keys)
-        dict_writer.writeheader()
-        dict_writer.writerows(list_of_posts)
+    if filename == "-":
+        output_file = sys.stdout
+    else:
+        output_file = open(filename, 'w', newline='', encoding=encoding)
+    dict_writer = csv.DictWriter(output_file, keys)
+    dict_writer.writeheader()
+    dict_writer.writerows(list_of_posts)
+    output_file.close()
 
 
 def enable_logging(level=logging.INFO):
