@@ -265,7 +265,7 @@ def write_posts_to_csv(
     encoding: str = None,
     **kwargs,
 ):
-    """Write posts from an account or group to a CSV file
+    """Write posts from an account or group to a CSV or JSON file
 
     Args:
         account (str): Facebook account name e.g. "nike" or "nintendo"
@@ -318,7 +318,10 @@ def write_posts_to_csv(
                 keys.append(key)
 
     if filename is None:
-        filename = str(account or group) + "_posts.csv"
+        if kwargs.get("format") == "json":
+            filename = str(account or group) + "_posts.json"
+        else:
+            filename = str(account or group) + "_posts.csv"
 
     if encoding is None:
         encoding = locale.getpreferredencoding()
@@ -327,9 +330,12 @@ def write_posts_to_csv(
         output_file = sys.stdout
     else:
         output_file = open(filename, 'w', newline='', encoding=encoding)
-    dict_writer = csv.DictWriter(output_file, keys)
-    dict_writer.writeheader()
-    dict_writer.writerows(list_of_posts)
+    if kwargs.get("format") == "json":
+        json.dump(list_of_posts, output_file, default=str, indent=4)
+    else:
+        dict_writer = csv.DictWriter(output_file, keys)
+        dict_writer.writeheader()
+        dict_writer.writerows(list_of_posts)
     output_file.close()
 
 

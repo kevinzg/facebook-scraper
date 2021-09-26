@@ -43,6 +43,7 @@ def run():
         help="Encoding for the output file",
         default=None,
     )
+    parser.add_argument('-fmt', '--format', type=str.lower, choices=["csv", "json"], help="What format to export as")
 
     args = parser.parse_args()
 
@@ -50,6 +51,7 @@ def run():
     account_type = 'group' if args.group else 'account'
     kwargs = {
         account_type: args.account,
+        "format": args.format,
         "cookies": args.cookies,
         "timeout": args.timeout,
         "sleep": args.sleep,
