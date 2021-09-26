@@ -215,7 +215,7 @@ class PostExtractor:
         return post
 
     def extract_post_id(self) -> PartialPost:
-        return {'post_id': self.data_ft.get('top_level_post_id')}
+        return {'post_id': self.live_data.get("ft_ent_identifier") or self.data_ft.get('top_level_post_id')}
 
     def extract_username(self) -> PartialPost:
         elem = self.element.find('h3 strong a,a.actor-link', first=True)
