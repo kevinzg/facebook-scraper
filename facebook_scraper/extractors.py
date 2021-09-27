@@ -10,7 +10,7 @@ from urllib.parse import parse_qs, urlparse
 from tqdm.auto import tqdm
 
 from . import utils, exceptions
-from .constants import FB_BASE_URL, FB_MOBILE_BASE_URL
+from .constants import FB_BASE_URL, FB_MOBILE_BASE_URL, FB_W3_BASE_URL
 from .fb_types import Options, Post, RawPost, RequestFunction, Response, URL
 
 
@@ -500,8 +500,15 @@ class PostExtractor:
                     if node["is_playable"]:
                         video_ids.append(node["id"])
                         videos.append(node["playable_url_hd"] or node["playable_url"])
-                    images.append(node["full_width_image"]["uri"])
-                    image_ids.append(node["id"])
+                        images.append(node["full_width_image"]["uri"])
+                        image_ids.append(node["id"])
+                    else:
+                        url = node["url"]
+                        url = url.replace(FB_W3_BASE_URL, FB_MOBILE_BASE_URL)
+                        logger.debug(f"Fetching {url}")
+                        response = self.request(url)
+                        images.append(self.extract_photo_link_HQ(response.text))
+                        image_ids.append(node["id"])
                     descriptions.append(node["accessibility_caption"])
                 return {
                     "image": images[0] if images else None,
