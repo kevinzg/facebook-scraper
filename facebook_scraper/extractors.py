@@ -592,6 +592,7 @@ class PostExtractor:
                 if v["default"]:
                     name = reaction_lookup[k]["display_name"].lower()
                     reactions[name] = v["default"]
+        reaction_count = self.live_data.get("reactioncount")
 
         url = self.post.get('post_url')
         if not post_id:
@@ -604,6 +605,18 @@ class PostExtractor:
             reaction_url = f'https://m.facebook.com/ufi/reaction/profile/browser/?ft_ent_identifier={post_id}'
             logger.debug(f"Fetching {reaction_url}")
             response = self.request(reaction_url)
+
+            reactions = {}
+            for sigil in response.html.find("span[data-sigil='reaction_profile_sigil']"):
+                k = str(demjson.decode(sigil.attrs.get("data-store"))["reactionType"])
+                v = sigil.find("span[data-sigil='reaction_profile_tab_count']", first=True).text.replace("All ", "")
+                v = utils.convert_numeric_abbr(v)
+                if k == "all":
+                    reaction_count = v
+                elif k in reaction_lookup:
+                    name = reaction_lookup[k]["display_name"].lower()
+                    reactions[name] = v
+
             emoji_class_lookup = {}
             spriteMapCssClass = "sp_E24l_TeOlgh"
             for k, v in self.get_jsmod("UFIReactionIcons").items():
@@ -668,7 +681,7 @@ class PostExtractor:
             return {
                 'likes': reactions.get("like"),
                 'reactions': reactions,
-                'reaction_count': self.live_data.get("reactioncount"),
+                'reaction_count': reaction_count,
                 'reactors': reactors,
                 'fetched_time': datetime.now(),
                 'w3_fb_url': w3_fb_url,
@@ -896,13 +909,14 @@ class PostExtractor:
                 if match:
                     image_url = utils.decode_css_url(match.groups()[0])
 
-        reactors = None
-        if self.options.get("reactors"):
+        reactions = {}
+        if self.options.get("reactions") or self.options.get("reactors"):
+            self.options["reactors"] = True # Required for comment reaction extraction
             reactors = comment.find(
                 'a[href^="/ufi/reaction/profile/browser/?ft_ent_identifier="] i', first=True
             )
             if reactors:
-                reactors = self.extract_reactions(comment_id)["reactors"]
+                reactions = self.extract_reactions(comment_id)
 
         return {
             "comment_id": comment_id,
@@ -914,7 +928,9 @@ class PostExtractor:
             "comment_text": text,
             "comment_time": date,
             "comment_image": image_url,
-            "comment_reactors": reactors,
+            "comment_reactors": reactions.get("reactors"),
+            "comment_reactions": reactions.get("reactions"),
+            "comment_reaction_count": reactions.get("reaction_count")
         }
 
     def extract_comment_replies(self, replies_url):
