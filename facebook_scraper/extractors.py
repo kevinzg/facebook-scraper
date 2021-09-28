@@ -1,6 +1,6 @@
 import itertools
 import json
-import demjson
+import demjson3 as demjson
 import logging
 import re
 from datetime import datetime
