@@ -215,7 +215,10 @@ class PostExtractor:
         return post
 
     def extract_post_id(self) -> PartialPost:
-        return {'post_id': self.live_data.get("ft_ent_identifier") or self.data_ft.get('top_level_post_id')}
+        return {
+            'post_id': self.live_data.get("ft_ent_identifier")
+            or self.data_ft.get('top_level_post_id')
+        }
 
     def extract_username(self) -> PartialPost:
         elem = self.element.find('h3 strong a,a.actor-link', first=True)
@@ -609,7 +612,9 @@ class PostExtractor:
             reactions = {}
             for sigil in response.html.find("span[data-sigil='reaction_profile_sigil']"):
                 k = str(demjson.decode(sigil.attrs.get("data-store"))["reactionType"])
-                v = sigil.find("span[data-sigil='reaction_profile_tab_count']", first=True).text.replace("All ", "")
+                v = sigil.find(
+                    "span[data-sigil='reaction_profile_tab_count']", first=True
+                ).text.replace("All ", "")
                 v = utils.convert_numeric_abbr(v)
                 if k == "all":
                     reaction_count = v
@@ -814,10 +819,7 @@ class PostExtractor:
 
     def extract_is_live(self):
         header = self.element.find('header')[0].full_text
-        return {
-            'is_live': "is live" in header,
-            'was_live': "was live" in header
-        }
+        return {'is_live': "is live" in header, 'was_live': "was live" in header}
 
     def extract_factcheck(self):
         button = self.element.find('button[value="See Why"]', first=True)
@@ -911,7 +913,7 @@ class PostExtractor:
 
         reactions = {}
         if self.options.get("reactions") or self.options.get("reactors"):
-            self.options["reactors"] = True # Required for comment reaction extraction
+            self.options["reactors"] = True  # Required for comment reaction extraction
             reactors = comment.find(
                 'a[href^="/ufi/reaction/profile/browser/?ft_ent_identifier="] i', first=True
             )
@@ -930,7 +932,7 @@ class PostExtractor:
             "comment_image": image_url,
             "comment_reactors": reactions.get("reactors"),
             "comment_reactions": reactions.get("reactions"),
-            "comment_reaction_count": reactions.get("reaction_count")
+            "comment_reaction_count": reactions.get("reaction_count"),
         }
 
     def extract_comment_replies(self, replies_url):
@@ -1028,7 +1030,10 @@ class PostExtractor:
         request_url_callback = self.options.get('comment_request_url_callback')
         more_url = None
         if more:
-            more_url = more.attrs.get("href") + "&m_entstream_source=video_home&player_suborigin=entry_point&player_format=permalink"
+            more_url = (
+                more.attrs.get("href")
+                + "&m_entstream_source=video_home&player_suborigin=entry_point&player_format=permalink"
+            )
         if self.options.get("comment_start_url"):
             more_url = self.options.get("comment_start_url")
 
@@ -1064,7 +1069,10 @@ class PostExtractor:
                     yield result
             more = elem.find(more_selector, first=True)
             if more:
-                more_url = more.attrs.get("href") + "&m_entstream_source=video_home&player_suborigin=entry_point&player_format=permalink"
+                more_url = (
+                    more.attrs.get("href")
+                    + "&m_entstream_source=video_home&player_suborigin=entry_point&player_format=permalink"
+                )
             else:
                 more_url = None
 

@@ -43,7 +43,13 @@ def run():
         help="Encoding for the output file",
         default=None,
     )
-    parser.add_argument('-fmt', '--format', type=str.lower, choices=["csv", "json"], help="What format to export as")
+    parser.add_argument(
+        '-fmt',
+        '--format',
+        type=str.lower,
+        choices=["csv", "json"],
+        help="What format to export as",
+    )
 
     args = parser.parse_args()
 

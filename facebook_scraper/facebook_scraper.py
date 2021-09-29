@@ -208,13 +208,17 @@ class FacebookScraper:
 
                     profile_photo = photo_links[1]
                     response = self.get(profile_photo.attrs.get("href"))
-                    result["profile_picture"] = extractor.extract_photo_link_HQ(response.html.html)
+                    result["profile_picture"] = extractor.extract_photo_link_HQ(
+                        response.html.html
+                    )
                 else:
                     result["cover_photo"] = None
                     profile_photo = photo_links[0]
                     response = self.get(profile_photo.attrs.get("href"))
                     extractor = PostExtractor(response.html, kwargs, self.get)
-                    result["profile_picture"] = extractor.extract_photo_link_HQ(response.html.html)
+                    result["profile_picture"] = extractor.extract_photo_link_HQ(
+                        response.html.html
+                    )
             else:
                 cover_photo = response.html.find(
                     "div[data-sigil='cover-photo']>i.img", first=True
