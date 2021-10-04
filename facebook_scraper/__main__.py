@@ -53,7 +53,7 @@ def run():
         help="What format to export as",
     )
     parser.add_argument(
-        '-d', '--days-limit', dest='days_limit', type=int, help="Number of days to download"
+        '-d', '--days-limit', dest='days_limit', default=3650, type=int, help="Number of days to download"
     )
     parser.add_argument(
         '-rf',
