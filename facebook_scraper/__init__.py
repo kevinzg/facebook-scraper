@@ -362,7 +362,6 @@ def write_posts_to_csv(
             else:
                 if kwargs.get("format") == "json":
                     output_file.write(",")
-            first_post = False
             if kwargs.get("matching") in post["text"]:
                 if kwargs.get("format") == "json":
                     if keys:
@@ -375,6 +374,7 @@ def write_posts_to_csv(
                     f"Reached days_limit - {post['time']} is more than {days_limit} days old (older than {max_post_time})"
                 )
                 break
+            first_post = False
             time.sleep(sleep)
     except KeyboardInterrupt:
         pass
