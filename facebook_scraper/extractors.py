@@ -1,10 +1,10 @@
 import itertools
 import json
 import demjson3 as demjson
+from demjson3 import JSONDecodeError
 import logging
 import re
 from datetime import datetime
-from json import JSONDecodeError
 from typing import Any, Dict, Optional
 from urllib.parse import parse_qs, urlparse
 from tqdm.auto import tqdm
@@ -133,6 +133,7 @@ class PostExtractor:
             'reactions': None,
             'reaction_count': None,
             'with': None,
+            'page_id': None,
         }
 
     def extract_post(self) -> Post:
@@ -324,7 +325,10 @@ class PostExtractor:
             return None
 
     def extract_user_id(self) -> PartialPost:
-        return {'user_id': self.data_ft['content_owner_id_new']}
+        return {
+            'user_id': self.data_ft['content_owner_id_new'],
+            'page_id': self.data_ft.get("page_id"),
+        }
 
     def extract_image_lq(self) -> PartialPost:
         elems = self.element.find('div.story_body_container>div .img:not(.profpic)')
@@ -1113,7 +1117,7 @@ class PostExtractor:
 
         self._data_ft = {}
         try:
-            data_ft_json = self.element.attrs['data-ft']
+            data_ft_json = self.element.attrs['data-ft'].replace("\\\\", "\\")
             self._data_ft = demjson.decode(data_ft_json)
         except JSONDecodeError as ex:
             logger.error("Error parsing data-ft JSON: %r", ex)

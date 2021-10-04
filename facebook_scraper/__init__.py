@@ -14,6 +14,9 @@ from .facebook_scraper import FacebookScraper
 from .fb_types import Credentials, Post, RawPost, Profile
 from .utils import html_element_to_string, parse_cookie_file
 from . import exceptions
+import traceback
+import time
+from datetime import datetime, timedelta
 
 
 _scraper = FacebookScraper()
@@ -258,6 +261,18 @@ def get_photos(
     return _scraper.get_photos(account, **kwargs)
 
 
+def write_post_to_disk(post: Post, source: RawPost, location: pathlib.Path):
+    post_id = post['post_id']
+    filename = f'{post_id}.html'
+
+    logger.debug("Writing post %s", post_id)
+    with open(location.joinpath(filename), mode='wt') as f:
+        f.write('<!--\n')
+        json.dump(post, f, indent=4, default=str)
+        f.write('\n-->\n')
+        f.write(html_element_to_string(source, pretty=True))
+
+
 def write_posts_to_csv(
     account: Optional[str] = None,
     group: Union[str, int, None] = None,
@@ -279,49 +294,13 @@ def write_posts_to_csv(
         extra_info (Optional[bool]): Set to True to try to get reactions.
         dump_location (Optional[pathlib.Path]): Location where to write the HTML source of the posts.
     """
-    dump_location = kwargs.pop('dump_location', None)
-
-    list_of_posts = utils.safe_consume(
-        get_posts(account=account, group=group, remove_source=not bool(dump_location), **kwargs),
-        kwargs.get("sleep", 0),
-    )
-
-    if not list_of_posts:
-        print("Couldn't get any posts.", file=sys.stderr)
-        return
-
-    def write_post_to_disk(post: Post, source: RawPost, location: pathlib.Path, index: int):
-        post_id = post['post_id'] or f'no_id_{index}'
-        filename = f'{post_id}.html'
-
-        logger.debug("Writing post %s", post_id)
-        with open(location.joinpath(filename), mode='wt') as f:
-            f.write('<!--\n')
-            json.dump(post, f, indent=4, default=str)
-            f.write('\n-->\n')
-            f.write(html_element_to_string(source, pretty=True))
-
+    dump_location = kwargs.pop('dump_location', None)  # For dumping HTML to disk, for debugging
     if dump_location is not None:
         dump_location.mkdir(exist_ok=True)
 
-        for i, post in enumerate(list_of_posts):
-            source = post.pop('source')
-            try:
-                write_post_to_disk(post, source, dump_location, i)
-            except Exception:
-                logger.exception("Error writing post to disk")
-
-    keys = list(list_of_posts[0].keys())
-    for post in list_of_posts:
-        for key in post.keys():
-            if key not in keys:
-                keys.append(key)
-
+    # Set a default filename, based on the account name with the appropriate extension
     if filename is None:
-        if kwargs.get("format") == "json":
-            filename = str(account or group) + "_posts.json"
-        else:
-            filename = str(account or group) + "_posts.csv"
+        filename = str(account or group) + "_posts." + kwargs.get("format")
 
     if encoding is None:
         encoding = locale.getpreferredencoding()
@@ -330,12 +309,82 @@ def write_posts_to_csv(
         output_file = sys.stdout
     else:
         output_file = open(filename, 'w', newline='', encoding=encoding)
+
+    first_post = True
+
+    sleep = kwargs.pop("sleep", 0)
+
+    days_limit = kwargs.get("days_limit", 3650)
+    max_post_time = datetime.now() - timedelta(days=days_limit)
+
+    start_url = None
+    resume_file = kwargs.get("resume_file")
+    if resume_file:
+        try:
+            with open(resume_file, "r") as f:
+                existing_url = f.readline().strip()
+            logger.debug("Existing URL:" + existing_url)
+            if existing_url:
+                start_url = existing_url
+        except FileNotFoundError:
+            pass
+
+    def handle_pagination_url(url):
+        if resume_file:
+            with open(resume_file, "w") as f:
+                f.write(url + "\n")
+
+    keys = kwargs.get("keys")
+
+    try:
+        for post in get_posts(
+            account=account,
+            group=group,
+            start_url=start_url,
+            request_url_callback=handle_pagination_url,
+            remove_source=not bool(dump_location),
+            **kwargs,
+        ):
+            if dump_location is not None:
+                source = post.pop('source')
+                try:
+                    write_post_to_disk(post, source, dump_location)
+                except Exception:
+                    logger.exception("Error writing post to disk")
+            if first_post:
+                if kwargs.get("format") == "json":
+                    output_file.write("[\n")
+                else:
+                    if not keys:
+                        keys = list(post.keys())
+                    dict_writer = csv.DictWriter(output_file, keys, extrasaction='ignore')
+                    dict_writer.writeheader()
+            else:
+                if kwargs.get("format") == "json":
+                    output_file.write(",")
+            first_post = False
+            if kwargs.get("matching") in post["text"]:
+                if kwargs.get("format") == "json":
+                    if keys:
+                        post = {k: v for k, v in post.items() if k in keys}
+                    json.dump(post, output_file, default=str, indent=4)
+                else:
+                    dict_writer.writerow(post)
+            if not first_post and post["time"] and post["time"] < max_post_time:
+                logger.debug(
+                    f"Reached days_limit - {post['time']} is more than {days_limit} days old (older than {max_post_time})"
+                )
+                break
+            time.sleep(sleep)
+    except KeyboardInterrupt:
+        pass
+    except Exception as e:
+        traceback.print_exc()
+
     if kwargs.get("format") == "json":
-        json.dump(list_of_posts, output_file, default=str, indent=4)
-    else:
-        dict_writer = csv.DictWriter(output_file, keys)
-        dict_writer.writeheader()
-        dict_writer.writerows(list_of_posts)
+        output_file.write("\n]")
+    if first_post:
+        print("Couldn't get any posts.", file=sys.stderr)
     output_file.close()
 
 

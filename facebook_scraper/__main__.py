@@ -1,6 +1,7 @@
 import argparse
 import logging
 import pathlib
+import datetime
 
 from . import enable_logging, write_posts_to_csv
 
@@ -48,7 +49,33 @@ def run():
         '--format',
         type=str.lower,
         choices=["csv", "json"],
+        default="csv",
         help="What format to export as",
+    )
+    parser.add_argument(
+        '-d', '--days-limit', dest='days_limit', type=int, help="Number of days to download"
+    )
+    parser.add_argument(
+        '-rf',
+        '--resume-file',
+        type=str,
+        help="Filename to store the last pagination URL in, for resuming",
+    )
+    parser.add_argument(
+        '-ner',
+        '--no-extra-requests',
+        dest='allow_extra_requests',
+        action='store_false',
+        help="Disable making extra requests (for things like high quality image URLs)",
+    )
+    parser.add_argument(
+        '-k',
+        '--keys',
+        type=lambda s: s.split(sep=","),
+        help="Comma separated list of which keys or columns to return. This lets you filter to just your desired outputs.",
+    )
+    parser.add_argument(
+        '-m', '--matching', type=str, default="", help='Filter to just posts matching string'
     )
 
     args = parser.parse_args()
@@ -58,13 +85,18 @@ def run():
     kwargs = {
         account_type: args.account,
         "format": args.format,
+        "days_limit": args.days_limit,
+        "resume_file": args.resume_file,
         "cookies": args.cookies,
         "timeout": args.timeout,
         "sleep": args.sleep,
+        "keys": args.keys,
+        "matching": args.matching,
         "options": {
             "reactions": args.reactions,
             "reactors": args.reactors,
             "comments": args.comments,
+            "allow_extra_requests": args.allow_extra_requests,
         },
     }
 
