@@ -559,7 +559,7 @@ class FacebookScraper:
 
         if "Login approval needed" in response.text or "checkpoint" in response.url:
             input("Login approval needed. From a browser logged into this account, approve this login from your notifications. Press enter once you've approved it.")
-            self.submit_form(response)
+            response = self.submit_form(response, {"submit[Continue]": "Continue"})
         if "The password that you entered is incorrect" in response.text:
             raise exceptions.LoginError("The password that you entered is incorrect")
         if 'c_user' not in self.session.cookies:
