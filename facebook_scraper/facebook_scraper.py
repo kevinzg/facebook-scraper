@@ -361,9 +361,11 @@ class FacebookScraper:
                 except Exception as e:
                     logger.error(e)
                     result = self.get_profile(page)
-                    result["followers"] = utils.convert_numeric_abbr(resp.html.find(
-                        "span.unlinkedTextEntity", first=True
-                    ).text.replace(" Followers", ""))
+                    result["followers"] = utils.convert_numeric_abbr(
+                        resp.html.find("span.unlinkedTextEntity", first=True).text.replace(
+                            " Followers", ""
+                        )
+                    )
             except Exception as e:
                 logger.error(e)
         if desc:
