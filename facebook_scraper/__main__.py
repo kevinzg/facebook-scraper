@@ -92,6 +92,20 @@ def run():
         type=str,
         help='Filter to just posts not matching regex expression',
     )
+    parser.add_argument(
+        '--extra-info ',
+        dest='extra_info',
+        action='store_true',
+        help="Try to do an extra request to get the post reactions. Default is False",
+        default=False,
+    )
+    parser.add_argument(
+        '--use-youtube-dl',
+        dest='youtube_dl',
+        action='store_true',
+        help='Use Youtube-DL for (high-quality) video extraction. You need to have youtube-dl installed on your environment. Default is False.',
+        default=False,
+    )
 
     args = parser.parse_args()
 
@@ -114,6 +128,8 @@ def run():
             "comments": args.comments,
             "allow_extra_requests": args.allow_extra_requests,
         },
+        'youtube_dl':args.youtube_dl,
+        'extra_info':args.extra_info,
     }
 
     # Enable logging
