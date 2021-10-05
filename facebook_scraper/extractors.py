@@ -916,7 +916,7 @@ class PostExtractor:
                     image_url = utils.decode_css_url(match.groups()[0])
 
         reactions = {}
-        if self.options.get("reactions") or self.options.get("reactors"):
+        if self.options.get("comment_reactors", self.options.get("reactions") or self.options.get("reactors")):
             self.options["reactors"] = True  # Required for comment reaction extraction
             reactors = comment.find(
                 'a[href^="/ufi/reaction/profile/browser/?ft_ent_identifier="] i', first=True
