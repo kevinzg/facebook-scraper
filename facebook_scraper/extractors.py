@@ -652,7 +652,7 @@ class PostExtractor:
                     break
                 prefix_length = len('for (;;);')
                 data = json.loads(response.text[prefix_length:])  # Strip 'for (;;);'
-
+                more = None
                 for action in data['payload']['actions']:
                     if action['cmd'] == 'append':
                         html = utils.make_html_element(
