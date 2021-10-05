@@ -53,7 +53,12 @@ def run():
         help="What format to export as",
     )
     parser.add_argument(
-        '-d', '--days-limit', dest='days_limit', default=3650, type=int, help="Number of days to download"
+        '-d',
+        '--days-limit',
+        dest='days_limit',
+        default=3650,
+        type=int,
+        help="Number of days to download",
     )
     parser.add_argument(
         '-rf',
@@ -75,7 +80,11 @@ def run():
         help="Comma separated list of which keys or columns to return. This lets you filter to just your desired outputs.",
     )
     parser.add_argument(
-        '-m', '--matching', type=str, default=".+", help='Filter to just posts matching regex expression'
+        '-m',
+        '--matching',
+        type=str,
+        default=".+",
+        help='Filter to just posts matching regex expression',
     )
 
     args = parser.parse_args()

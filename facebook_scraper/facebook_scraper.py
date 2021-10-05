@@ -558,7 +558,9 @@ class FacebookScraper:
                 response = self.submit_form(response, {"name_action_selected": "save_device"})
 
         if "Login approval needed" in response.text or "checkpoint" in response.url:
-            input("Login approval needed. From a browser logged into this account, approve this login from your notifications. Press enter once you've approved it.")
+            input(
+                "Login approval needed. From a browser logged into this account, approve this login from your notifications. Press enter once you've approved it."
+            )
             response = self.submit_form(response, {"submit[Continue]": "Continue"})
         if "The password that you entered is incorrect" in response.text:
             raise exceptions.LoginError("The password that you entered is incorrect")
