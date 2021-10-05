@@ -1043,7 +1043,7 @@ class PostExtractor:
 
         while more_url and len(comments) <= limit:
             if request_url_callback:
-                request_url_callback(more_url)
+                request_url_callback(utils.urljoin(FB_MOBILE_BASE_URL, more_url))
             if more_url in visited_urls:
                 logger.debug("cycle detected, break")
                 break
