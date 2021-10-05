@@ -86,6 +86,12 @@ def run():
         default=".+",
         help='Filter to just posts matching regex expression',
     )
+    parser.add_argument(
+        '-nm',
+        '--not-matching',
+        type=str,
+        help='Filter to just posts not matching regex expression',
+    )
 
     args = parser.parse_args()
 
@@ -101,6 +107,7 @@ def run():
         "sleep": args.sleep,
         "keys": args.keys,
         "matching": args.matching,
+        "not_matching": args.not_matching,
         "options": {
             "reactions": args.reactions,
             "reactors": args.reactors,

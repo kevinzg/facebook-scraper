@@ -364,6 +364,8 @@ def write_posts_to_csv(
                 if kwargs.get("format") == "json":
                     output_file.write(",")
             match = re.search(kwargs.get("matching"), post["text"], flags=re.IGNORECASE)
+            if kwargs.get("not_matching") and re.search(kwargs.get("not_matching"), post["text"], flags=re.IGNORECASE):
+                match = None
             if match:
                 if kwargs.get("format") == "json":
                     if keys:
