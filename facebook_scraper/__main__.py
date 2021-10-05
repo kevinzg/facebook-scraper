@@ -75,7 +75,7 @@ def run():
         help="Comma separated list of which keys or columns to return. This lets you filter to just your desired outputs.",
     )
     parser.add_argument(
-        '-m', '--matching', type=str, default="", help='Filter to just posts matching string'
+        '-m', '--matching', type=str, default=".+", help='Filter to just posts matching regex expression'
     )
 
     args = parser.parse_args()

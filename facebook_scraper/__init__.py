@@ -17,6 +17,7 @@ from . import exceptions
 import traceback
 import time
 from datetime import datetime, timedelta
+import re
 
 
 _scraper = FacebookScraper()
@@ -362,7 +363,8 @@ def write_posts_to_csv(
             else:
                 if kwargs.get("format") == "json":
                     output_file.write(",")
-            if kwargs.get("matching") in post["text"]:
+            match = re.search(kwargs.get("matching"), post["text"], flags=re.IGNORECASE)
+            if match:
                 if kwargs.get("format") == "json":
                     if keys:
                         post = {k: v for k, v in post.items() if k in keys}
