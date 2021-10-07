@@ -310,29 +310,6 @@ class FacebookScraper:
         result = {}
         desc = None
 
-        if kwargs.get("allow_extra_requests", True):
-            for post in self.get_posts(page, **kwargs):
-                logger.debug(f"Fetching {post['post_id']}")
-                resp = self.get(post["post_id"])
-                elem = resp.html.find("script[type='application/ld+json']", first=True)
-                if not elem:
-                    continue
-                meta = json.loads(elem.text)
-                if meta.get("creator"):
-                    result = meta["creator"]
-                    result["type"] = result.pop("@type")
-                    desc = resp.html.find("meta[name='description']", first=True)
-                    try:
-                        for interaction in result.get("interactionStatistic", []):
-                            if interaction["interactionType"] == {
-                                "@type": "http://schema.org/FollowAction"
-                            }:
-                                result["followers"] = interaction["userInteractionCount"]
-                    except TypeError as e:
-                        logger.error(e)
-                    result.pop("interactionStatistic", None)
-                    break
-
         try:
             about_url = f'/{page}/about/'
             logger.debug(f"Requesting page from: {about_url}")
@@ -349,30 +326,41 @@ class FacebookScraper:
                 result["profile_photo"] = profile_photo.attrs["src"]
         except Exception as e:
             logger.error(e)
+        try:
+            url = f'/{page}/'
+            logger.debug(f"Requesting page from: {url}")
+            resp = self.get(url)
+            desc = resp.html.find("meta[name='description']", first=True)
+            elem = resp.html.find("script[type='application/ld+json']", first=True)
+            meta = json.loads(elem.text)
+            result.update(meta["author"])
+            result["type"] = result.pop("@type")
+            for interaction in meta.get("interactionStatistic", []):
+                if interaction["interactionType"] == "http://schema.org/FollowAction":
+                    result["followers"] = interaction["userInteractionCount"]
             try:
-                url = f'/{page}/'
-                logger.debug(f"Requesting page from: {url}")
-                resp = self.get(url)
-                desc = resp.html.find("meta[name='description']", first=True)
-                try:
-                    result["about"] = resp.html.find(
-                        '#pages_msite_body_contents>div>div:nth-child(2)', first=True
-                    ).text
-                except Exception as e:
-                    logger.error(e)
-                    result = self.get_profile(page)
-                    result["followers"] = utils.convert_numeric_abbr(
-                        resp.html.find("span.unlinkedTextEntity", first=True).text.replace(
-                            " Followers", ""
-                        )
-                    )
+                result["about"] = resp.html.find(
+                    '#pages_msite_body_contents>div>div:nth-child(2)', first=True
+                ).text
             except Exception as e:
                 logger.error(e)
+                result = self.get_profile(page)
+                result["followers"] = utils.convert_numeric_abbr(
+                    resp.html.find("span.unlinkedTextEntity", first=True).text.replace(
+                        " Followers", ""
+                    )
+                )
+        except Exception as e:
+            logger.error(e)
         if desc:
             logger.debug(desc.attrs["content"])
-            match = re.search(r'\..+?(\d[\d,.]+)', desc.attrs["content"])
+            match = re.search(r'\..+?(\d[\d,.]+).+·', desc.attrs["content"])
             if match:
                 result["likes"] = utils.parse_int(match.groups()[0])
+            bits = desc.attrs["content"].split("·")
+            if len(bits) == 3:
+                result["people_talking_about_this"] = utils.parse_int(bits[1])
+                result["checkins"] = utils.parse_int(bits[2])
 
         return result
 
