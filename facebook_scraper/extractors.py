@@ -190,6 +190,9 @@ class PostExtractor:
         if self.options.get('reactions') or self.options.get('reactors'):
             try:
                 reactions = self.extract_reactions()
+                if self.options.get("reactors") != "generator":
+                    # Consume reactor generator to return list
+                    reactions["reactors"] = utils.safe_consume(reactions["reactors"])
             except Exception as ex:
                 log_warning("Exception while extracting reactions: %r", ex)
                 reactions = {}
@@ -207,6 +210,9 @@ class PostExtractor:
                     post["comments_full"] = utils.safe_consume(post["comments_full"])
                     for comment in post["comments_full"]:
                         comment["replies"] = utils.safe_consume(comment["replies"])
+                        comment["comment_reactors"] = utils.safe_consume(
+                            comment["comment_reactors"]
+                        )
                     if post.get("comments_full") and not post.get("comments"):
                         post["comments"] = len(post.get("comments_full"))
 
@@ -575,6 +581,75 @@ class PostExtractor:
             "image_ids": image_ids,
         }
 
+    def extract_reactors(self, response, reaction_lookup):
+        """Fetch people reacting to an existing post obtained by `get_posts`.
+        Note that this method may raise one more http request per post to get all reactors"""
+        emoji_class_lookup = {}
+        spriteMapCssClass = "sp_E24l_TeOlgh"
+        for k, v in self.get_jsmod("UFIReactionIcons").items():
+            name = reaction_lookup[k]["display_name"].lower()
+            for item in v.values():
+                emoji_class_lookup[item["spriteCssClass"]] = name
+                spriteMapCssClass = item["spriteMapCssClass"]
+
+        reactors_opt = self.options.get("reactors")
+        limit = 3000
+        if type(reactors_opt) in [int, float] and reactors_opt < limit:
+            limit = reactors_opt
+        logger.debug(f"Fetching {limit} reactors")
+        elems = list(response.html.find("div[id^='reaction_profile_browser']>div"))
+        for elem in elems:
+            emoji_class = elem.find(f"div>i.{spriteMapCssClass}", first=True).attrs.get("class")[
+                -1
+            ]
+            if not emoji_class_lookup.get(emoji_class):
+                logger.error(f"Don't know {emoji_class}")
+            yield {
+                "name": elem.find("strong", first=True).text,
+                "link": utils.urljoin(FB_BASE_URL, elem.find("a", first=True).attrs.get("href")),
+                "type": emoji_class_lookup.get(emoji_class),
+            }
+        more = response.html.find("div#reaction_profile_pager a", first=True)
+        while more and len(elems) < limit:
+            url = utils.urljoin(FB_MOBILE_BASE_URL, more.attrs.get("href"))
+            logger.debug(f"Fetching {url}")
+            try:
+                response = self.request(url)
+            except Exception as e:
+                logger.error(e)
+                break
+            prefix_length = len('for (;;);')
+            data = json.loads(response.text[prefix_length:])  # Strip 'for (;;);'
+            more = None
+            for action in data['payload']['actions']:
+                if action['cmd'] == 'append':
+                    html = utils.make_html_element(
+                        f"<div id='reaction_profile_browser'>{action['html']}</div>",
+                        url=FB_MOBILE_BASE_URL,
+                    )
+                    elems = html.find(
+                        'div#reaction_profile_browser>div,div#reaction_profile_browser1>div'
+                    )
+                    for elem in elems:
+                        emoji_class = elem.find(
+                            f"div>i.{spriteMapCssClass}", first=True
+                        ).attrs.get("class")[-1]
+                        if not emoji_class_lookup.get(emoji_class):
+                            logger.error(f"Don't know {emoji_class}")
+                        yield {
+                            "name": elem.find("strong", first=True).text,
+                            "link": utils.urljoin(
+                                FB_BASE_URL, elem.find("a", first=True).attrs.get("href")
+                            ),
+                            "type": emoji_class_lookup.get(emoji_class),
+                        }
+                elif action['cmd'] == 'replace':
+                    html = utils.make_html_element(
+                        f"<div id='reaction_profile_browser'>{action['html']}</div>",
+                        url=FB_MOBILE_BASE_URL,
+                    )
+                    more = html.find("div#reaction_profile_pager a", first=True)
+
     def extract_reactions(self, post_id=None) -> PartialPost:
         """Fetch share and reactions information with a existing post obtained by `get_posts`.
         Return a merged post that has some new fields including `reactions`, `w3_fb_url`,
@@ -606,7 +681,6 @@ class PostExtractor:
             post_id = self.post.get("post_id")
         w3_fb_url = url and utils.urlparse(url)._replace(netloc='www.facebook.com').geturl()
 
-        reactors = []
         reactors_opt = self.options.get("reactors")
         if reactors_opt:
             reaction_url = f'https://m.facebook.com/ufi/reaction/profile/browser/?ft_ent_identifier={post_id}'
@@ -625,66 +699,7 @@ class PostExtractor:
                 elif k in reaction_lookup:
                     name = reaction_lookup[k]["display_name"].lower()
                     reactions[name] = v
-
-            emoji_class_lookup = {}
-            spriteMapCssClass = "sp_E24l_TeOlgh"
-            for k, v in self.get_jsmod("UFIReactionIcons").items():
-                name = reaction_lookup[k]["display_name"].lower()
-                for item in v.values():
-                    emoji_class_lookup[item["spriteCssClass"]] = name
-                    spriteMapCssClass = item["spriteMapCssClass"]
-
-            """Fetch people reacting to an existing post obtained by `get_posts`.
-            Note that this method may raise one more http request per post to get all reactors"""
-            limit = 3000
-            if type(reactors_opt) in [int, float] and reactors_opt < limit:
-                limit = reactors_opt
-            logger.debug(f"Fetching {limit} reactors")
-            elems = list(response.html.find("div[id^='reaction_profile_browser']>div"))
-            more = response.html.find("div#reaction_profile_pager a", first=True)
-            while more and len(elems) < limit:
-                url = utils.urljoin(FB_MOBILE_BASE_URL, more.attrs.get("href"))
-                logger.debug(f"Fetching {url}")
-                try:
-                    response = self.request(url)
-                except Exception as e:
-                    logger.error(e)
-                    break
-                prefix_length = len('for (;;);')
-                data = json.loads(response.text[prefix_length:])  # Strip 'for (;;);'
-                more = None
-                for action in data['payload']['actions']:
-                    if action['cmd'] == 'append':
-                        html = utils.make_html_element(
-                            f"<div id='reaction_profile_browser'>{action['html']}</div>",
-                            url=FB_MOBILE_BASE_URL,
-                        )
-                        more_elems = html.find(
-                            'div#reaction_profile_browser>div,div#reaction_profile_browser1>div'
-                        )
-                        elems.extend(more_elems)
-                    elif action['cmd'] == 'replace':
-                        html = utils.make_html_element(
-                            f"<div id='reaction_profile_browser'>{action['html']}</div>",
-                            url=FB_MOBILE_BASE_URL,
-                        )
-                        more = html.find("div#reaction_profile_pager a", first=True)
-            logger.debug(f"Found {len(elems)} reactors")
-            for elem in elems:
-                emoji_class = elem.find(f"div>i.{spriteMapCssClass}", first=True).attrs.get(
-                    "class"
-                )[-1]
-                if not emoji_class_lookup.get(emoji_class):
-                    logger.error(f"Don't know {emoji_class}")
-                reactors.append(
-                    {
-                        "name": elem.find("strong", first=True).text,
-                        "link": utils.urljoin(
-                            FB_BASE_URL, elem.find("a", first=True).attrs.get("href")
-                        ),
-                        "type": emoji_class_lookup.get(emoji_class),
-                    }
-                )
+            reactors = self.extract_reactors(response, reaction_lookup)
 
         if reactions:
             return {
@@ -936,7 +951,7 @@ class PostExtractor:
             "comment_text": text,
             "comment_time": date,
             "comment_image": image_url,
-            "comment_reactors": reactions.get("reactors"),
+            "comment_reactors": reactions.get("reactors", []),
             "comment_reactions": reactions.get("reactions"),
             "comment_reaction_count": reactions.get("reaction_count"),
         }
