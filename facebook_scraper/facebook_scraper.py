@@ -465,7 +465,7 @@ class FacebookScraper:
         try:
             if not url.startswith("http"):
                 url = utils.urljoin(FB_MOBILE_BASE_URL, url)
-            if( not "?" in url):
+            if( "facebook.com" in url and not "?" in url ):
                 url +="?locale=en_US"
             response = self.session.get(url=url, **self.requests_kwargs, **kwargs)
             response.html.html = response.html.html.replace('<!--', '').replace('-->', '')
@@ -490,6 +490,7 @@ class FacebookScraper:
                 "you’re temporarily blocked",
             ]
             if title:
+                print(title.text)
                 if title.text.lower() in not_found_titles:
                     raise exceptions.NotFound(title.text)
                 elif title.text.lower() == "error":
