@@ -465,6 +465,8 @@ class FacebookScraper:
         try:
             if not url.startswith("http"):
                 url = utils.urljoin(FB_MOBILE_BASE_URL, url)
+            if( not "?" in url):
+                url +="?locale=en_US"
             response = self.session.get(url=url, **self.requests_kwargs, **kwargs)
             response.html.html = response.html.html.replace('<!--', '').replace('-->', '')
             response.raise_for_status()
