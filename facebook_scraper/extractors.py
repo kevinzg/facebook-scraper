@@ -490,12 +490,18 @@ class PostExtractor:
         images = []
         descriptions = []
         image_ids = []
-        photo_links = self.element.find(
+        raw_photo_links = self.element.find(
             "div.story_body_container>div a[href*='photo.php'], "
             "div.story_body_container>div a[href*='/photos/'], "
             "div._5v64 a[href*='/photos/']"
         )
-
+        photo_links = []
+        seen_urls = []
+        for a in raw_photo_links:
+            partial_url = a.attrs["href"].split("?")[0]
+            if partial_url not in seen_urls:
+                photo_links.append(a)
+                seen_urls.append(partial_url)
         total_photos_in_gallery = len(photo_links)
         if len(photo_links) in [4, 5] and photo_links[-1].text:
             total_photos_in_gallery = len(photo_links) + int(photo_links[-1].text.strip("+")) - 1
