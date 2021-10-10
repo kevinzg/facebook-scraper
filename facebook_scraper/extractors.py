@@ -341,6 +341,7 @@ class PostExtractor:
         if not elems:
             elems = self.element.find('.img:not(.profpic), img:not(.profpic)')
         images = []
+        image_ids = []
         descriptions = []
         for elem in elems:
             url = None
@@ -353,10 +354,16 @@ class PostExtractor:
             if url and "static.xx.fbcdn.net" not in url:
                 images.append(url)
                 descriptions.append(elem.attrs.get("aria-label") or elem.attrs.get("alt"))
+            url = elem.element.getparent().getparent().getparent().attrib.get("href")
+            if url:
+                image_ids.append(re.search(r'[=/](\d+)', url).group(1))
 
         image = images[0] if images else None
+        image_id = image_ids[0] if image_ids else None
         result = {
             "image_lowquality": image,
+            "image_id": image_id,
+            "image_ids": image_ids,
             "images_lowquality": images,
             "images_lowquality_description": descriptions,
         }
