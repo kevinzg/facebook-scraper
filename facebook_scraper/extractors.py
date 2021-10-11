@@ -695,6 +695,7 @@ class PostExtractor:
         w3_fb_url = url and utils.urlparse(url)._replace(netloc='www.facebook.com').geturl()
 
         reactors_opt = self.options.get("reactors")
+        reactors = []
         if reactors_opt:
             reaction_url = f'https://m.facebook.com/ufi/reaction/profile/browser/?ft_ent_identifier={post_id}'
             logger.debug(f"Fetching {reaction_url}")
