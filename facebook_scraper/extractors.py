@@ -190,7 +190,7 @@ class PostExtractor:
         if self.options.get('reactions') or self.options.get('reactors'):
             try:
                 reactions = self.extract_reactions()
-                if self.options.get("reactors") != "generator":
+                if reactions["reactors"] and self.options.get("reactors") != "generator":
                     # Consume reactor generator to return list
                     reactions["reactors"] = utils.safe_consume(reactions["reactors"])
             except Exception as ex:
