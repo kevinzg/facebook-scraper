@@ -177,7 +177,7 @@ class FacebookScraper:
                 friends_found += 1
             if limit and friends_found > limit:
                 return
-            more = re.search(r'href:"(/[^/]+/friends[^"]+)"', response.text)
+            more = re.search(r'm_more_friends",href:"([^"]+)"', response.text)
             if more:
                 friend_url = utils.urljoin(FB_MOBILE_BASE_URL, more.group(1))
                 if request_url_callback:
