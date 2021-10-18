@@ -134,6 +134,7 @@ class PostExtractor:
             'reaction_count': None,
             'with': None,
             'page_id': None,
+            'sharers': None,
         }
 
     def extract_post(self) -> Post:
@@ -201,6 +202,14 @@ class PostExtractor:
                 log_warning("Extract reactions didn't return anything")
             else:
                 post.update(reactions)
+
+        if self.options.get("sharers"):
+            try:
+                post["sharers"] = self.extract_sharers()
+                if self.options.get("sharers") != "generator":
+                    post["sharers"] = utils.safe_consume(post["sharers"])
+            except Exception as ex:
+                log_warning("Exception while extracting sharers: %r", ex)
 
         if self.options.get('comments'):
             try:
@@ -662,6 +671,27 @@ class PostExtractor:
                         url=FB_MOBILE_BASE_URL,
                     )
                     more = html.find("div#reaction_profile_pager a", first=True)
+
+    def extract_sharers(self):
+        """Fetch people sharing an existing post obtained by `get_posts`.
+        Note that this method may raise more http requests per post to get all sharers"""
+        share_url = f'https://m.facebook.com/browse/shares?id={self.post.get("post_id")}'
+        while share_url:
+            logger.debug(f"Fetching {share_url}")
+            response = self.request(share_url)
+            elems = response.html.find("div.item:not(#m_more_item)")
+            for elem in elems:
+                yield {
+                    "name": elem.find("strong", first=True).text,
+                    "link": utils.urljoin(
+                        FB_BASE_URL, elem.find("a", first=True).attrs.get("href")
+                    ),
+                }
+            more = response.html.find("#m_more_item a", first=True)
+            if more:
+                share_url = more.attrs.get("href")
+            else:
+                share_url = None
 
     def extract_reactions(self, post_id=None) -> PartialPost:
         """Fetch share and reactions information with a existing post obtained by `get_posts`.
