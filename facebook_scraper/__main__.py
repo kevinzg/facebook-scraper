@@ -2,8 +2,12 @@ import argparse
 import logging
 import pathlib
 import datetime
+import sys
+import locale
+import json
+import csv
 
-from . import enable_logging, write_posts_to_csv
+from . import enable_logging, write_posts_to_csv, get_profile
 
 
 def run():
@@ -106,31 +110,17 @@ def run():
         help='Use Youtube-DL for (high-quality) video extraction. You need to have youtube-dl installed on your environment. Default is False.',
         default=False,
     )
+    parser.add_argument(
+        '--profile',
+        action='store_true',
+        help="Extract an account's profile",
+        default=False,
+    )
+    parser.add_argument(
+        '--friends', type=int, help='When extracting a profile, how many friends to extract'
+    )
 
     args = parser.parse_args()
-
-    # Choose the right argument to pass to write_posts_to_csv (group or account)
-    account_type = 'group' if args.group else 'account'
-    kwargs = {
-        account_type: args.account,
-        "format": args.format,
-        "days_limit": args.days_limit,
-        "resume_file": args.resume_file,
-        "cookies": args.cookies,
-        "timeout": args.timeout,
-        "sleep": args.sleep,
-        "keys": args.keys,
-        "matching": args.matching,
-        "not_matching": args.not_matching,
-        "options": {
-            "reactions": args.reactions,
-            "reactors": args.reactors,
-            "comments": args.comments,
-            "allow_extra_requests": args.allow_extra_requests,
-        },
-        'youtube_dl': args.youtube_dl,
-        'extra_info': args.extra_info,
-    }
 
     # Enable logging
     if args.verbose > 0:
@@ -138,13 +128,59 @@ def run():
         level = {1: logging.WARNING, 2: logging.INFO, 3: logging.DEBUG}[args.verbose]
         enable_logging(level)
 
-    write_posts_to_csv(
-        **kwargs,
-        filename=args.filename,
-        pages=args.pages,
-        encoding=args.encoding,
-        dump_location=args.dump_location,
-    )
+    if args.profile:
+        # Set a default filename, based on the account name with the appropriate extension
+        if args.filename is None:
+            filename = str(args.account) + "_profile." + args.format
+
+        if args.encoding is None:
+            encoding = locale.getpreferredencoding()
+
+        if args.filename == "-":
+            output_file = sys.stdout
+        else:
+            output_file = open(filename, 'w', newline='', encoding=encoding)
+
+        profile = get_profile(args.account, friends=args.friends, cookies=args.cookies)
+
+        if args.format == "json":
+            json.dump(profile, output_file, default=str, indent=4)
+        else:
+            dict_writer = csv.DictWriter(output_file, profile.keys())
+            dict_writer.writeheader()
+            dict_writer.writerow(profile)
+        output_file.close()
+    else:
+        # Choose the right argument to pass to write_posts_to_csv (group or account)
+        account_type = 'group' if args.group else 'account'
+        kwargs = {
+            account_type: args.account,
+            "format": args.format,
+            "days_limit": args.days_limit,
+            "resume_file": args.resume_file,
+            "cookies": args.cookies,
+            "timeout": args.timeout,
+            "sleep": args.sleep,
+            "keys": args.keys,
+            "matching": args.matching,
+            "not_matching": args.not_matching,
+            "options": {
+                "reactions": args.reactions,
+                "reactors": args.reactors,
+                "comments": args.comments,
+                "allow_extra_requests": args.allow_extra_requests,
+            },
+            'youtube_dl': args.youtube_dl,
+            'extra_info': args.extra_info,
+        }
+
+        write_posts_to_csv(
+            **kwargs,
+            filename=args.filename,
+            pages=args.pages,
+            encoding=args.encoding,
+            dump_location=args.dump_location,
+        )
 
 
 if __name__ == '__main__':
