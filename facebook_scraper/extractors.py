@@ -731,18 +731,18 @@ class PostExtractor:
             logger.debug(f"Fetching {reaction_url}")
             response = self.request(reaction_url)
 
-            reactions = {}
-            for sigil in response.html.find("span[data-sigil='reaction_profile_sigil']"):
-                k = str(demjson.decode(sigil.attrs.get("data-store"))["reactionType"])
-                v = sigil.find(
-                    "span[data-sigil='reaction_profile_tab_count']", first=True
-                ).text.replace("All ", "")
-                v = utils.convert_numeric_abbr(v)
-                if k == "all":
-                    reaction_count = v
-                elif k in reaction_lookup:
-                    name = reaction_lookup[k]["display_name"].lower()
-                    reactions[name] = v
+            if not reactions:
+                for sigil in response.html.find("span[data-sigil='reaction_profile_sigil']"):
+                    k = str(demjson.decode(sigil.attrs.get("data-store"))["reactionType"])
+                    v = sigil.find(
+                        "span[data-sigil='reaction_profile_tab_count']", first=True
+                    ).text.replace("All ", "")
+                    v = utils.convert_numeric_abbr(v)
+                    if k == "all":
+                        reaction_count = v
+                    elif k in reaction_lookup:
+                        name = reaction_lookup[k]["display_name"].lower()
+                        reactions[name] = v
             reactors = self.extract_reactors(response, reaction_lookup)
 
         if reactions:
