@@ -631,7 +631,7 @@ class PostExtractor:
                 "link": utils.urljoin(FB_BASE_URL, elem.find("a", first=True).attrs.get("href")),
                 "type": emoji_class_lookup.get(emoji_class),
             }
-        more = response.html.find("div#reaction_profile_pager a", first=True)
+        more = response.html.find("div[id^=reaction_profile_pager] a", first=True)
         while more and len(elems) < limit:
             url = utils.urljoin(FB_MOBILE_BASE_URL, more.attrs.get("href"))
             logger.debug(f"Fetching {url}")
