@@ -219,6 +219,8 @@ class PostExtractor:
                     post["comments_full"] = utils.safe_consume(post["comments_full"])
                     for comment in post["comments_full"]:
                         comment["replies"] = utils.safe_consume(comment["replies"])
+                        for reply in comment["replies"]:
+                            utils.safe_consume(reply["comment_reactors"])
                         comment["comment_reactors"] = utils.safe_consume(
                             comment["comment_reactors"]
                         )
