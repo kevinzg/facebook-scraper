@@ -185,19 +185,12 @@ class FacebookScraper:
             else:
                 return
 
-    def get_followers(self, account, **kwargs) -> Iterator[Profile]:
-        follower_opt = kwargs.get("followers")
-        limit = None
-        if type(follower_opt) in [int, float]:
-            limit = follower_opt
-        follower_url = kwargs.pop("follower_start_url", None)
-        if not follower_url:
-            follower_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}?v=followers')
-        request_url_callback = kwargs.get('follower_request_url_callback')
-        followers_found = 0
-        while follower_url:
-            logger.debug(f"Requesting page from: {follower_url}")
-            response = self.get(follower_url)
+    def get_collection(self, more_url, limit=None, **kwargs) -> Iterator[Profile]:
+        request_url_callback = kwargs.get('request_url_callback')
+        count = 0
+        while more_url:
+            logger.debug(f"Requesting page from: {more_url}")
+            response = self.get(more_url)
             if response.text.startswith("for (;;);"):
                 prefix_length = len('for (;;);')
                 data = json.loads(response.text[prefix_length:])  # Strip 'for (;;);'
@@ -223,7 +216,7 @@ class FacebookScraper:
                 )
                 if more_url:
                     more_url = more_url.group(1)
-            logger.debug(f"Found {len(elems)} followers")
+            logger.debug(f"Found {len(elems)} elems")
             for elem in elems:
                 name = elem.find("strong", first=True).text
                 link = elem.attrs.get("href")
@@ -235,23 +228,18 @@ class FacebookScraper:
                 match = re.search(r"url\('(.+)'\)", profile_picture)
                 if match:
                     profile_picture = utils.decode_css_url(match.groups()[0])
-                follower = {
+                result = {
                     "link": link,
                     "name": name,
                     "profile_picture": profile_picture,
                     "tagline": tagline,
                 }
-                yield follower
-                followers_found += 1
-            if limit and followers_found > limit:
+                yield result
+                count += 1
+            if type(limit) in [int, float] and count > limit:
                 return
-            if more_url:
-                follower_url = more_url
-                if request_url_callback:
-                    request_url_callback(follower_url)
-            else:
-                logger.debug("No more followers")
-                return
+            if more_url and request_url_callback:
+                request_url_callback(more_url)
 
     def get_profile(self, account, **kwargs) -> Profile:
         account = account.replace("profile.php?id=", "")
@@ -279,6 +267,16 @@ class FacebookScraper:
             except Exception as e:
                 result["Follower_count"] = None
                 logger.error(f"Follower_count extraction failed: {e}")
+            try:
+                following_url = f'/{account}?v=following'
+                logger.debug(f"Fetching {following_url}")
+                following_response = self.get(following_url)
+                result["Following_count"] = utils.parse_int(
+                    following_response.html.find("div[role='heading']", first=True).text
+                )
+            except Exception as e:
+                result["Following_count"] = None
+                logger.error(f"Following_count extraction failed: {e}")
 
             photo_links = response.html.find("a[href^='/photo.php']")
             if len(photo_links) == 1:
@@ -394,7 +392,17 @@ class FacebookScraper:
         if kwargs.get("friends"):
             result["Friends"] = list(self.get_friends(account, **kwargs))
         if kwargs.get("followers"):
-            result["Followers"] = list(self.get_followers(account, **kwargs))
+            result["Followers"] = list(
+                self.get_collection(
+                    f'/{account}?v=followers', limit=kwargs.get("followers"), **kwargs
+                )
+            )
+        if kwargs.get("following"):
+            result["Following"] = list(
+                self.get_collection(
+                    f'/{account}?v=following', limit=kwargs.get("following"), **kwargs
+                )
+            )
         return result
 
     def get_page_info(self, page, **kwargs) -> Profile:
