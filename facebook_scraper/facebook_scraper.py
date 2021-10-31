@@ -192,6 +192,26 @@ class FacebookScraper:
         if kwargs.get("allow_extra_requests", True):
             logger.debug(f"Requesting page from: {account}")
             response = self.get(account)
+
+            try:
+                result["Friend_count"] = utils.parse_int(
+                    response.html.find("a[data-store*='friends']>div>div")[-1].text
+                )
+            except Exception as e:
+                result["Friend_count"] = None
+                logger.error(f"Friend_count extraction failed: {e}")
+            try:
+                result["Follower_count"] = utils.parse_int(
+                    response.html.find(
+                        "div[data-sigil*='profile-intro-card-log']",
+                        containing="Followed by",
+                        first=True,
+                    ).text
+                )
+            except Exception as e:
+                result["Follower_count"] = None
+                logger.error(f"Follower_count extraction failed: {e}")
+
             photo_links = response.html.find("a[href^='/photo.php']")
             if len(photo_links) == 1:
                 profile_photo = photo_links[0]
