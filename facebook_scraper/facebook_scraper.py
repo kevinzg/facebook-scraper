@@ -376,7 +376,7 @@ class FacebookScraper:
                 elif len(bits) == 1:
                     result[header] = bits[0]
                 elif (
-                    header in ["Contact Info", "Basic info", "Other names"] and len(bits) % 2 == 0
+                    header in ["Contact Info", "Basic Info", "Education", "Family Members", "Other names"] and len(bits) % 2 == 0
                 ):  # Divisible by two, assume pairs
                     pairs = {}
                     for i in range(0, len(bits), 2):
