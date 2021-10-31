@@ -185,6 +185,74 @@ class FacebookScraper:
             else:
                 return
 
+    def get_followers(self, account, **kwargs) -> Iterator[Profile]:
+        follower_opt = kwargs.get("followers")
+        limit = None
+        if type(follower_opt) in [int, float]:
+            limit = follower_opt
+        follower_url = kwargs.pop("follower_start_url", None)
+        if not follower_url:
+            follower_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}?v=followers')
+        request_url_callback = kwargs.get('follower_request_url_callback')
+        followers_found = 0
+        while follower_url:
+            logger.debug(f"Requesting page from: {follower_url}")
+            response = self.get(follower_url)
+            if response.text.startswith("for (;;);"):
+                prefix_length = len('for (;;);')
+                data = json.loads(response.text[prefix_length:])  # Strip 'for (;;);'
+                for action in data['payload']['actions']:
+                    if action['cmd'] == 'append' and action['html']:
+                        element = utils.make_html_element(
+                            action['html'],
+                            url=FB_MOBILE_BASE_URL,
+                        )
+                        elems = element.find('a.touchable')
+                        html = element.text
+                    elif action['cmd'] == 'script':
+                        more_url = re.search(
+                            r'("\\/timeline\\/app_collection\\/more\\/[^"]+")', action["code"]
+                        )
+                        if more_url:
+                            more_url = more_url.group(1)
+                            more_url = json.loads(more_url)
+            else:
+                elems = response.html.find('#timelineBody a.touchable')
+                more_url = re.search(
+                    r'href:"(/timeline/app_collection/more/[^"]+)"', response.text
+                )
+                if more_url:
+                    more_url = more_url.group(1)
+            logger.debug(f"Found {len(elems)} followers")
+            for elem in elems:
+                name = elem.find("strong", first=True).text
+                link = elem.attrs.get("href")
+                try:
+                    tagline = elem.find("div.twoLines", first=True).text
+                except:
+                    tagline = None
+                profile_picture = elem.find("i.profpic", first=True).attrs.get("style")
+                match = re.search(r"url\('(.+)'\)", profile_picture)
+                if match:
+                    profile_picture = utils.decode_css_url(match.groups()[0])
+                follower = {
+                    "link": link,
+                    "name": name,
+                    "profile_picture": profile_picture,
+                    "tagline": tagline,
+                }
+                yield follower
+                followers_found += 1
+            if limit and followers_found > limit:
+                return
+            if more_url:
+                follower_url = more_url
+                if request_url_callback:
+                    request_url_callback(follower_url)
+            else:
+                logger.debug("No more followers")
+                return
+
     def get_profile(self, account, **kwargs) -> Profile:
         account = account.replace("profile.php?id=", "")
         result = {}
@@ -325,6 +393,8 @@ class FacebookScraper:
                     result[header] = "\n".join(bits)
         if kwargs.get("friends"):
             result["Friends"] = list(self.get_friends(account, **kwargs))
+        if kwargs.get("followers"):
+            result["Followers"] = list(self.get_followers(account, **kwargs))
         return result
 
     def get_page_info(self, page, **kwargs) -> Profile:
