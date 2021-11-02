@@ -251,7 +251,7 @@ class FacebookScraper:
 
             try:
                 result["Friend_count"] = utils.parse_int(
-                    response.html.find("a[data-store*='friends']>div>div")[-1].text
+                    response.html.find("a[data-store*='friends']>div>div")[-1].text.split()[0]
                 )
             except Exception as e:
                 result["Friend_count"] = None
