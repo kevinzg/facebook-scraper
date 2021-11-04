@@ -157,7 +157,7 @@ class FacebookScraper:
             elems = response.html.find('div[class="timeline"] > div > div')
             logger.debug(f"Found {len(elems)} friends")
             for elem in elems:
-                name = elem.find("h3>a", first=True)
+                name = elem.find("h3>a,h1>a", first=True)
                 if not name:
                     continue
                 # Tagline
