@@ -172,7 +172,7 @@ class FacebookScraper:
                 if match:
                     profile_picture = utils.decode_css_url(match.groups()[0])
                 # User ID if present, not present if no "add friend"
-                user_id= elem.find("a.touchable[data-store]", first=True)
+                user_id = elem.find("a.touchable[data-store]", first=True)
                 if user_id:
                     user_id = json.loads(user_id.attrs["data-store"]).get("id")
                 else:
@@ -388,7 +388,15 @@ class FacebookScraper:
                 elif len(bits) == 1:
                     result[header] = bits[0]
                 elif (
-                    header in ["Contact Info", "Basic Info", "Education", "Family Members", "Other names"] and len(bits) % 2 == 0
+                    header
+                    in [
+                        "Contact Info",
+                        "Basic Info",
+                        "Education",
+                        "Family Members",
+                        "Other names",
+                    ]
+                    and len(bits) % 2 == 0
                 ):  # Divisible by two, assume pairs
                     pairs = {}
                     for i in range(0, len(bits), 2):
