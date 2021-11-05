@@ -139,7 +139,7 @@ def run():
         if args.filename == "-":
             output_file = sys.stdout
         else:
-            output_file = open(filename, 'w', newline='', encoding=encoding)
+            output_file = open(args.filename, 'w', newline='', encoding=encoding)
 
         profile = get_profile(args.account, friends=args.friends, cookies=args.cookies)
 
