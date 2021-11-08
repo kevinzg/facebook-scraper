@@ -18,6 +18,7 @@ import traceback
 import time
 from datetime import datetime, timedelta
 import re
+import browser_cookie3
 
 
 _scraper = FacebookScraper()
@@ -25,14 +26,18 @@ _scraper = FacebookScraper()
 
 def set_cookies(cookies):
     if isinstance(cookies, str):
-        try:
-            cookies = parse_cookie_file(cookies)
-        except ValueError as e:
-            raise exceptions.InvalidCookies(f"Cookies are in an invalid format: {e}")
+        if cookies == "from_browser":
+            cookies = browser_cookie3.load(domain_name='.facebook.com')
+        else:
+            try:
+                cookies = parse_cookie_file(cookies)
+            except ValueError as e:
+                raise exceptions.InvalidCookies(f"Cookies are in an invalid format: {e}")
     elif isinstance(cookies, dict):
         cookies = cookiejar_from_dict(cookies)
     if cookies is not None:
-        missing_cookies = [c for c in ['c_user', 'xs'] if c not in cookies]
+        cookie_names = [c.name for c in cookies]
+        missing_cookies = [c for c in ['c_user', 'xs'] if c not in cookie_names]
         if missing_cookies:
             raise exceptions.InvalidCookies(f"Missing cookies with name(s): {missing_cookies}")
         _scraper.session.cookies.update(cookies)

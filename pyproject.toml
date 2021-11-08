@@ -13,6 +13,7 @@ requests-html = "^0.10.0"
 youtube_dl = {version = "*", optional=true}
 dateparser = "^1.0.0"
 demjson3 = "^3.0.5"
+browser-cookie3 = "^0.13.0"
 
 [tool.poetry.dev-dependencies]
 ipdb = {version = "*", python = "^3.7"}
