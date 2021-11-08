@@ -131,7 +131,7 @@ def run():
     if args.profile:
         # Set a default filename, based on the account name with the appropriate extension
         if args.filename is None:
-            filename = str(args.account) + "_profile." + args.format
+            args.filename = str(args.account) + "_profile." + args.format
 
         if args.encoding is None:
             encoding = locale.getpreferredencoding()
@@ -139,7 +139,7 @@ def run():
         if args.filename == "-":
             output_file = sys.stdout
         else:
-            output_file = open(filename, 'w', newline='', encoding=encoding)
+            output_file = open(args.filename, 'w', newline='', encoding=encoding)
 
         profile = get_profile(args.account, friends=args.friends, cookies=args.cookies)
 
