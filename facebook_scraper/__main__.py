@@ -119,6 +119,14 @@ def run():
     parser.add_argument(
         '--friends', type=int, help='When extracting a profile, how many friends to extract'
     )
+    parser.add_argument(
+        '-ppp',
+        '--posts-per-page',
+        dest='posts_per_page',
+        default=4,
+        type=int,
+        help="Number of posts to fetch per page",
+    )
 
     args = parser.parse_args()
 
@@ -169,6 +177,7 @@ def run():
                 "reactors": args.reactors,
                 "comments": args.comments,
                 "allow_extra_requests": args.allow_extra_requests,
+                "posts_per_page": args.posts_per_page
             },
             'youtube_dl': args.youtube_dl,
             'extra_info': args.extra_info,
