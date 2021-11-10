@@ -177,7 +177,7 @@ def run():
                 "reactors": args.reactors,
                 "comments": args.comments,
                 "allow_extra_requests": args.allow_extra_requests,
-                "posts_per_page": args.posts_per_page
+                "posts_per_page": args.posts_per_page,
             },
             'youtube_dl': args.youtube_dl,
             'extra_info': args.extra_info,

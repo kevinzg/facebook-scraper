@@ -90,7 +90,10 @@ class FacebookScraper:
             response = self.get(url)
             if response.url == "https://m.facebook.com/watch/?ref=watch_permalink":
                 if str(post_url).isdigit():
-                    url = utils.urljoin(FB_MOBILE_BASE_URL, f"story.php?story_fbid={post_url}&id=1&m_entstream_source=timeline")
+                    url = utils.urljoin(
+                        FB_MOBILE_BASE_URL,
+                        f"story.php?story_fbid={post_url}&id=1&m_entstream_source=timeline",
+                    )
                     post = {"original_request_url": post_url, "post_url": url}
                     logger.debug(f"Requesting page from: {url}")
                     response = self.get(url)
