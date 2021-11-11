@@ -443,7 +443,7 @@ class FacebookScraper:
             logger.debug(f"Requesting page from: {about_url}")
             resp = self.get(about_url)
             desc = resp.html.find("meta[name='description']", first=True)
-            result["about"] = resp.html.find('#pages_msite_body_contents', first=True).text
+            result["about"] = resp.html.find('#pages_msite_body_contents,div.aboutme', first=True).text
             cover_photo = resp.html.find("#msite-pages-header-contents i.coverPhoto", first=True)
             if cover_photo:
                 match = re.search(r"url\('(.+)'\)", cover_photo.attrs["style"])
