@@ -496,7 +496,9 @@ class PostExtractor:
             return None
 
     def extract_photo_link(self) -> PartialPost:
-        if not self.options.get("allow_extra_requests", True):
+        if not self.options.get("allow_extra_requests", True) or not self.options.get(
+            "HQ_images", True
+        ):
             return None
         images = []
         descriptions = []
