@@ -443,7 +443,9 @@ class FacebookScraper:
             logger.debug(f"Requesting page from: {about_url}")
             resp = self.get(about_url)
             desc = resp.html.find("meta[name='description']", first=True)
-            result["about"] = resp.html.find('#pages_msite_body_contents,div.aboutme', first=True).text
+            result["about"] = resp.html.find(
+                '#pages_msite_body_contents,div.aboutme', first=True
+            ).text
             cover_photo = resp.html.find("#msite-pages-header-contents i.coverPhoto", first=True)
             if cover_photo:
                 match = re.search(r"url\('(.+)'\)", cover_photo.attrs["style"])
@@ -459,13 +461,16 @@ class FacebookScraper:
             logger.debug(f"Requesting page from: {url}")
             resp = self.get(url)
             desc = resp.html.find("meta[name='description']", first=True)
-            elem = resp.html.find("script[type='application/ld+json']", first=True)
-            meta = json.loads(elem.text)
-            result.update(meta["author"])
-            result["type"] = result.pop("@type")
-            for interaction in meta.get("interactionStatistic", []):
-                if interaction["interactionType"] == "http://schema.org/FollowAction":
-                    result["followers"] = interaction["userInteractionCount"]
+            try:
+                elem = resp.html.find("script[type='application/ld+json']", first=True)
+                meta = json.loads(elem.text)
+                result.update(meta["author"])
+                result["type"] = result.pop("@type")
+                for interaction in meta.get("interactionStatistic", []):
+                    if interaction["interactionType"] == "http://schema.org/FollowAction":
+                        result["followers"] = interaction["userInteractionCount"]
+            except:
+                logger.error("No ld+json element")
             try:
                 result["about"] = resp.html.find(
                     '#pages_msite_body_contents>div>div:nth-child(2)', first=True
@@ -473,11 +478,26 @@ class FacebookScraper:
             except Exception as e:
                 logger.error(e)
                 result = self.get_profile(page)
-                result["followers"] = utils.convert_numeric_abbr(
-                    resp.html.find("span.unlinkedTextEntity", first=True).text.replace(
-                        " Followers", ""
+            for elem in resp.html.find("div[data-sigil*='profile-intro-card-log']"):
+                text = elem.text.split("\n")[0]
+                if " Followers" in text:
+                    result["followers"] = utils.convert_numeric_abbr(
+                        text.replace(" Followers", "")
                     )
-                )
+                if text.startswith("Price Range"):
+                    result["Price Range"] = text.split(" · ")[-1]
+                link = elem.find("a[href]", first=True)
+                if link:
+                    link = link.attrs["href"]
+                    if "active_ads" in link:
+                        result["active_ads_link"] = link
+                    if "maps.google.com" in link:
+                        result["map_link"] = parse_qs(urlparse(link).query).get("u")[0]
+                        result["address"] = text
+                    if link.startswith("tel:"):
+                        result["phone"] = link.replace("tel:", "")
+                    if link.startswith("mailto:"):
+                        result["email"] = link.replace("mailto:", "")
         except Exception as e:
             logger.error(e)
         if desc:
