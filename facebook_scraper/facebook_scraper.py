@@ -89,7 +89,8 @@ class FacebookScraper:
             logger.debug(f"Requesting page from: {url}")
             response = self.get(url)
             if response.url == "https://m.facebook.com/watch/?ref=watch_permalink":
-                if str(post_url).isdigit():
+                post_url = re.search("\d+", str(post_url)).group()
+                if post_url:
                     url = utils.urljoin(
                         FB_MOBILE_BASE_URL,
                         f"story.php?story_fbid={post_url}&id=1&m_entstream_source=timeline",
