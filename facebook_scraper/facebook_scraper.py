@@ -34,7 +34,6 @@ class FacebookScraper:
     base_url = FB_MOBILE_BASE_URL
     default_headers = {
         'Accept-Language': 'en-US,en;q=0.5',
-        "Sec-Fetch-User": "?1",
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/603.3.8 (KHTML, like Gecko) Version/10.1.2 Safari/603.3.8",
     }
     have_checked_locale = False
@@ -607,7 +606,7 @@ class FacebookScraper:
         if match:
             locale = match.groups(1)[0]
             if locale != "en_US":
-                warnings.warn(f"Locale detected as {locale} - for best results, set to en_US")
+                warnings.warn(f"Facebook language detected as {locale} - for best results, set to en_US")
             self.have_checked_locale = True
 
     def get(self, url, **kwargs):
