@@ -73,6 +73,14 @@ def filter_query_params(url, whitelist=None, blacklist=None) -> str:
     return urlunparse(parsed_url._replace(query=query_string))
 
 
+def combine_url_params(url1, url2) -> str:
+    parsed_url = urlparse(url1)
+    parsed_url2 = urlparse(url2)
+    query_params = parse_qsl(parsed_url.query) + parse_qsl(parsed_url2.query)
+    query_string = urlencode([(k, v) for k, v in query_params])
+    return urlunparse(parsed_url._replace(query=query_string))
+
+
 def remove_control_characters(html):
     # type: (t.Text) -> t.Text
     """
