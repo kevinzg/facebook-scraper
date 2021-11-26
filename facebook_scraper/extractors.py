@@ -1102,10 +1102,15 @@ class PostExtractor:
         request_url_callback = self.options.get('comment_request_url_callback')
         more_url = None
         if more:
-            more_url = (
-                more.attrs.get("href")
-                + "&m_entstream_source=video_home&player_suborigin=entry_point&player_format=permalink"
-            )
+            if self.options.get("response_url"):
+                more_url = utils.combine_url_params(
+                    self.options.get("response_url"), more.attrs.get("href")
+                )
+            else:
+                more_url = (
+                    more.attrs.get("href")
+                    + "&m_entstream_source=video_home&player_suborigin=entry_point&player_format=permalink"
+                )
         if self.options.get("comment_start_url"):
             more_url = self.options.get("comment_start_url")
 
@@ -1141,10 +1146,15 @@ class PostExtractor:
                     yield result
             more = elem.find(more_selector, first=True)
             if more:
-                more_url = (
-                    more.attrs.get("href")
-                    + "&m_entstream_source=video_home&player_suborigin=entry_point&player_format=permalink"
-                )
+                if self.options.get("response_url"):
+                    more_url = utils.combine_url_params(
+                        self.options.get("response_url"), more.attrs.get("href")
+                    )
+                else:
+                    more_url = (
+                        more.attrs.get("href")
+                        + "&m_entstream_source=video_home&player_suborigin=entry_point&player_format=permalink"
+                    )
             else:
                 more_url = None
 

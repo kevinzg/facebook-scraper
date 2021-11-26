@@ -103,6 +103,7 @@ class FacebookScraper:
                 url = f"story.php?story_fbid={video_id}&id={video_id}&m_entstream_source=video_home&player_suborigin=entry_point&player_format=permalink"
                 logger.debug(f"Fetching {url}")
                 response = self.get(url)
+            options["response_url"] = response.url
             elem = response.html.find('[data-ft*="top_level_post_id"]', first=True)
             photo_post = False
             if response.html.find("div.msg", first=True):
@@ -607,7 +608,9 @@ class FacebookScraper:
         if match:
             locale = match.groups(1)[0]
             if locale != "en_US":
-                warnings.warn(f"Facebook language detected as {locale} - for best results, set to en_US")
+                warnings.warn(
+                    f"Facebook language detected as {locale} - for best results, set to en_US"
+                )
             self.have_checked_locale = True
 
     def get(self, url, **kwargs):
