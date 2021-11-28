@@ -717,7 +717,7 @@ class PostExtractor:
         reaction_lookup = self.get_jsmod("UFIReactionTypes")
         if reaction_lookup:
             reaction_lookup = reaction_lookup.get("reactions")
-            for k, v in self.live_data.get("reactioncountmap").items():
+            for k, v in self.live_data.get("reactioncountmap", {}).items():
                 if v["default"]:
                     name = reaction_lookup[k]["display_name"].lower()
                     reactions[name] = v["default"]
