@@ -401,7 +401,7 @@ def write_posts_to_csv(
     output_file.close()
 
 
-def enable_logging(level=logging.INFO):
+def enable_logging(level=logging.DEBUG):
     handler = logging.StreamHandler()
     handler.setLevel(level)
 
