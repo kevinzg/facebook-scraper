@@ -19,9 +19,9 @@ from .constants import (
     FB_W3_BASE_URL,
     FB_MBASIC_BASE_URL,
 )
-from .extractors import extract_group_post, extract_post, extract_photo_post, PostExtractor
+from .extractors import extract_group_post, extract_post, extract_photo_post, PostExtractor, extract_hashtag_post
 from .fb_types import Post, Profile
-from .page_iterators import iter_group_pages, iter_pages, iter_photos, iter_search_pages
+from .page_iterators import iter_group_pages, iter_pages, iter_photos, iter_search_pages, iter_hashtag_pages
 from . import exceptions
 
 
@@ -76,6 +76,12 @@ class FacebookScraper:
         iter_pages_fn = partial(iter_photos, account=account, request_fn=self.get, **kwargs)
         return self._generic_get_posts(extract_post, iter_pages_fn, **kwargs)
 
+    def get_posts_by_hashtag(self, hashtag: str, **kwargs) -> Iterator[Post]:
+        kwargs["scraper"] = self
+        kwargs["base_url"] = FB_MBASIC_BASE_URL
+        iter_pages_fn = partial(iter_hashtag_pages, hashtag=hashtag, request_fn=self.get, **kwargs)
+        return self._generic_get_posts(extract_hashtag_post, iter_pages_fn, **kwargs)
+
     def get_posts_by_url(self, post_urls, options={}, remove_source=True) -> Iterator[Post]:
         for post_url in post_urls:
             url = str(post_url)
@@ -85,6 +91,7 @@ class FacebookScraper:
                 url = url.replace(FB_W3_BASE_URL, FB_MOBILE_BASE_URL)
             if not url.startswith(FB_MOBILE_BASE_URL):
                 url = utils.urljoin(FB_MOBILE_BASE_URL, url)
+
             post = {"original_request_url": post_url, "post_url": url}
             logger.debug(f"Requesting page from: {url}")
             response = self.get(url)
@@ -684,6 +691,7 @@ class FacebookScraper:
         try:
             if not url.startswith("http"):
                 url = utils.urljoin(FB_MOBILE_BASE_URL, url)
+
             response = self.session.get(url=url, **self.requests_kwargs, **kwargs)
             response.html.html = response.html.html.replace('<!--', '').replace('-->', '')
             response.raise_for_status()
@@ -816,7 +824,6 @@ class FacebookScraper:
                 "A low page limit (<=2) might return no results, try increasing the limit",
                 stacklevel=3,
             )
-
         logger.debug("Starting to iterate pages")
         for i, page in zip(counter, iter_pages_fn()):
             logger.debug("Extracting posts from page %s", i)
