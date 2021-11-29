@@ -105,6 +105,8 @@ class FacebookScraper:
                 response = self.get(url)
             options["response_url"] = response.url
             elem = response.html.find('[data-ft*="top_level_post_id"]', first=True)
+            if not elem:
+                elem = response.html.find('div.async_like', first=True)
             photo_post = False
             if response.html.find("div.msg", first=True):
                 photo_post = True
