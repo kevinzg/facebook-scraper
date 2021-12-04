@@ -717,7 +717,7 @@ class PostExtractor:
         reaction_lookup = self.get_jsmod("UFIReactionTypes")
         if reaction_lookup:
             reaction_lookup = reaction_lookup.get("reactions")
-            for k, v in self.live_data.get("reactioncountmap").items():
+            for k, v in self.live_data.get("reactioncountmap", {}).items():
                 if v["default"]:
                     name = reaction_lookup[k]["display_name"].lower()
                     reactions[name] = v["default"]
@@ -1186,7 +1186,7 @@ class PostExtractor:
                 links = response.html.find("#root .item>div>div>a:not(.touchable)")
                 for link in links:
                     people.append({"name": link.text, "link": link.attrs["href"]})
-            return {"with": people}
+            return {"with": people, "header": self.element.find("header h3", first=True).text}
 
     @property
     def data_ft(self) -> dict:
