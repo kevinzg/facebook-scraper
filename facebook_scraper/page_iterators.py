@@ -39,6 +39,18 @@ def iter_group_pages(
 
     return generic_iter_pages(start_url, GroupPageParser, request_fn, **kwargs)
 
+def iter_search_pages(word: str, request_fn: RequestFunction, **kwargs) -> Iterator[Page]:
+    start_url = kwargs.pop("start_url", None)
+    if not start_url:
+        start_url = utils.urljoin(FB_MOBILE_BASE_URL,
+                                  f'/search/posts?q={word}'
+                                  f'&filters=eyJyZWNlbnRfcG9zdHM6MCI6IntcIm5hbWVcIjpcInJlY2VudF9wb3N0c1wiLFwiYXJnc1wiOlwiXCJ9In0%3D')
+        try:
+            request_fn(start_url)
+        except Exception as ex:
+            logger.error(ex)
+            start_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/search/posts?q={word}')
+    return generic_iter_pages(start_url, SearchPageParser, request_fn, **kwargs)
 
 def iter_photos(account: str, request_fn: RequestFunction, **kwargs) -> Iterator[Page]:
     start_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/photos/')
@@ -222,6 +234,22 @@ class PhotosPageParser(PageParser):
 
     def get_page(self) -> Page:
         return super()._get_page('div._5v64', "div._5v64")
+
+    def get_next_page(self) -> Optional[URL]:
+        if self.cursor_blob is not None:
+            match = self.cursor_regex.search(self.cursor_blob)
+            if match:
+                return match.groups()[0]
+
+            match = self.cursor_regex_2.search(self.cursor_blob)
+            if match:
+                value = match.groups()[0]
+                return value.encode('utf-8').decode('unicode_escape').replace('\\/', '/')
+
+
+class SearchPageParser(PageParser):
+    cursor_regex = re.compile(r'href[:=]"[^"]+(/search/[^"]+)"')
+    cursor_regex_2 = re.compile(r'href":"[^"]+(/search/[^"]+)"')
 
     def get_next_page(self) -> Optional[URL]:
         if self.cursor_blob is not None:
