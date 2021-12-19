@@ -21,7 +21,7 @@ from .constants import (
 )
 from .extractors import extract_group_post, extract_post, extract_photo_post, PostExtractor
 from .fb_types import Post, Profile
-from .page_iterators import iter_group_pages, iter_pages, iter_photos
+from .page_iterators import iter_group_pages, iter_pages, iter_photos, iter_search_pages
 from . import exceptions
 
 
@@ -153,6 +153,11 @@ class FacebookScraper:
                 if remove_source:
                     post.pop('source', None)
             yield post
+
+    def get_posts_by_search(self, word: str, **kwargs) -> Iterator[Post]:
+        kwargs["scraper"] = self
+        iter_pages_fn = partial(iter_search_pages, word=word, request_fn=self.get, **kwargs)
+        return self._generic_get_posts(extract_post, iter_pages_fn, **kwargs)
 
     def get_friends(self, account, **kwargs) -> Iterator[Profile]:
         friend_opt = kwargs.get("friends")
