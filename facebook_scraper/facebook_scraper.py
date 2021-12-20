@@ -441,6 +441,66 @@ class FacebookScraper:
                     f'/{account}?v=following', limit=kwargs.get("following"), **kwargs
                 )
             )
+
+        # Likes
+        if result["id"] and kwargs.get("likes"):
+            likes_url = utils.urljoin(
+                FB_MOBILE_BASE_URL,
+                f'timeline/app_section/?section_token={result["id"]}:2409997254',
+            )
+            logger.debug(f"Requesting page from: {likes_url}")
+            response = self.get(likes_url)
+            result["likes_by_category"] = {}
+            for elem in response.html.find('header[data-sigil="profile-card-header"]'):
+                count, category = elem.text.split("\n")
+                count = utils.parse_int(count)
+                if category == "All Likes":
+                    result["likes_count"] = count
+                result["likes_by_category"][category] = count
+
+            all_likes_url = utils.urljoin(
+                FB_MOBILE_BASE_URL,
+                f'timeline/app_collection/?collection_token={result["id"]}:2409997254:96',
+            )
+            logger.debug(f"Requesting page from: {all_likes_url}")
+            response = self.get(all_likes_url)
+            result["likes"] = []
+            for elem in response.html.find("div._1a5p"):
+                result["likes"].append(
+                    {
+                        "name": elem.text,
+                        "link": elem.find("a", first=True).attrs.get("href"),
+                    }
+                )
+            more_url = re.search(r'href:"(/timeline/app_collection/more/[^"]+)"', response.text)
+            if more_url:
+                more_url = more_url.group(1)
+            while more_url:
+                logger.debug(f"Fetching {more_url}")
+                response = self.get(more_url)
+                prefix_length = len('for (;;);')
+                data = json.loads(response.text[prefix_length:])  # Strip 'for (;;);'
+                for action in data['payload']['actions']:
+                    if action['cmd'] == 'append' and action['html']:
+                        element = utils.make_html_element(
+                            action['html'],
+                            url=FB_MOBILE_BASE_URL,
+                        )
+                        for elem in element.find("div._1a5p"):
+                            result["likes"].append(
+                                {
+                                    "name": elem.text,
+                                    "link": elem.find("a", first=True).attrs.get("href"),
+                                }
+                            )
+                    elif action['cmd'] == 'script':
+                        more_url = re.search(
+                            r'("\\/timeline\\/app_collection\\/more\\/[^"]+")', action["code"]
+                        )
+                        if more_url:
+                            more_url = more_url.group(1)
+                            more_url = json.loads(more_url)
+
         return result
 
     def get_page_info(self, page, **kwargs) -> Profile:

@@ -39,18 +39,22 @@ def iter_group_pages(
 
     return generic_iter_pages(start_url, GroupPageParser, request_fn, **kwargs)
 
+
 def iter_search_pages(word: str, request_fn: RequestFunction, **kwargs) -> Iterator[Page]:
     start_url = kwargs.pop("start_url", None)
     if not start_url:
-        start_url = utils.urljoin(FB_MOBILE_BASE_URL,
-                                  f'/search/posts?q={word}'
-                                  f'&filters=eyJyZWNlbnRfcG9zdHM6MCI6IntcIm5hbWVcIjpcInJlY2VudF9wb3N0c1wiLFwiYXJnc1wiOlwiXCJ9In0%3D')
+        start_url = utils.urljoin(
+            FB_MOBILE_BASE_URL,
+            f'/search/posts?q={word}'
+            f'&filters=eyJyZWNlbnRfcG9zdHM6MCI6IntcIm5hbWVcIjpcInJlY2VudF9wb3N0c1wiLFwiYXJnc1wiOlwiXCJ9In0%3D',
+        )
         try:
             request_fn(start_url)
         except Exception as ex:
             logger.error(ex)
             start_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/search/posts?q={word}')
     return generic_iter_pages(start_url, SearchPageParser, request_fn, **kwargs)
+
 
 def iter_photos(account: str, request_fn: RequestFunction, **kwargs) -> Iterator[Page]:
     start_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/photos/')
