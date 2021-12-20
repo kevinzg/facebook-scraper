@@ -799,9 +799,10 @@ class FacebookScraper:
         page_limit=DEFAULT_PAGE_LIMIT,
         options=None,
         remove_source=True,
+        latest_date=None,
+        max_past_limit=5,
         **kwargs,
     ):
-        counter = itertools.count(0) if page_limit is None else range(page_limit)
 
         if options is None:
             options = {}
@@ -817,11 +818,96 @@ class FacebookScraper:
                 stacklevel=3,
             )
 
-        logger.debug("Starting to iterate pages")
-        for i, page in zip(counter, iter_pages_fn()):
-            logger.debug("Extracting posts from page %s", i)
-            for post_element in page:
-                post = extract_post_fn(post_element, options=options, request_fn=self.get)
-                if remove_source:
-                    post.pop('source', None)
-                yield post
+        # if latest_date is specified, iterate until the date is reached n times in a row (recurrent_past_posts)
+        if latest_date is not None:
+
+            # Pinned posts repeat themselves over time, so ignore them
+            pinned_posts = []
+
+            # Stats
+            null_date_posts = 0
+            total_scraped_posts = 0
+
+            # Helpers
+            recurrent_past_posts = 0
+            show_every = 50
+            done = False
+
+            for page in iter_pages_fn():
+
+                for post_element in page:
+                    try:
+                        post = extract_post_fn(
+                            post_element, options=options, request_fn=self.get
+                        )
+
+                        if remove_source:
+                            post.pop("source", None)
+
+                        # date is None, no way to check latest_date, yield it
+                        if post["time"] is None:
+                            null_date_posts += 1
+
+                        # date is above latest_date, yield it
+                        if post["time"] > latest_date:
+                            recurrent_past_posts = 0
+
+                        # if any of above, yield the post and continue
+                        if post["time"] is None or post["time"] > latest_date:
+                            total_scraped_posts += 1
+                            if total_scraped_posts % show_every == 0:
+                                logger.info(
+                                    "Posts scraped: %s", total_scraped_posts
+                                )
+
+                            yield post
+                            continue
+
+                        # else, the date is behind the date limit
+                        recurrent_past_posts += 1
+
+                        # and it has reached the max_past_limit posts
+                        if recurrent_past_posts >= max_past_limit:
+                            done = True
+                            logger.info(
+                                "Sequential posts behind latest_date reached. Stopping scraping."
+                            )
+                            logger.info(
+                                "Posts with null date: %s",
+                                null_date_posts,
+                            )
+                            break
+                        
+                        # or the text is not banned (repeated)
+                        if (
+                            post["text"] is not None
+                            and post["text"] not in pinned_posts
+                        ):
+                            pinned_posts.append(post["text"])
+                            logger.warning(
+                                "Sequential post #%s behind the date limit: %s. Ignored (in logs) from now on.",
+                                recurrent_past_posts,
+                                post["time"],
+                            )
+
+                    except Exception as e:
+                        logger.exception(
+                            "An exception has occured during scraping: %s. Omitting the post...", e
+                        )
+
+                # if max_past_limit, stop
+                if done:
+                    break
+
+        # else, iterate over pages as usual
+        else:
+            counter = itertools.count(0) if page_limit is None else range(page_limit)
+
+            logger.debug("Starting to iterate pages")
+            for i, page in zip(counter, iter_pages_fn()):
+                logger.debug("Extracting posts from page %s", i)
+                for post_element in page:
+                    post = extract_post_fn(post_element, options=options, request_fn=self.get)
+                    if remove_source:
+                        post.pop('source', None)
+                    yield post
