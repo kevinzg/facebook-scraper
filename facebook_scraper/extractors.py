@@ -44,10 +44,12 @@ def extract_photo_post(
 ) -> Post:
     return PhotoPostExtractor(raw_post, options, request_fn, full_post_html).extract_post()
 
+
 def extract_hashtag_post(
     raw_post: RawPost, options: Options, request_fn: RequestFunction, full_post_html=None
 ) -> Post:
     return HashtagPostExtractor(raw_post, options, request_fn, full_post_html).extract_post()
+
 
 class PostExtractor:
     """Class for Extracting fields from a FacebookPost"""
@@ -1285,6 +1287,7 @@ class PhotoPostExtractor(PostExtractor):
             match = re.search(r'ft_ent_identifier=(\d+)', self.full_post_html.html)
             if match:
                 return {"post_id": match.groups()[0]}
+
 
 class HashtagPostExtractor(PostExtractor):
     def __init__(self, element, options, request_fn, full_post_html=None):

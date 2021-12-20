@@ -19,9 +19,21 @@ from .constants import (
     FB_W3_BASE_URL,
     FB_MBASIC_BASE_URL,
 )
-from .extractors import extract_group_post, extract_post, extract_photo_post, PostExtractor, extract_hashtag_post
+from .extractors import (
+    extract_group_post,
+    extract_post,
+    extract_photo_post,
+    PostExtractor,
+    extract_hashtag_post,
+)
 from .fb_types import Post, Profile
-from .page_iterators import iter_group_pages, iter_pages, iter_photos, iter_search_pages, iter_hashtag_pages
+from .page_iterators import (
+    iter_group_pages,
+    iter_pages,
+    iter_photos,
+    iter_search_pages,
+    iter_hashtag_pages,
+)
 from . import exceptions
 
 
@@ -79,7 +91,9 @@ class FacebookScraper:
     def get_posts_by_hashtag(self, hashtag: str, **kwargs) -> Iterator[Post]:
         kwargs["scraper"] = self
         kwargs["base_url"] = FB_MBASIC_BASE_URL
-        iter_pages_fn = partial(iter_hashtag_pages, hashtag=hashtag, request_fn=self.get, **kwargs)
+        iter_pages_fn = partial(
+            iter_hashtag_pages, hashtag=hashtag, request_fn=self.get, **kwargs
+        )
         return self._generic_get_posts(extract_hashtag_post, iter_pages_fn, **kwargs)
 
     def get_posts_by_url(self, post_urls, options={}, remove_source=True) -> Iterator[Post]:
@@ -845,9 +859,7 @@ class FacebookScraper:
 
                 for post_element in page:
                     try:
-                        post = extract_post_fn(
-                            post_element, options=options, request_fn=self.get
-                        )
+                        post = extract_post_fn(post_element, options=options, request_fn=self.get)
 
                         if remove_source:
                             post.pop("source", None)
@@ -864,9 +876,7 @@ class FacebookScraper:
                         if post["time"] is None or post["time"] > latest_date:
                             total_scraped_posts += 1
                             if total_scraped_posts % show_every == 0:
-                                logger.info(
-                                    "Posts scraped: %s", total_scraped_posts
-                                )
+                                logger.info("Posts scraped: %s", total_scraped_posts)
 
                             yield post
                             continue
@@ -885,12 +895,9 @@ class FacebookScraper:
                                 null_date_posts,
                             )
                             break
-                        
+
                         # or the text is not banned (repeated)
-                        if (
-                            post["text"] is not None
-                            and post["text"] not in pinned_posts
-                        ):
+                        if post["text"] is not None and post["text"] not in pinned_posts:
                             pinned_posts.append(post["text"])
                             logger.warning(
                                 "Sequential post #%s behind the date limit: %s. Ignored (in logs) from now on.",
@@ -900,7 +907,8 @@ class FacebookScraper:
 
                     except Exception as e:
                         logger.exception(
-                            "An exception has occured during scraping: %s. Omitting the post...", e
+                            "An exception has occured during scraping: %s. Omitting the post...",
+                            e,
                         )
 
                 # if max_past_limit, stop

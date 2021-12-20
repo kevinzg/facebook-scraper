@@ -17,6 +17,7 @@ from . import exceptions
 
 logger = logging.getLogger(__name__)
 
+
 def iter_hashtag_pages(hashtag: str, request_fn: RequestFunction, **kwargs) -> Iterator[Page]:
     start_url = kwargs.pop("start_url", None)
     if not start_url:
@@ -26,6 +27,7 @@ def iter_hashtag_pages(hashtag: str, request_fn: RequestFunction, **kwargs) -> I
         except Exception as ex:
             logger.error(ex)
     return generic_iter_pages(start_url, HashtagPageParser, request_fn, **kwargs)
+
 
 def iter_pages(account: str, request_fn: RequestFunction, **kwargs) -> Iterator[Page]:
     start_url = kwargs.pop("start_url", None)
