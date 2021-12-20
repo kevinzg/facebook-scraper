@@ -137,6 +137,7 @@ def get_posts(
     account: Optional[str] = None,
     group: Union[str, int, None] = None,
     post_urls: Optional[Iterator[str]] = None,
+    hashtag: Optional[str] = None,
     credentials: Optional[Credentials] = None,
     **kwargs,
 ) -> Iterator[Post]:
@@ -158,7 +159,7 @@ def get_posts(
     Yields:
         dict: The post representation in a dictionary.
     """
-    valid_args = sum(arg is not None for arg in (account, group, post_urls))
+    valid_args = sum(arg is not None for arg in (account, group, post_urls, hashtag))
 
     if valid_args != 1:
         raise ValueError("You need to specify either account, group, or post_urls")
@@ -201,6 +202,9 @@ def get_posts(
 
     elif group is not None:
         return _scraper.get_group_posts(group, **kwargs)
+
+    elif hashtag is not None:
+        return _scraper.get_posts_by_hashtag(hashtag, **kwargs)
 
     elif post_urls is not None:
         return _scraper.get_posts_by_url(post_urls, **kwargs)
