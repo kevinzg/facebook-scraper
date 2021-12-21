@@ -772,6 +772,11 @@ class FacebookScraper:
 
     def login(self, email: str, password: str):
         response = self.get(self.base_url)
+
+        cookies_values = re.findall(r'js_datr","([^"]+)', response.html.html)
+        if len(cookies_values) == 1:
+            self.session.cookies.set("datr", cookies_values[0])
+
         response = self.submit_form(
             response, {"email": email, "pass": password, "_fb_noscript": None}
         )
