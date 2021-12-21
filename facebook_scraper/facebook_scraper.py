@@ -19,9 +19,21 @@ from .constants import (
     FB_W3_BASE_URL,
     FB_MBASIC_BASE_URL,
 )
-from .extractors import extract_group_post, extract_post, extract_photo_post, PostExtractor
+from .extractors import (
+    extract_group_post,
+    extract_post,
+    extract_photo_post,
+    PostExtractor,
+    extract_hashtag_post,
+)
 from .fb_types import Post, Profile
-from .page_iterators import iter_group_pages, iter_pages, iter_photos
+from .page_iterators import (
+    iter_group_pages,
+    iter_pages,
+    iter_photos,
+    iter_search_pages,
+    iter_hashtag_pages,
+)
 from . import exceptions
 
 
@@ -76,6 +88,14 @@ class FacebookScraper:
         iter_pages_fn = partial(iter_photos, account=account, request_fn=self.get, **kwargs)
         return self._generic_get_posts(extract_post, iter_pages_fn, **kwargs)
 
+    def get_posts_by_hashtag(self, hashtag: str, **kwargs) -> Iterator[Post]:
+        kwargs["scraper"] = self
+        kwargs["base_url"] = FB_MBASIC_BASE_URL
+        iter_pages_fn = partial(
+            iter_hashtag_pages, hashtag=hashtag, request_fn=self.get, **kwargs
+        )
+        return self._generic_get_posts(extract_hashtag_post, iter_pages_fn, **kwargs)
+
     def get_posts_by_url(self, post_urls, options={}, remove_source=True) -> Iterator[Post]:
         for post_url in post_urls:
             url = str(post_url)
@@ -85,6 +105,7 @@ class FacebookScraper:
                 url = url.replace(FB_W3_BASE_URL, FB_MOBILE_BASE_URL)
             if not url.startswith(FB_MOBILE_BASE_URL):
                 url = utils.urljoin(FB_MOBILE_BASE_URL, url)
+
             post = {"original_request_url": post_url, "post_url": url}
             logger.debug(f"Requesting page from: {url}")
             response = self.get(url)
@@ -153,6 +174,11 @@ class FacebookScraper:
                 if remove_source:
                     post.pop('source', None)
             yield post
+
+    def get_posts_by_search(self, word: str, **kwargs) -> Iterator[Post]:
+        kwargs["scraper"] = self
+        iter_pages_fn = partial(iter_search_pages, word=word, request_fn=self.get, **kwargs)
+        return self._generic_get_posts(extract_post, iter_pages_fn, **kwargs)
 
     def get_friends(self, account, **kwargs) -> Iterator[Profile]:
         friend_opt = kwargs.get("friends")
@@ -436,6 +462,66 @@ class FacebookScraper:
                     f'/{account}?v=following', limit=kwargs.get("following"), **kwargs
                 )
             )
+
+        # Likes
+        if result["id"] and kwargs.get("likes"):
+            likes_url = utils.urljoin(
+                FB_MOBILE_BASE_URL,
+                f'timeline/app_section/?section_token={result["id"]}:2409997254',
+            )
+            logger.debug(f"Requesting page from: {likes_url}")
+            response = self.get(likes_url)
+            result["likes_by_category"] = {}
+            for elem in response.html.find('header[data-sigil="profile-card-header"]'):
+                count, category = elem.text.split("\n")
+                count = utils.parse_int(count)
+                if category == "All Likes":
+                    result["likes_count"] = count
+                result["likes_by_category"][category] = count
+
+            all_likes_url = utils.urljoin(
+                FB_MOBILE_BASE_URL,
+                f'timeline/app_collection/?collection_token={result["id"]}:2409997254:96',
+            )
+            logger.debug(f"Requesting page from: {all_likes_url}")
+            response = self.get(all_likes_url)
+            result["likes"] = []
+            for elem in response.html.find("div._1a5p"):
+                result["likes"].append(
+                    {
+                        "name": elem.text,
+                        "link": elem.find("a", first=True).attrs.get("href"),
+                    }
+                )
+            more_url = re.search(r'href:"(/timeline/app_collection/more/[^"]+)"', response.text)
+            if more_url:
+                more_url = more_url.group(1)
+            while more_url:
+                logger.debug(f"Fetching {more_url}")
+                response = self.get(more_url)
+                prefix_length = len('for (;;);')
+                data = json.loads(response.text[prefix_length:])  # Strip 'for (;;);'
+                for action in data['payload']['actions']:
+                    if action['cmd'] == 'append' and action['html']:
+                        element = utils.make_html_element(
+                            action['html'],
+                            url=FB_MOBILE_BASE_URL,
+                        )
+                        for elem in element.find("div._1a5p"):
+                            result["likes"].append(
+                                {
+                                    "name": elem.text,
+                                    "link": elem.find("a", first=True).attrs.get("href"),
+                                }
+                            )
+                    elif action['cmd'] == 'script':
+                        more_url = re.search(
+                            r'("\\/timeline\\/app_collection\\/more\\/[^"]+")', action["code"]
+                        )
+                        if more_url:
+                            more_url = more_url.group(1)
+                            more_url = json.loads(more_url)
+
         return result
 
     def get_page_info(self, page, **kwargs) -> Profile:
@@ -619,6 +705,7 @@ class FacebookScraper:
         try:
             if not url.startswith("http"):
                 url = utils.urljoin(FB_MOBILE_BASE_URL, url)
+
             response = self.session.get(url=url, **self.requests_kwargs, **kwargs)
             response.html.html = response.html.html.replace('<!--', '').replace('-->', '')
             response.raise_for_status()
@@ -734,9 +821,10 @@ class FacebookScraper:
         page_limit=DEFAULT_PAGE_LIMIT,
         options=None,
         remove_source=True,
+        latest_date=None,
+        max_past_limit=5,
         **kwargs,
     ):
-        counter = itertools.count(0) if page_limit is None else range(page_limit)
 
         if options is None:
             options = {}
@@ -752,11 +840,90 @@ class FacebookScraper:
                 stacklevel=3,
             )
 
-        logger.debug("Starting to iterate pages")
-        for i, page in zip(counter, iter_pages_fn()):
-            logger.debug("Extracting posts from page %s", i)
-            for post_element in page:
-                post = extract_post_fn(post_element, options=options, request_fn=self.get)
-                if remove_source:
-                    post.pop('source', None)
-                yield post
+        # if latest_date is specified, iterate until the date is reached n times in a row (recurrent_past_posts)
+        if latest_date is not None:
+
+            # Pinned posts repeat themselves over time, so ignore them
+            pinned_posts = []
+
+            # Stats
+            null_date_posts = 0
+            total_scraped_posts = 0
+
+            # Helpers
+            recurrent_past_posts = 0
+            show_every = 50
+            done = False
+
+            for page in iter_pages_fn():
+
+                for post_element in page:
+                    try:
+                        post = extract_post_fn(post_element, options=options, request_fn=self.get)
+
+                        if remove_source:
+                            post.pop("source", None)
+
+                        # date is None, no way to check latest_date, yield it
+                        if post["time"] is None:
+                            null_date_posts += 1
+
+                        # date is above latest_date, yield it
+                        if post["time"] > latest_date:
+                            recurrent_past_posts = 0
+
+                        # if any of above, yield the post and continue
+                        if post["time"] is None or post["time"] > latest_date:
+                            total_scraped_posts += 1
+                            if total_scraped_posts % show_every == 0:
+                                logger.info("Posts scraped: %s", total_scraped_posts)
+
+                            yield post
+                            continue
+
+                        # else, the date is behind the date limit
+                        recurrent_past_posts += 1
+
+                        # and it has reached the max_past_limit posts
+                        if recurrent_past_posts >= max_past_limit:
+                            done = True
+                            logger.info(
+                                "Sequential posts behind latest_date reached. Stopping scraping."
+                            )
+                            logger.info(
+                                "Posts with null date: %s",
+                                null_date_posts,
+                            )
+                            break
+
+                        # or the text is not banned (repeated)
+                        if post["text"] is not None and post["text"] not in pinned_posts:
+                            pinned_posts.append(post["text"])
+                            logger.warning(
+                                "Sequential post #%s behind the date limit: %s. Ignored (in logs) from now on.",
+                                recurrent_past_posts,
+                                post["time"],
+                            )
+
+                    except Exception as e:
+                        logger.exception(
+                            "An exception has occured during scraping: %s. Omitting the post...",
+                            e,
+                        )
+
+                # if max_past_limit, stop
+                if done:
+                    break
+
+        # else, iterate over pages as usual
+        else:
+            counter = itertools.count(0) if page_limit is None else range(page_limit)
+
+            logger.debug("Starting to iterate pages")
+            for i, page in zip(counter, iter_pages_fn()):
+                logger.debug("Extracting posts from page %s", i)
+                for post_element in page:
+                    post = extract_post_fn(post_element, options=options, request_fn=self.get)
+                    if remove_source:
+                        post.pop('source', None)
+                    yield post
