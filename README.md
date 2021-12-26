@@ -6,7 +6,7 @@
 
 [![PyPI version](https://img.shields.io/pypi/v/facebook-scraper?color=blue)](https://pypi.python.org/pypi/facebook-scraper/)
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/facebook-scraper.svg)](https://pypi.python.org/pypi/facebook-scraper/)
-[![GitHub commits since tagged version](https://img.shields.io/github/commits-since/kevinzg/facebook-scraper/v0.2.50)](https://github.com/kevinzg/facebook-scraper/commits/)
+[![GitHub commits since tagged version](https://img.shields.io/github/commits-since/kevinzg/facebook-scraper/v0.2.51)](https://github.com/kevinzg/facebook-scraper/commits/)
 
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
@@ -128,6 +128,7 @@ Run `facebook-scraper --help` for more details on CLI usage.
 - Group scraping may return only one page and not work on private groups.
 - If you scrape too much, Facebook might temporarily ban your IP.
 - The vast majority of unique IDs on facebook (post IDs, video IDs, photo IDs, comment IDs, profile IDs, etc) can be appended to https://www.facebook.com/ to result in a redirect to the corresponding object.
+- Some functions (such as extracting reactions) require you to be logged into Facebook (pass cookies). If something isn't working as expected, try pass cookies and see if that fixes it.
 
 ## Profiles
 

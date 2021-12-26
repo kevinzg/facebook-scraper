@@ -9,12 +9,24 @@ from requests.exceptions import HTTPError
 import warnings
 
 from . import utils
-from .constants import FB_MOBILE_BASE_URL
+from .constants import FB_MOBILE_BASE_URL, FB_MBASIC_BASE_URL
+
 from .fb_types import URL, Page, RawPage, RequestFunction, Response
 from . import exceptions
 
 
 logger = logging.getLogger(__name__)
+
+
+def iter_hashtag_pages(hashtag: str, request_fn: RequestFunction, **kwargs) -> Iterator[Page]:
+    start_url = kwargs.pop("start_url", None)
+    if not start_url:
+        start_url = utils.urljoin(FB_MBASIC_BASE_URL, f'/hashtag/{hashtag}/')
+        try:
+            request_fn(start_url)
+        except Exception as ex:
+            logger.error(ex)
+    return generic_iter_pages(start_url, HashtagPageParser, request_fn, **kwargs)
 
 
 def iter_pages(account: str, request_fn: RequestFunction, **kwargs) -> Iterator[Page]:
@@ -40,6 +52,22 @@ def iter_group_pages(
     return generic_iter_pages(start_url, GroupPageParser, request_fn, **kwargs)
 
 
+def iter_search_pages(word: str, request_fn: RequestFunction, **kwargs) -> Iterator[Page]:
+    start_url = kwargs.pop("start_url", None)
+    if not start_url:
+        start_url = utils.urljoin(
+            FB_MOBILE_BASE_URL,
+            f'/search/posts?q={word}'
+            f'&filters=eyJyZWNlbnRfcG9zdHM6MCI6IntcIm5hbWVcIjpcInJlY2VudF9wb3N0c1wiLFwiYXJnc1wiOlwiXCJ9In0%3D',
+        )
+        try:
+            request_fn(start_url)
+        except Exception as ex:
+            logger.error(ex)
+            start_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/search/posts?q={word}')
+    return generic_iter_pages(start_url, SearchPageParser, request_fn, **kwargs)
+
+
 def iter_photos(account: str, request_fn: RequestFunction, **kwargs) -> Iterator[Page]:
     start_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/photos/')
     return generic_iter_pages(start_url, PhotosPageParser, request_fn, **kwargs)
@@ -50,6 +78,7 @@ def generic_iter_pages(
 ) -> Iterator[Page]:
     next_url = start_url
 
+    base_url = kwargs.get('base_url', FB_MOBILE_BASE_URL)
     request_url_callback = kwargs.get('request_url_callback')
     while next_url:
         # Execute callback of starting a new URL request
@@ -90,7 +119,7 @@ def generic_iter_pages(
             posts_per_page = kwargs.get("options", {}).get("posts_per_page")
             if posts_per_page:
                 next_page = next_page.replace("num_to_fetch=4", f"num_to_fetch={posts_per_page}")
-            next_url = utils.urljoin(FB_MOBILE_BASE_URL, next_page)
+            next_url = utils.urljoin(base_url, next_page)
         else:
             logger.info("Page parser did not find next page URL")
             next_url = None
@@ -233,3 +262,35 @@ class PhotosPageParser(PageParser):
             if match:
                 value = match.groups()[0]
                 return value.encode('utf-8').decode('unicode_escape').replace('\\/', '/')
+
+
+class SearchPageParser(PageParser):
+    cursor_regex = re.compile(r'href[:=]"[^"]+(/search/[^"]+)"')
+    cursor_regex_2 = re.compile(r'href":"[^"]+(/search/[^"]+)"')
+
+    def get_next_page(self) -> Optional[URL]:
+        if self.cursor_blob is not None:
+            match = self.cursor_regex.search(self.cursor_blob)
+            if match:
+                return match.groups()[0]
+
+            match = self.cursor_regex_2.search(self.cursor_blob)
+            if match:
+                value = match.groups()[0]
+                return value.encode('utf-8').decode('unicode_escape').replace('\\/', '/')
+
+
+class HashtagPageParser(PageParser):
+    cursor_regex = re.compile(r'(\/hashtag\/[a-z]+\/\?locale=[a-z_A-Z]+&amp;cursor=[^"]+).*$')
+
+    def get_page(self) -> Page:
+        return super()._get_page('article', 'article')
+
+    def get_next_page(self) -> Optional[URL]:
+        assert self.cursor_blob is not None
+
+        match = self.cursor_regex.search(self.cursor_blob)
+        if match:
+            return utils.unquote(match.groups()[0]).replace("&amp;", "&")
+
+        return None

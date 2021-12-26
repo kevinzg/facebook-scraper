@@ -137,6 +137,7 @@ def get_posts(
     account: Optional[str] = None,
     group: Union[str, int, None] = None,
     post_urls: Optional[Iterator[str]] = None,
+    hashtag: Optional[str] = None,
     credentials: Optional[Credentials] = None,
     **kwargs,
 ) -> Iterator[Post]:
@@ -158,7 +159,7 @@ def get_posts(
     Yields:
         dict: The post representation in a dictionary.
     """
-    valid_args = sum(arg is not None for arg in (account, group, post_urls))
+    valid_args = sum(arg is not None for arg in (account, group, post_urls, hashtag))
 
     if valid_args != 1:
         raise ValueError("You need to specify either account, group, or post_urls")
@@ -201,6 +202,9 @@ def get_posts(
 
     elif group is not None:
         return _scraper.get_group_posts(group, **kwargs)
+
+    elif hashtag is not None:
+        return _scraper.get_posts_by_hashtag(hashtag, **kwargs)
 
     elif post_urls is not None:
         return _scraper.get_posts_by_url(post_urls, **kwargs)
@@ -265,6 +269,71 @@ def get_photos(
         _scraper.login(*credentials)
 
     return _scraper.get_photos(account, **kwargs)
+
+
+def get_posts_by_search(
+    word: str,
+    credentials: Optional[Credentials] = None,
+    **kwargs,
+) -> Iterator[Post]:
+
+    """Get posts from a Facebook page or group.
+    Args:
+        word (str): The word for searching posts.
+        group (int): The group id.
+        credentials (Optional[Tuple[str, str]]): Tuple of email and password to login before scraping.
+        timeout (int): Timeout for requests.
+        page_limit (int): How many pages of posts to go through.
+            Use None to try to get all of them.
+        extra_info (bool): Set to True to try to get reactions.
+        youtube_dl (bool): Use Youtube-DL for video extraction.
+        cookies (Union[dict, CookieJar, str]): Cookie jar to use.
+            Can also be a filename to load the cookies from a file (Netscape format).
+
+    Yields:
+        dict: The post representation in a dictionary.
+    """
+    if not word:
+        raise ValueError("You need to specify word")
+
+    _scraper.requests_kwargs['timeout'] = kwargs.pop('timeout', DEFAULT_REQUESTS_TIMEOUT)
+
+    cookies = kwargs.pop('cookies', None)
+
+    if cookies is not None and credentials is not None:
+        raise ValueError("Can't use cookies and credentials arguments at the same time")
+    set_cookies(cookies)
+
+    options: Union[Dict[str, Any], Set[str]] = kwargs.setdefault('options', {})
+    if isinstance(options, set):
+        warnings.warn("The options argument should be a dictionary.", stacklevel=2)
+        options = {k: True for k in options}
+
+    options.setdefault('word', word)
+
+    # TODO: Add a better throttling mechanism
+    if 'sleep' in kwargs:
+        warnings.warn(
+            "The sleep parameter has been removed, it won't have any effect.", stacklevel=2
+        )
+        kwargs.pop('sleep')
+
+    # TODO: Deprecate `pages` in favor of `page_limit` since it is less confusing
+    if 'pages' in kwargs:
+        kwargs['page_limit'] = kwargs.pop('pages')
+
+    # TODO: Deprecate `extra_info` in favor of `options`
+    if "reactions" not in options:
+        options['reactions'] = kwargs.pop('extra_info', False)
+    options['youtube_dl'] = kwargs.pop('youtube_dl', False)
+
+    if credentials is not None:
+        _scraper.login(*credentials)
+
+    if word is not None:
+        return _scraper.get_posts_by_search(word, **kwargs)
+
+    raise ValueError('No account nor group')
 
 
 def write_post_to_disk(post: Post, source: RawPost, location: pathlib.Path):
