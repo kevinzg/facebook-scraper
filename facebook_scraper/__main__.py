@@ -127,6 +127,12 @@ def run():
         type=int,
         help="Number of posts to fetch per page",
     )
+    parser.add_argument(
+        '--source',
+        action='store_true',
+        help="Include HTML source",
+        default=False,
+    )
 
     args = parser.parse_args()
 
@@ -179,8 +185,9 @@ def run():
                 "allow_extra_requests": args.allow_extra_requests,
                 "posts_per_page": args.posts_per_page,
             },
-            'youtube_dl': args.youtube_dl,
-            'extra_info': args.extra_info,
+            "youtube_dl": args.youtube_dl,
+            "extra_info": args.extra_info,
+            "remove_source": not args.source
         }
 
         write_posts_to_csv(

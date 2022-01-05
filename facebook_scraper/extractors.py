@@ -194,6 +194,10 @@ class PostExtractor:
             except Exception as ex:
                 log_warning("Exception while running %s: %r", method.__name__, ex)
 
+        has_more = self.more_url_regex.search(self.element.html)
+        if has_more and self.full_post_html:
+            post['source'] = self.full_post_html.find('.story_body_container', first=True)
+
         if self.options.get('reactions') or self.options.get('reactors'):
             try:
                 reactions = self.extract_reactions()
