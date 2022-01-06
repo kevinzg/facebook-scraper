@@ -187,7 +187,7 @@ def run():
             },
             "youtube_dl": args.youtube_dl,
             "extra_info": args.extra_info,
-            "remove_source": not args.source
+            "remove_source": not args.source,
         }
 
         write_posts_to_csv(

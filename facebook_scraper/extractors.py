@@ -959,6 +959,8 @@ class PostExtractor:
         comment_body_elem = comment.find(
             '[data-sigil="comment-body"],div._14ye,div.bl', first=True
         )
+        if not comment_body_elem:
+            comment_body_elem = comment.find('div>div>div', first=True)
         if comment_body_elem:
             text = comment_body_elem.text
         else:
@@ -1068,14 +1070,14 @@ class PostExtractor:
         if not self.full_post_html:
             logger.error("Unable to get comments without full post HTML")
             return
-        comments_area_selector = 'div.ufi'
+        comments_area_selector = 'div[id^="ufi_"]'
         elem = self.full_post_html.find(comments_area_selector, first=True)
         if not elem:
             logger.error("No comments area found")
             return
         comments_selector = 'div[data-sigil="comment"]'
         if self.options.get("noscript"):
-            comments_selector = "div._55wr"
+            comments_selector = f"{comments_area_selector}>div>div:not(id)>div"
         comments = list(elem.find(comments_selector))
         if not comments:
             logger.warning("No comments found on page")

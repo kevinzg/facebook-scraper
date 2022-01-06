@@ -97,6 +97,8 @@ class FacebookScraper:
         return self._generic_get_posts(extract_hashtag_post, iter_pages_fn, **kwargs)
 
     def get_posts_by_url(self, post_urls, options={}, remove_source=True) -> Iterator[Post]:
+        if self.session.cookies.get("noscript") == "1":
+            options["noscript"] = True
         for post_url in post_urls:
             url = str(post_url)
             if url.startswith(FB_BASE_URL):
