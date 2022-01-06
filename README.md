@@ -24,6 +24,8 @@ pip install facebook-scraper
 
 Or, to install the latest master branch:
 
+Windows Requirement:  Microsoft Visual C++ 14.0 or greater is required. Get it with "Microsoft C++ Build Tools": https://visualstudio.microsoft.com/visual-cpp-build-tools/
+
 ```sh
 pip install git+https://github.com/kevinzg/facebook-scraper.git
 ```
