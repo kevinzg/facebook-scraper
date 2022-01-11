@@ -125,9 +125,12 @@ class FacebookScraper:
                 comments_area = response.html.find('div.ufi', first=True)
                 if comments_area:
                     # Makes likes/shares regexes work
-                    elem = utils.make_html_element(
-                        elem.html.replace("</footer>", comments_area.html + "</footer>")
-                    )
+                    try:
+                        elem = utils.make_html_element(
+                            elem.html.replace("</footer>", comments_area.html + "</footer>")
+                        )
+                    except ValueError as e:
+                        logger.debug(e)
 
                 if photo_post:
                     post.update(
