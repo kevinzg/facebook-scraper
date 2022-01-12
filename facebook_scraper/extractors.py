@@ -952,6 +952,9 @@ class PostExtractor:
             name = comment.find("h3", first=True).text
             commenter_id = None
             url = None
+            link = comment.find("h3>a", first=True)
+            if link:
+                url = utils.urljoin(FB_BASE_URL, link.attrs.get("href"))
         first_link = comment.find(
             "div:not([data-sigil])>a[href]:not([data-click]):not([data-store]):not([data-sigil])",
             first=True,
