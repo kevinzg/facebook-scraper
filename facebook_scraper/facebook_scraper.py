@@ -578,6 +578,7 @@ class FacebookScraper:
                         result["phone"] = link.replace("tel:", "")
                     if link.startswith("mailto:"):
                         result["email"] = link.replace("mailto:", "")
+            result["rating"] = resp.html.find("div[data-nt='FB:TEXT4']")[1].text
         except Exception as e:
             logger.error(e)
         if desc:
