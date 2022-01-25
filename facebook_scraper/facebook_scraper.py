@@ -6,7 +6,8 @@ import re
 from functools import partial
 from typing import Iterator, Union
 import json
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlparse, unquote
+from datetime import datetime
 
 from requests import RequestException
 from requests_html import HTMLSession
@@ -514,6 +515,55 @@ class FacebookScraper:
 
         return result
 
+    def get_page_reviews(self, page, **kwargs) -> Iterator[Post]:
+        more_url = f"/{page}/reviews"
+        while more_url:
+            logger.debug(f"Fetching {more_url}")
+            response = self.get(more_url)
+            if response.text.startswith("for (;;);"):
+                prefix_length = len('for (;;);')
+                data = json.loads(response.text[prefix_length:])  # Strip 'for (;;);'
+                for action in data['payload']['actions']:
+                    if action['cmd'] == 'replace' and action['html']:
+                        element = utils.make_html_element(
+                            action['html'],
+                            url=FB_MOBILE_BASE_URL,
+                        )
+                        elems = element.find('#page_suggestions_on_liking ~ div')
+                    elif action['cmd'] == 'script':
+                        more_url = re.search(
+                            r'see_more_cards_id","href":"([^"]+)"', action["code"]
+                        )
+                        if more_url:
+                            more_url = more_url.group(1)
+                            more_url = utils.decode_css_url(more_url)
+                            more_url = more_url.replace("\\", "")
+            else:
+                elems = response.html.find('#page_suggestions_on_liking ~ div')
+                more_url = re.search(r'see_more_cards_id",href:"([^"]+)"', response.text)
+                if more_url:
+                    more_url = more_url.group(1)
+
+            for elem in elems:
+                links = elem.find("a")
+                if not links:
+                    continue
+                text_elem = elem.find("div[data-nt='FB:FEED_TEXT']", first=True)
+                date_element = elem.find("abbr[data-store*='time']", first=True)
+                time = json.loads(date_element.attrs["data-store"])["time"]
+                yield {
+                    "user_url": utils.urljoin(FB_BASE_URL, links[0].attrs["href"]),
+                    "username": links[0].text,
+                    "profile_picture": elem.find("img", first=True).attrs["src"],
+                    "text": text_elem.find("span p", first=True).text,
+                    "time": datetime.fromtimestamp(time),
+                    "timestamp": time,
+                    "recommends": "</span> recommends <span>" in elem.html,
+                    "post_url": utils.urljoin(
+                        FB_BASE_URL, text_elem.find("a[href*='story']", first=True).attrs["href"]
+                    ),
+                }
+
     def get_page_info(self, page, **kwargs) -> Profile:
         result = {}
         desc = None
@@ -590,6 +640,7 @@ class FacebookScraper:
             if len(bits) == 3:
                 result["people_talking_about_this"] = utils.parse_int(bits[1])
                 result["checkins"] = utils.parse_int(bits[2])
+        result["reviews"] = self.get_page_reviews(page, **kwargs)
 
         return result
 
