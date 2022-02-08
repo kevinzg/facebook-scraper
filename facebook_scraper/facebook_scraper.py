@@ -591,16 +591,25 @@ class FacebookScraper:
             logger.debug(f"Requesting page from: {url}")
             resp = self.get(url)
             desc = resp.html.find("meta[name='description']", first=True)
+            elem = None
             try:
                 elem = resp.html.find("script[type='application/ld+json']", first=True)
+            except:
+                logger.error("No ld+json element")
+                url = f'/{page}/community'
+                logger.debug(f"Requesting page from: {url}")
+                try:
+                    resp = self.get(url)
+                    elem = resp.html.find("script[type='application/ld+json']", first=True)
+                except:
+                    logger.error("No ld+json element")
+            if elem:
                 meta = json.loads(elem.text)
                 result.update(meta["author"])
                 result["type"] = result.pop("@type")
                 for interaction in meta.get("interactionStatistic", []):
                     if interaction["interactionType"] == "http://schema.org/FollowAction":
                         result["followers"] = interaction["userInteractionCount"]
-            except:
-                logger.error("No ld+json element")
             try:
                 result["about"] = resp.html.find(
                     '#pages_msite_body_contents>div>div:nth-child(2)', first=True
