@@ -591,20 +591,20 @@ class FacebookScraper:
             logger.debug(f"Requesting page from: {url}")
             resp = self.get(url)
             desc = resp.html.find("meta[name='description']", first=True)
-            elem = None
+            ld_json = None
             try:
-                elem = resp.html.find("script[type='application/ld+json']", first=True)
+                ld_json = resp.html.find("script[type='application/ld+json']", first=True).text
             except:
                 logger.error("No ld+json element")
                 url = f'/{page}/community'
                 logger.debug(f"Requesting page from: {url}")
                 try:
-                    resp = self.get(url)
-                    elem = resp.html.find("script[type='application/ld+json']", first=True)
+                    community_resp = self.get(url)
+                    ld_json = community_resp.html.find("script[type='application/ld+json']", first=True).text
                 except:
                     logger.error("No ld+json element")
-            if elem:
-                meta = json.loads(elem.text)
+            if ld_json:
+                meta = json.loads(ld_json)
                 result.update(meta["author"])
                 result["type"] = result.pop("@type")
                 for interaction in meta.get("interactionStatistic", []):
