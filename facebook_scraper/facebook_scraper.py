@@ -6,6 +6,7 @@ import re
 from functools import partial
 from typing import Iterator, Union
 import json
+import demjson3 as demjson
 from urllib.parse import parse_qs, urlparse, unquote
 from datetime import datetime
 
@@ -604,7 +605,7 @@ class FacebookScraper:
                 except:
                     logger.error("No ld+json element")
             if ld_json:
-                meta = json.loads(ld_json)
+                meta = demjson.decode(ld_json)
                 result.update(meta["author"])
                 result["type"] = result.pop("@type")
                 for interaction in meta.get("interactionStatistic", []):
