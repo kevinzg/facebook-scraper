@@ -791,6 +791,10 @@ class FacebookScraper:
                 warnings.warn(
                     f"Facebook served mbasic/noscript content unexpectedly on {response.url}"
                 )
+            if response.html.find("h1,h2", containing="Unsupported Browser"):
+                warnings.warn(
+                    f"Facebook says 'Unsupported Browser'"
+                )
             title = response.html.find("title", first=True)
             not_found_titles = ["page not found", "content not found"]
             temp_ban_titles = [
