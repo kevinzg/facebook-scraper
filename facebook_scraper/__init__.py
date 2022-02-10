@@ -18,7 +18,6 @@ import traceback
 import time
 from datetime import datetime, timedelta
 import re
-import browser_cookie3
 
 
 _scraper = FacebookScraper()
@@ -27,7 +26,13 @@ _scraper = FacebookScraper()
 def set_cookies(cookies):
     if isinstance(cookies, str):
         if cookies == "from_browser":
-            cookies = browser_cookie3.load(domain_name='.facebook.com')
+            try:
+                import browser_cookie3
+                cookies = browser_cookie3.load(domain_name='.facebook.com')
+            except:
+                raise ModuleNotFoundError(
+                    "browser_cookie3 must be installed to use browser cookies"
+                )
         else:
             try:
                 cookies = parse_cookie_file(cookies)
