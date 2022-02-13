@@ -18,7 +18,6 @@ import traceback
 import time
 from datetime import datetime, timedelta
 import re
-import browser_cookie3
 
 
 _scraper = FacebookScraper()
@@ -27,7 +26,13 @@ _scraper = FacebookScraper()
 def set_cookies(cookies):
     if isinstance(cookies, str):
         if cookies == "from_browser":
-            cookies = browser_cookie3.load(domain_name='.facebook.com')
+            try:
+                import browser_cookie3
+                cookies = browser_cookie3.load(domain_name='.facebook.com')
+            except:
+                raise ModuleNotFoundError(
+                    "browser_cookie3 must be installed to use browser cookies"
+                )
         else:
             try:
                 cookies = parse_cookie_file(cookies)
@@ -372,6 +377,7 @@ def write_posts_to_csv(
     dump_location = kwargs.pop('dump_location', None)  # For dumping HTML to disk, for debugging
     if dump_location is not None:
         dump_location.mkdir(exist_ok=True)
+        kwargs["remove_source"] = False
 
     # Set a default filename, based on the account name with the appropriate extension
     if filename is None:
@@ -417,7 +423,6 @@ def write_posts_to_csv(
             group=group,
             start_url=start_url,
             request_url_callback=handle_pagination_url,
-            remove_source=not bool(dump_location),
             **kwargs,
         ):
             if dump_location is not None:
@@ -426,6 +431,8 @@ def write_posts_to_csv(
                     write_post_to_disk(post, source, dump_location)
                 except Exception:
                     logger.exception("Error writing post to disk")
+            elif post.get("source"):
+                post["source"] = post["source"].html
             if first_post:
                 if kwargs.get("format") == "json":
                     output_file.write("[\n")

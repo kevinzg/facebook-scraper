@@ -247,12 +247,15 @@ def parse_cookie_file(filename: str) -> RequestsCookieJar:
                     jar.set(k, v)
     except json.decoder.JSONDecodeError:
         # Netscape format
-        for line in data.splitlines():
+        for i, line in enumerate(data.splitlines()):
             line = line.strip()
             if line == "" or line.startswith('#'):
                 continue
 
-            domain, _, path, secure, expires, name, value = line.split('\t')
+            try:
+                domain, _, path, secure, expires, name, value = line.split('\t')
+            except Exception as e:
+                raise exceptions.InvalidCookies(f"Can't parse line {i + 1}: '{line}'")
             secure = secure.lower() == 'true'
             expires = None if expires == '0' else int(expires)
 

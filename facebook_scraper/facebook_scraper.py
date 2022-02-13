@@ -6,7 +6,9 @@ import re
 from functools import partial
 from typing import Iterator, Union
 import json
-from urllib.parse import parse_qs, urlparse
+import demjson3 as demjson
+from urllib.parse import parse_qs, urlparse, unquote
+from datetime import datetime
 
 from requests import RequestException
 from requests_html import HTMLSession
@@ -97,6 +99,8 @@ class FacebookScraper:
         return self._generic_get_posts(extract_hashtag_post, iter_pages_fn, **kwargs)
 
     def get_posts_by_url(self, post_urls, options={}, remove_source=True) -> Iterator[Post]:
+        if self.session.cookies.get("noscript") == "1":
+            options["noscript"] = True
         for post_url in post_urls:
             url = str(post_url)
             if url.startswith(FB_BASE_URL):
@@ -109,21 +113,6 @@ class FacebookScraper:
             post = {"original_request_url": post_url, "post_url": url}
             logger.debug(f"Requesting page from: {url}")
             response = self.get(url)
-            if response.url == "https://m.facebook.com/watch/?ref=watch_permalink":
-                post_url = re.search("\d+", str(post_url)).group()
-                if post_url:
-                    url = utils.urljoin(
-                        FB_MOBILE_BASE_URL,
-                        f"story.php?story_fbid={post_url}&id=1&m_entstream_source=timeline",
-                    )
-                    post = {"original_request_url": post_url, "post_url": url}
-                    logger.debug(f"Requesting page from: {url}")
-                    response = self.get(url)
-            if "/watch/" in response.url:
-                video_id = parse_qs(urlparse(response.url).query).get("v")[0]
-                url = f"story.php?story_fbid={video_id}&id={video_id}&m_entstream_source=video_home&player_suborigin=entry_point&player_format=permalink"
-                logger.debug(f"Fetching {url}")
-                response = self.get(url)
             options["response_url"] = response.url
             elem = response.html.find('[data-ft*="top_level_post_id"]', first=True)
             if not elem:
@@ -138,9 +127,12 @@ class FacebookScraper:
                 comments_area = response.html.find('div.ufi', first=True)
                 if comments_area:
                     # Makes likes/shares regexes work
-                    elem = utils.make_html_element(
-                        elem.html.replace("</footer>", comments_area.html + "</footer>")
-                    )
+                    try:
+                        elem = utils.make_html_element(
+                            elem.html.replace("</footer>", comments_area.html + "</footer>")
+                        )
+                    except ValueError as e:
+                        logger.debug(e)
 
                 if photo_post:
                     post.update(
@@ -524,6 +516,55 @@ class FacebookScraper:
 
         return result
 
+    def get_page_reviews(self, page, **kwargs) -> Iterator[Post]:
+        more_url = f"/{page}/reviews"
+        while more_url:
+            logger.debug(f"Fetching {more_url}")
+            response = self.get(more_url)
+            if response.text.startswith("for (;;);"):
+                prefix_length = len('for (;;);')
+                data = json.loads(response.text[prefix_length:])  # Strip 'for (;;);'
+                for action in data['payload']['actions']:
+                    if action['cmd'] == 'replace' and action['html']:
+                        element = utils.make_html_element(
+                            action['html'],
+                            url=FB_MOBILE_BASE_URL,
+                        )
+                        elems = element.find('#page_suggestions_on_liking ~ div')
+                    elif action['cmd'] == 'script':
+                        more_url = re.search(
+                            r'see_more_cards_id","href":"([^"]+)"', action["code"]
+                        )
+                        if more_url:
+                            more_url = more_url.group(1)
+                            more_url = utils.decode_css_url(more_url)
+                            more_url = more_url.replace("\\", "")
+            else:
+                elems = response.html.find('#page_suggestions_on_liking ~ div')
+                more_url = re.search(r'see_more_cards_id",href:"([^"]+)"', response.text)
+                if more_url:
+                    more_url = more_url.group(1)
+
+            for elem in elems:
+                links = elem.find("a")
+                if not links:
+                    continue
+                text_elem = elem.find("div[data-nt='FB:FEED_TEXT']", first=True)
+                date_element = elem.find("abbr[data-store*='time']", first=True)
+                time = json.loads(date_element.attrs["data-store"])["time"]
+                yield {
+                    "user_url": utils.urljoin(FB_BASE_URL, links[0].attrs["href"]),
+                    "username": links[0].text,
+                    "profile_picture": elem.find("img", first=True).attrs["src"],
+                    "text": text_elem.find("span p", first=True).text,
+                    "time": datetime.fromtimestamp(time),
+                    "timestamp": time,
+                    "recommends": "</span> recommends <span>" in elem.html,
+                    "post_url": utils.urljoin(
+                        FB_BASE_URL, text_elem.find("a[href*='story']", first=True).attrs["href"]
+                    ),
+                }
+
     def get_page_info(self, page, **kwargs) -> Profile:
         result = {}
         desc = None
@@ -551,16 +592,25 @@ class FacebookScraper:
             logger.debug(f"Requesting page from: {url}")
             resp = self.get(url)
             desc = resp.html.find("meta[name='description']", first=True)
+            ld_json = None
             try:
-                elem = resp.html.find("script[type='application/ld+json']", first=True)
-                meta = json.loads(elem.text)
+                ld_json = resp.html.find("script[type='application/ld+json']", first=True).text
+            except:
+                logger.error("No ld+json element")
+                url = f'/{page}/community'
+                logger.debug(f"Requesting page from: {url}")
+                try:
+                    community_resp = self.get(url)
+                    ld_json = community_resp.html.find("script[type='application/ld+json']", first=True).text
+                except:
+                    logger.error("No ld+json element")
+            if ld_json:
+                meta = demjson.decode(ld_json)
                 result.update(meta["author"])
                 result["type"] = result.pop("@type")
                 for interaction in meta.get("interactionStatistic", []):
                     if interaction["interactionType"] == "http://schema.org/FollowAction":
                         result["followers"] = interaction["userInteractionCount"]
-            except:
-                logger.error("No ld+json element")
             try:
                 result["about"] = resp.html.find(
                     '#pages_msite_body_contents>div>div:nth-child(2)', first=True
@@ -588,6 +638,7 @@ class FacebookScraper:
                         result["phone"] = link.replace("tel:", "")
                     if link.startswith("mailto:"):
                         result["email"] = link.replace("mailto:", "")
+            result["rating"] = resp.html.find("div[data-nt='FB:TEXT4']")[1].text
         except Exception as e:
             logger.error(e)
         if desc:
@@ -599,6 +650,7 @@ class FacebookScraper:
             if len(bits) == 3:
                 result["people_talking_about_this"] = utils.parse_int(bits[1])
                 result["checkins"] = utils.parse_int(bits[2])
+        result["reviews"] = self.get_page_reviews(page, **kwargs)
 
         return result
 
@@ -710,6 +762,24 @@ class FacebookScraper:
             response.html.html = response.html.html.replace('<!--', '').replace('-->', '')
             response.raise_for_status()
             self.check_locale(response)
+
+            # Special handling for video posts that redirect to /watch/
+            if response.url == "https://m.facebook.com/watch/?ref=watch_permalink":
+                post_url = re.search("\d+", url).group()
+                if post_url:
+                    url = utils.urljoin(
+                        FB_MOBILE_BASE_URL,
+                        f"story.php?story_fbid={post_url}&id=1&m_entstream_source=timeline",
+                    )
+                    post = {"original_request_url": post_url, "post_url": url}
+                    logger.debug(f"Requesting page from: {url}")
+                    response = self.get(url)
+            if "/watch/" in response.url:
+                video_id = parse_qs(urlparse(response.url).query).get("v")[0]
+                url = f"story.php?story_fbid={video_id}&id={video_id}&m_entstream_source=video_home&player_suborigin=entry_point&player_format=permalink"
+                logger.debug(f"Fetching {url}")
+                response = self.get(url)
+
             if "cookie/consent-page" in response.url:
                 response = self.submit_form(response)
             if (
@@ -720,6 +790,10 @@ class FacebookScraper:
             ):
                 warnings.warn(
                     f"Facebook served mbasic/noscript content unexpectedly on {response.url}"
+                )
+            if response.html.find("h1,h2", containing="Unsupported Browser"):
+                warnings.warn(
+                    f"Facebook says 'Unsupported Browser'"
                 )
             title = response.html.find("title", first=True)
             not_found_titles = ["page not found", "content not found"]
