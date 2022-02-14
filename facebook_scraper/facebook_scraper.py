@@ -601,7 +601,9 @@ class FacebookScraper:
                 logger.debug(f"Requesting page from: {url}")
                 try:
                     community_resp = self.get(url)
-                    ld_json = community_resp.html.find("script[type='application/ld+json']", first=True).text
+                    ld_json = community_resp.html.find(
+                        "script[type='application/ld+json']", first=True
+                    ).text
                 except:
                     logger.error("No ld+json element")
             if ld_json:
@@ -792,9 +794,7 @@ class FacebookScraper:
                     f"Facebook served mbasic/noscript content unexpectedly on {response.url}"
                 )
             if response.html.find("h1,h2", containing="Unsupported Browser"):
-                warnings.warn(
-                    f"Facebook says 'Unsupported Browser'"
-                )
+                warnings.warn(f"Facebook says 'Unsupported Browser'")
             title = response.html.find("title", first=True)
             not_found_titles = ["page not found", "content not found"]
             temp_ban_titles = [

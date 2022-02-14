@@ -28,6 +28,7 @@ def set_cookies(cookies):
         if cookies == "from_browser":
             try:
                 import browser_cookie3
+
                 cookies = browser_cookie3.load(domain_name='.facebook.com')
             except:
                 raise ModuleNotFoundError(
