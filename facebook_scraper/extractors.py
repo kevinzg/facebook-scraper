@@ -98,6 +98,7 @@ class PostExtractor:
             'text': None,
             'post_text': None,
             'shared_text': None,
+            'original_text': None,
             'time': None,
             'timestamp': None,
             'image': None,
@@ -296,10 +297,18 @@ class PostExtractor:
             post_text = paragraph_separator.join(post_text)
             shared_text = paragraph_separator.join(shared_text)
 
+            original_text = None
+            hidden_div = element.find('div[style="display:none"]', first=True)
+            if hidden_div:
+                original_text = paragraph_separator.join(
+                    node.text for node in hidden_div.find("p,span[role=presentation]")
+                )
+
             return {
                 'text': text,
                 'post_text': post_text,
                 'shared_text': shared_text,
+                'original_text': original_text,
             }
         elif element.find(".story_body_container>div", first=True):
             text = element.find(".story_body_container>div", first=True).text
