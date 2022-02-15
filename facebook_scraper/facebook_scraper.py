@@ -682,25 +682,39 @@ class FacebookScraper:
         logger.debug(f"Requesting page from: {url}")
         try:
             resp = self.get(url).html
-            url = resp.find("a[data-testid='GroupBaseListSeeAll']", first=True).attrs.get("href")
-            logger.debug(f"Requesting page from: {url}")
-            try:
-                respAdmins = self.get(url).html
-                # Test if we are a member that can add new members
-                if(re.match("/groups/members/search", respAdmins.find("div:nth-child(1)>div:nth-child(1) a:not(.touchable)", first=True).attrs.get('href'))):
-                    admins = respAdmins.find("div:nth-of-type(2)>div.touchable a:not(.touchable)")
-                else:
-                    admins = respAdmins.find("div:first-child>div.touchable a:not(.touchable)")
-                result["admins"] = [
-                    {
-                        "name": e.text,
-                        "link": utils.filter_query_params(e.attrs["href"], blacklist=["refid"]),
-                    }
-                    for e in admins
-                ]
-            except:
-                raise exceptions.UnexpectedResponse("Unable to get admin list")
-            url = resp.find("a[href^='/browse/group/members']", first=True)
+            url = resp.find("a[href*='listType=list_admin_moderator']", first=True)
+            if url:
+                url = url.attrs.get("href")
+                logger.debug(f"Requesting page from: {url}")
+                try:
+                    respAdmins = self.get(url).html
+                    # Test if we are a member that can add new members
+                    if re.match(
+                        "/groups/members/search",
+                        resp.find(
+                            "div:nth-child(1)>div:nth-child(1) a:not(.touchable)", first=True
+                        ).attrs.get('href'),
+                    ):
+                        admins = respAdmins.find(
+                            "div:nth-of-type(2)>div.touchable a:not(.touchable)"
+                        )
+                    else:
+                        admins = respAdmins.find(
+                            "div:first-child>div.touchable a:not(.touchable)"
+                        )
+                except:
+                    raise exceptions.UnexpectedResponse("Unable to get admin list")
+            else:
+                admins = resp.find("div:first-child>div.touchable a:not(.touchable)")
+            result["admins"] = [
+                {
+                    "name": e.text,
+                    "link": utils.filter_query_params(e.attrs["href"], blacklist=["refid"]),
+                }
+                for e in admins
+            ]
+
+            url = resp.find("a[href*='listType=list_nonfriend_nonadmin']", first=True)
             if url:
                 url = url.attrs["href"]
                 members = []
