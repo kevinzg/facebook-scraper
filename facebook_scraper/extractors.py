@@ -300,9 +300,13 @@ class PostExtractor:
             original_text = None
             hidden_div = element.find('div[style="display:none"]', first=True)
             if hidden_div:
-                original_text = paragraph_separator.join(
-                    node.text for node in hidden_div.find("p,span[role=presentation]")
-                )
+                original_text = []
+                for node in hidden_div.find("p,span[role=presentation]"):
+                    node = utils.make_html_element(
+                        html=node.html.replace('>… <', '><', 1).replace('>More<', '', 1)
+                    )
+                    original_text.append(node.text)
+                original_text = paragraph_separator.join(original_text)
 
             return {
                 'text': text,
