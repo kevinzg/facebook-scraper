@@ -641,7 +641,7 @@ class PostExtractor:
                 spriteMapCssClass = item["spriteMapCssClass"]
 
         reactors_opt = self.options.get("reactors")
-        limit = 3000
+        limit = 1e9
         if type(reactors_opt) in [int, float] and reactors_opt < limit:
             limit = reactors_opt
         logger.debug(f"Fetching {limit} reactors")
@@ -1111,14 +1111,14 @@ class PostExtractor:
             more = elem.find(more_selector, first=True)
 
         # Comment limiting and progress
-        limit = 5000  # Default
+        limit = 1e9  # Default
         if more and more.attrs.get("data-ajaxify-href"):
             parsed = parse_qs(urlparse(more.attrs.get("data-ajaxify-href")).query)
             count = int(parsed.get("count")[0])
             if count < limit:
                 limit = count
         comments_opt = self.options.get('comments')
-        if type(comments_opt) in [int, float] and comments_opt < limit:
+        if type(comments_opt) in [int, float]:
             limit = comments_opt
         logger.debug(f"Fetching up to {limit} comments")
 
@@ -1164,6 +1164,7 @@ class PostExtractor:
                 logger.warning("No comments found on page")
                 break
             more_comments = elem.find(comments_selector)
+            comments.extend(more_comments)
             if not more_comments:
                 logger.warning("No comments found on page")
                 break
