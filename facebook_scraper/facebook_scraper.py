@@ -691,7 +691,7 @@ class FacebookScraper:
                     # Test if we are a member that can add new members
                     if re.match(
                         "/groups/members/search",
-                        resp.find(
+                        respAdmins.find(
                             "div:nth-child(1)>div:nth-child(1) a:not(.touchable)", first=True
                         ).attrs.get('href'),
                     ):
