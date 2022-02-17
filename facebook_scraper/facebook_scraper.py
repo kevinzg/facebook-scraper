@@ -688,24 +688,24 @@ class FacebookScraper:
                 logger.debug(f"Requesting page from: {url}")
                 try:
                     respAdmins = self.get(url).html
-                    # Test if we are a member that can add new members
-                    if re.match(
-                        "/groups/members/search",
-                        resp.find(
-                            "div:nth-child(1)>div:nth-child(1) a:not(.touchable)", first=True
-                        ).attrs.get('href'),
-                    ):
-                        admins = respAdmins.find(
-                            "div:nth-of-type(2)>div.touchable a:not(.touchable)"
-                        )
-                    else:
-                        admins = respAdmins.find(
-                            "div:first-child>div.touchable a:not(.touchable)"
-                        )
                 except:
                     raise exceptions.UnexpectedResponse("Unable to get admin list")
             else:
-                admins = resp.find("div:first-child>div.touchable a:not(.touchable)")
+                respAdmins = resp
+            # Test if we are a member that can add new members
+            if re.match(
+                "/groups/members/search",
+                respAdmins.find(
+                    "div:nth-child(1)>div:nth-child(1) a:not(.touchable)", first=True
+                ).attrs.get('href')
+            ):
+                admins = respAdmins.find(
+                    "div:nth-of-type(2)>div.touchable a:not(.touchable)"
+                )
+            else:
+                admins = respAdmins.find(
+                    "div:first-child>div.touchable a:not(.touchable)"
+                )
             result["admins"] = [
                 {
                     "name": e.text,
