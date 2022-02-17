@@ -697,15 +697,11 @@ class FacebookScraper:
                 "/groups/members/search",
                 respAdmins.find(
                     "div:nth-child(1)>div:nth-child(1) a:not(.touchable)", first=True
-                ).attrs.get('href')
+                ).attrs.get('href'),
             ):
-                admins = respAdmins.find(
-                    "div:nth-of-type(2)>div.touchable a:not(.touchable)"
-                )
+                admins = respAdmins.find("div:nth-of-type(2)>div.touchable a:not(.touchable)")
             else:
-                admins = respAdmins.find(
-                    "div:first-child>div.touchable a:not(.touchable)"
-                )
+                admins = respAdmins.find("div:first-child>div.touchable a:not(.touchable)")
             result["admins"] = [
                 {
                     "name": e.text,

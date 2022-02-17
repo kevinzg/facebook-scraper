@@ -719,7 +719,7 @@ class PostExtractor:
             else:
                 share_url = None
 
-    def extract_reactions(self, post_id=None) -> PartialPost:
+    def extract_reactions(self, post_id=None, force_parse_HTML=False) -> PartialPost:
         """Fetch share and reactions information with a existing post obtained by `get_posts`.
         Return a merged post that has some new fields including `reactions`, `w3_fb_url`,
         `fetched_time`, and reactions fields `LIKE`, `ANGER`, `SORRY`, `WOW`, `LOVE`, `HAHA` if
@@ -756,8 +756,9 @@ class PostExtractor:
             reaction_url = f'https://m.facebook.com/ufi/reaction/profile/browser/?ft_ent_identifier={post_id}'
             logger.debug(f"Fetching {reaction_url}")
             response = self.request(reaction_url)
-
-            if not reactions:
+            if not reactions or force_parse_HTML:
+                reactions = {}
+                reaction_count = 0
                 for sigil in response.html.find("span[data-sigil='reaction_profile_sigil']"):
                     k = str(demjson.decode(sigil.attrs.get("data-store"))["reactionType"])
                     v = sigil.find(
@@ -769,6 +770,8 @@ class PostExtractor:
                     elif k in reaction_lookup:
                         name = reaction_lookup[k]["display_name"].lower()
                         reactions[name] = v
+                if not reaction_count:
+                    reaction_count = sum(reactions.values())
             reactors = self.extract_reactors(response, reaction_lookup)
 
         if reactions:
@@ -1015,7 +1018,7 @@ class PostExtractor:
                 'a[href^="/ufi/reaction/profile/browser/?ft_ent_identifier="] i', first=True
             )
             if reactors:
-                reactions = self.extract_reactions(comment_id)
+                reactions = self.extract_reactions(comment_id, force_parse_HTML=True)
                 if comment_reactors_opt != "generator":
                     reactions["reactors"] = utils.safe_consume(reactions.get("reactors", []))
 
