@@ -1015,7 +1015,9 @@ class PostExtractor:
         if comment_reactors_opt:
             self.options["reactors"] = True  # Required for comment reaction extraction
             reactors = comment.find(
-                'a[href^="/ufi/reaction/profile/browser/?ft_ent_identifier="] i', first=True
+                'a[href^="/ufi/reaction/profile/browser/?ft_ent_identifier="] i,'
+                'a[href^="/ufi/reaction/profile/browser/?ft_ent_identifier="] img',
+                first=True,
             )
             if reactors:
                 reactions = self.extract_reactions(comment_id, force_parse_HTML=True)
