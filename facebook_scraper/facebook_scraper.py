@@ -9,6 +9,7 @@ import json
 import demjson3 as demjson
 from urllib.parse import parse_qs, urlparse, unquote
 from datetime import datetime
+import os
 
 from requests import RequestException
 from requests_html import HTMLSession
@@ -781,6 +782,13 @@ class FacebookScraper:
                 url = utils.urljoin(FB_MOBILE_BASE_URL, url)
 
             response = self.session.get(url=url, **self.requests_kwargs, **kwargs)
+            DEBUG = False
+            if DEBUG:
+                for filename in os.listdir("."):
+                    if filename.endswith(".html") and filename.replace(".html", "") in url:
+                        logger.debug(f"Replacing {url} content with {filename}")
+                        with open(filename) as f:
+                            response.html.html = f.read()
             response.html.html = response.html.html.replace('<!--', '').replace('-->', '')
             response.raise_for_status()
             self.check_locale(response)

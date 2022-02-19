@@ -633,12 +633,20 @@ class PostExtractor:
         """Fetch people reacting to an existing post obtained by `get_posts`.
         Note that this method may raise one more http request per post to get all reactors"""
         emoji_class_lookup = {}
-        spriteMapCssClass = "sp_E24l_TeOlgh"
-        for k, v in self.get_jsmod("UFIReactionIcons").items():
-            name = reaction_lookup[k]["display_name"].lower()
-            for item in v.values():
-                emoji_class_lookup[item["spriteCssClass"]] = name
-                spriteMapCssClass = item["spriteMapCssClass"]
+        spriteMapCssClass = "sp_JHjFAQ60dv1"
+        reaction_icons = self.get_jsmod("UFIReactionIcons")
+        if reaction_icons:
+            for k, v in reaction_icons.items():
+                name = reaction_lookup[k]["display_name"].lower()
+                for item in v.values():
+                    emoji_class_lookup[item["spriteCssClass"]] = name
+                    spriteMapCssClass = item["spriteMapCssClass"]
+        else:
+            emoji_style_lookup = {}
+            for sigil in response.html.find("span[data-sigil='reaction_profile_sigil']"):
+                k = str(demjson.decode(sigil.attrs.get("data-store"))["reactionType"])
+                name = reaction_lookup[k]["display_name"].lower()
+                emoji_style_lookup[sigil.find("i", first=True).attrs.get("style")] = name
 
         reactors_opt = self.options.get("reactors")
         limit = 1e9
@@ -647,15 +655,21 @@ class PostExtractor:
         logger.debug(f"Fetching {limit} reactors")
         elems = list(response.html.find("div[id^='reaction_profile_browser']>div"))
         for elem in elems:
-            emoji_class = elem.find(f"div>i.{spriteMapCssClass}", first=True).attrs.get("class")[
-                -1
-            ]
-            if not emoji_class_lookup.get(emoji_class):
-                logger.error(f"Don't know {emoji_class}")
+            try:
+                emoji_class = elem.find(f"div>i.{spriteMapCssClass}", first=True).attrs.get(
+                    "class"
+                )[-1]
+                reaction_type = emoji_class_lookup.get(emoji_class)
+                if not reaction_type:
+                    logger.error(f"Don't know {emoji_class}")
+            except AttributeError:
+                reaction_type = emoji_style_lookup[
+                    elem.find(f"div>i", first=True).attrs.get("style")
+                ]
             yield {
                 "name": elem.find("strong", first=True).text,
                 "link": utils.urljoin(FB_BASE_URL, elem.find("a", first=True).attrs.get("href")),
-                "type": emoji_class_lookup.get(emoji_class),
+                "type": reaction_type,
             }
         more = response.html.find("div[id^=reaction_profile_pager] a", first=True)
         while more and len(elems) < limit:
