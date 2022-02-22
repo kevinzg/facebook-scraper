@@ -6,8 +6,10 @@ import re
 from functools import partial
 from typing import Iterator, Union
 import json
+import demjson3 as demjson
 from urllib.parse import parse_qs, urlparse, unquote
 from datetime import datetime
+import os
 
 from requests import RequestException
 from requests_html import HTMLSession
@@ -591,16 +593,27 @@ class FacebookScraper:
             logger.debug(f"Requesting page from: {url}")
             resp = self.get(url)
             desc = resp.html.find("meta[name='description']", first=True)
+            ld_json = None
             try:
-                elem = resp.html.find("script[type='application/ld+json']", first=True)
-                meta = json.loads(elem.text)
+                ld_json = resp.html.find("script[type='application/ld+json']", first=True).text
+            except:
+                logger.error("No ld+json element")
+                url = f'/{page}/community'
+                logger.debug(f"Requesting page from: {url}")
+                try:
+                    community_resp = self.get(url)
+                    ld_json = community_resp.html.find(
+                        "script[type='application/ld+json']", first=True
+                    ).text
+                except:
+                    logger.error("No ld+json element")
+            if ld_json:
+                meta = demjson.decode(ld_json)
                 result.update(meta["author"])
                 result["type"] = result.pop("@type")
                 for interaction in meta.get("interactionStatistic", []):
                     if interaction["interactionType"] == "http://schema.org/FollowAction":
                         result["followers"] = interaction["userInteractionCount"]
-            except:
-                logger.error("No ld+json element")
             try:
                 result["about"] = resp.html.find(
                     '#pages_msite_body_contents>div>div:nth-child(2)', first=True
@@ -670,7 +683,26 @@ class FacebookScraper:
         logger.debug(f"Requesting page from: {url}")
         try:
             resp = self.get(url).html
-            admins = resp.find("div:first-child>div.touchable a:not(.touchable)")
+            url = resp.find("a[href*='listType=list_admin_moderator']", first=True)
+            if url:
+                url = url.attrs.get("href")
+                logger.debug(f"Requesting page from: {url}")
+                try:
+                    respAdmins = self.get(url).html
+                except:
+                    raise exceptions.UnexpectedResponse("Unable to get admin list")
+            else:
+                respAdmins = resp
+            # Test if we are a member that can add new members
+            if re.match(
+                "/groups/members/search",
+                respAdmins.find(
+                    "div:nth-child(1)>div:nth-child(1) a:not(.touchable)", first=True
+                ).attrs.get('href'),
+            ):
+                admins = respAdmins.find("div:nth-of-type(2)>div.touchable a:not(.touchable)")
+            else:
+                admins = respAdmins.find("div:first-child>div.touchable a:not(.touchable)")
             result["admins"] = [
                 {
                     "name": e.text,
@@ -678,7 +710,8 @@ class FacebookScraper:
                 }
                 for e in admins
             ]
-            url = resp.find("a[href^='/browse/group/members']", first=True)
+
+            url = resp.find("a[href*='listType=list_nonfriend_nonadmin']", first=True)
             if url:
                 url = url.attrs["href"]
                 members = []
@@ -749,6 +782,13 @@ class FacebookScraper:
                 url = utils.urljoin(FB_MOBILE_BASE_URL, url)
 
             response = self.session.get(url=url, **self.requests_kwargs, **kwargs)
+            DEBUG = False
+            if DEBUG:
+                for filename in os.listdir("."):
+                    if filename.endswith(".html") and filename.replace(".html", "") in url:
+                        logger.debug(f"Replacing {url} content with {filename}")
+                        with open(filename) as f:
+                            response.html.html = f.read()
             response.html.html = response.html.html.replace('<!--', '').replace('-->', '')
             response.raise_for_status()
             self.check_locale(response)
@@ -781,6 +821,8 @@ class FacebookScraper:
                 warnings.warn(
                     f"Facebook served mbasic/noscript content unexpectedly on {response.url}"
                 )
+            if response.html.find("h1,h2", containing="Unsupported Browser"):
+                warnings.warn(f"Facebook says 'Unsupported Browser'")
             title = response.html.find("title", first=True)
             not_found_titles = ["page not found", "content not found"]
             temp_ban_titles = [
