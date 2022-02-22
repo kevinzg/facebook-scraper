@@ -346,3 +346,5 @@ yarl==1.6.3; python_version >= "3.6" \
 zipp==3.4.1; python_version < "3.8" and python_version >= "3.6" \
     --hash=sha256:51cb66cc54621609dd593d1787f286ee42a5c0adbb4b29abea5a63edc3e03098 \
     --hash=sha256:3607921face881ba3e026887d8150cca609d517579abe052ac81fc5aeffdbd76
+demjson3==3.0.5
+browser-cookie3==0.13.0
