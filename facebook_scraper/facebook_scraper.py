@@ -75,8 +75,10 @@ class FacebookScraper:
         else:
             self.session.cookies.set("noscript", "0")
 
-    def set_proxy(self, proxy):
-        self.requests_kwargs.update({'proxies': {'http': proxy, 'https': proxy}})
+    def set_proxy(self, proxy, verify=True):
+        self.requests_kwargs.update(
+            {'proxies': {'http': proxy, 'https': proxy}, 'verify': verify}
+        )
         ip = self.get(
             "http://lumtest.com/myip.json", headers={"Accept": "application/json"}
         ).json()
