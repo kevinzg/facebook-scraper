@@ -56,8 +56,8 @@ def unset_cookies():
     _scraper.session.cookies = cookiejar_from_dict({})
 
 
-def set_proxy(proxy):
-    _scraper.set_proxy(proxy)
+def set_proxy(proxy, verify=True):
+    _scraper.set_proxy(proxy, verify)
 
 
 def set_user_agent(user_agent):
