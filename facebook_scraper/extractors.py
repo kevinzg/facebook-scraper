@@ -886,10 +886,72 @@ class PostExtractor:
             logger.debug(f"Fetching {reaction_url}")
             response = self.request(reaction_url)
             if not reactions or force_parse_HTML:
+                reaction_lookup.update({
+                    '1635855486666999': {
+                        'color': '#2078f4',
+                        'display_name': 'Like',
+                        'is_deprecated': False,
+                        'is_visible': True,
+                        'name': 'like',
+                        'type': 1635855486666999,
+                    },
+                    '613557422527858': {
+                        'color': '#f7b125',
+                        'display_name': 'Care',
+                        'is_deprecated': False,
+                        'is_visible': True,
+                        'name': 'support',
+                        'type': 613557422527858,
+                    },
+                    '1678524932434102': {
+                        'color': '#f33e58',
+                        'display_name': 'Love',
+                        'is_deprecated': False,
+                        'is_visible': True,
+                        'name': 'love',
+                        'type': 1678524932434102,
+                    },
+                    '478547315650144': {
+                        'color': '#f7b125',
+                        'display_name': 'Wow',
+                        'is_deprecated': False,
+                        'is_visible': True,
+                        'name': 'wow',
+                        'type': 478547315650144,
+                    },
+                    '115940658764963': {
+                        'color': '#f7b125',
+                        'display_name': 'Haha',
+                        'is_deprecated': False,
+                        'is_visible': True,
+                        'name': 'haha',
+                        'type': 115940658764963,
+                    },
+                    '908563459236466': {
+                        'color': '#f7b125',
+                        'display_name': 'Sad',
+                        'is_deprecated': False,
+                        'is_visible': True,
+                        'name': 'sorry',
+                        'type': 908563459236466,
+                    },
+                    '444813342392137': {
+                        'color': '#e9710f',
+                        'display_name': 'Angry',
+                        'is_deprecated': False,
+                        'is_visible': True,
+                        'name': 'anger',
+                        'type': 444813342392137,
+                    },
+                })
                 reactions = {}
                 reaction_count = 0
                 for sigil in response.html.find("span[data-sigil='reaction_profile_sigil']"):
-                    k = str(demjson.decode(sigil.attrs.get("data-store"))["reactionType"])
+                    single_reaction = demjson.decode(sigil.attrs.get("data-store"))
+                    if "reactionType" in single_reaction:
+                        k = str(single_reaction["reactionType"])
+                    else:
+                        k = str(single_reaction["reactionID"])
                     v = sigil.find(
                         "span[data-sigil='reaction_profile_tab_count']", first=True
                     ).text.replace("All ", "")
