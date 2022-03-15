@@ -353,13 +353,19 @@ class FacebookScraper:
                         response.html.html
                     )
             else:
+                #f = open("/mnt/d/test,html","wb+")
+                #f.write(response.html.raw_html)
+                #f.close()
                 cover_photo = response.html.find(
                     "div[data-sigil='cover-photo']>i.img", first=True
                 )
+                cover_photo = response.html.xpath('.//img[contains(@alt,\"Nintendo, profile picture\")]')
+                if not cover_photo:
+                    cover_photo = response.html.xpath('.//img[contains(@aria-label,\"Profile photo\")]')
                 if cover_photo:
-                    match = re.search(r"url\('(.+)'\)", cover_photo.attrs["style"])
-                    if match:
-                        result["cover_photo"] = utils.decode_css_url(match.groups()[0])
+                    if len(cover_photo) > 0:
+                        first = cover_photo[0]
+                        result["cover_photo"] = first.attrs['src']
                 profpic = response.html.find("img.profpic", first=True)
                 if profpic:
                     result["profile_picture"] = profpic.attrs["src"]
