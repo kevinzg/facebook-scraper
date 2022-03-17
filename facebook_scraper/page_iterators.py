@@ -14,6 +14,8 @@ from .constants import FB_MOBILE_BASE_URL, FB_MBASIC_BASE_URL
 from .fb_types import URL, Page, RawPage, RequestFunction, Response
 from . import exceptions
 
+from .tracking import record_event
+
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +88,7 @@ def generic_iter_pages(
             request_url_callback(next_url)
 
         RETRY_LIMIT = 6
+        retry = 0
         for retry in range(1, RETRY_LIMIT + 1):
             try:
                 logger.debug("Requesting page from: %s", next_url)
@@ -111,6 +114,11 @@ def generic_iter_pages(
 
         # TODO: If page is actually an iterable calling len(page) might consume it
         logger.debug("Got %s raw posts from page", len(page))
+        record_event(
+            "generic_iter_pages",
+            data={"start_url": start_url, "url": next_url, "retries": retry, "posts": len(page)},
+            remark="Got %s raw posts from page: %s" % (len(page), next_url),
+        )
         yield page
 
         logger.debug("Looking for next page URL")

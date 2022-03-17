@@ -37,6 +37,7 @@ from .page_iterators import (
     iter_search_pages,
     iter_hashtag_pages,
 )
+from .tracking import record_event
 from . import exceptions
 
 
@@ -860,8 +861,10 @@ class FacebookScraper:
                     raise exceptions.LoginRequired(
                         "A login (cookies) is required to see this page"
                     )
+            record_event("request_fn", data={"url":url, "status_code": response.status_code})
             return response
         except RequestException as ex:
+            record_event("request_exception", data={"url": url, "exception":str(type(ex))}, remark=str(ex))
             logger.exception("Exception while requesting URL: %s\nException: %r", url, ex)
             raise
 
@@ -1031,8 +1034,11 @@ class FacebookScraper:
             logger.debug("Starting to iterate pages")
             for i, page in zip(counter, iter_pages_fn()):
                 logger.debug("Extracting posts from page %s", i)
+                posts = 0
                 for post_element in page:
                     post = extract_post_fn(post_element, options=options, request_fn=self.get)
                     if remove_source:
                         post.pop('source', None)
                     yield post
+                    posts += 1
+                record_event("generic_get_posts", data = {"posts": posts, "page_number": i}, remark="Extracted %s posts from page %s" % (posts, i))
