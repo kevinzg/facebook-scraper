@@ -835,17 +835,22 @@ class FacebookScraper:
             ]
             if title:
                 if title.text.lower() in not_found_titles:
+                    record_event("exception", data={"url": url, "exception": "NotFound"}, remark=title.text)
                     raise exceptions.NotFound(title.text)
                 elif title.text.lower() == "error":
+                    record_event("exception", data={"url": url, "exception": "UnexpectedResponse"}, remark="Your request couldn't be processed")
                     raise exceptions.UnexpectedResponse("Your request couldn't be processed")
                 elif title.text.lower() in temp_ban_titles:
+                    record_event("exception", data={"url": url, "exception": "TemporarilyBanned"}, remark=title.text)
                     raise exceptions.TemporarilyBanned(title.text)
                 elif ">your account has been disabled<" in response.html.html.lower():
+                    record_event("exception", data={"url": url, "exception": "AccountDisabled"}, remark="Your Account Has Been Disabled")
                     raise exceptions.AccountDisabled("Your Account Has Been Disabled")
                 elif (
                     ">We saw unusual activity on your account. This may mean that someone has used your account without your knowledge.<"
                     in response.html.html
                 ):
+                    record_event("exception", data={"url": url, "exception": "AccountDisabled"}, remark="Your Account Has Been Locked")
                     raise exceptions.AccountDisabled("Your Account Has Been Locked")
                 elif (
                     title.text == "Log in to Facebook | Facebook"
@@ -858,13 +863,14 @@ class FacebookScraper:
                         )
                     )
                 ):
+                    record_event("exception", data={"url": url, "exception": "LoginRequired"}, remark="A login (cookies) is required to see this page")
                     raise exceptions.LoginRequired(
                         "A login (cookies) is required to see this page"
                     )
             record_event("request_fn", data={"url":url, "status_code": response.status_code})
             return response
         except RequestException as ex:
-            record_event("request_exception", data={"url": url, "exception":str(type(ex))}, remark=str(ex))
+            record_event("exception", data={"url": url, "exception":str(type(ex))}, remark=str(ex))
             logger.exception("Exception while requesting URL: %s\nException: %r", url, ex)
             raise
 
