@@ -273,7 +273,10 @@ class PostExtractor:
             post_text = []
             shared_text = []
             ended = False
-            for node in nodes[1:]:
+            index_non_header = next(
+                (i for i, node in enumerate(nodes) if node.tag != 'header'), 1
+            )
+            for node in nodes[index_non_header:]:
                 if node.tag == 'header':
                     ended = True
 
