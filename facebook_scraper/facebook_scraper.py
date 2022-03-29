@@ -549,9 +549,17 @@ class FacebookScraper:
                     more_url = more_url.group(1)
 
             for elem in elems:
-                links = elem.find("a")
-                if not links:
+                header_elem = elem.find("div[data-nt='FB:TEXT4']:has(span)", first=True)
+                if not header_elem:
                     continue
+                bits = list(header_elem.element.itertext())
+                username = bits[0].strip()
+                recommends = "recommends" in header_elem.text
+                links = header_elem.find("a")
+                if len(links) == 2:
+                    user_url = utils.urljoin(FB_BASE_URL, links[0].attrs["href"])
+                else:
+                    user_url = None
                 text_elem = elem.find("div[data-nt='FB:FEED_TEXT'] span p", first=True)
                 if text_elem:
                     text = text_elem.text
@@ -560,13 +568,14 @@ class FacebookScraper:
                 date_element = elem.find("abbr[data-store*='time']", first=True)
                 time = json.loads(date_element.attrs["data-store"])["time"]
                 yield {
-                    "user_url": utils.urljoin(FB_BASE_URL, links[0].attrs["href"]),
-                    "username": links[0].text,
+                    "user_url": user_url,
+                    "username": username,
                     "profile_picture": elem.find("img", first=True).attrs["src"],
                     "text": text,
+                    "header": header_elem.text,
                     "time": datetime.fromtimestamp(time),
                     "timestamp": time,
-                    "recommends": "</span> recommends <span>" in elem.html,
+                    "recommends": recommends,
                     "post_url": utils.urljoin(
                         FB_BASE_URL, elem.find("a[href*='story']", first=True).attrs["href"]
                     ),
