@@ -893,7 +893,7 @@ class FacebookScraper:
         if login_error:
             raise exceptions.LoginError(login_error.text)
 
-        if "Enter login code to continue" in response.text:
+        if "enter login code to continue" in response.text.lower():
             token = input("Enter 2FA token: ")
             response = self.submit_form(response, {"approvals_code": token})
             strong = response.html.find("strong", first=True)
@@ -901,19 +901,19 @@ class FacebookScraper:
                 raise exceptions.LoginError(strong.text)
             # Remember Browser
             response = self.submit_form(response, {"name_action_selected": "save_device"})
-            if "Review recent login" in response.text:
+            if "review recent login" in response.text.lower():
                 response = self.submit_form(response)
                 # Login near {location} from {browser} on {OS} ({time}). Unset "This wasn't me", leaving "This was me" set.
                 response = self.submit_form(response, {"submit[This wasn't me]": None})
                 # Remember Browser. Please save the browser that you just verified. You won't have to enter a code when you log in from browsers that you've saved.
                 response = self.submit_form(response, {"name_action_selected": "save_device"})
 
-        if "Login approval needed" in response.text or "checkpoint" in response.url:
+        if "login approval needed" in response.text.lower() or "checkpoint" in response.url:
             input(
                 "Login approval needed. From a browser logged into this account, approve this login from your notifications. Press enter once you've approved it."
             )
             response = self.submit_form(response, {"submit[Continue]": "Continue"})
-        if "The password that you entered is incorrect" in response.text:
+        if "the password that you entered is incorrect" in response.text.lower():
             raise exceptions.LoginError("The password that you entered is incorrect")
         if 'c_user' not in self.session.cookies:
             with open("login_error.html", "w") as f:
