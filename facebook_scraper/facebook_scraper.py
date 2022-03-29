@@ -552,19 +552,23 @@ class FacebookScraper:
                 links = elem.find("a")
                 if not links:
                     continue
-                text_elem = elem.find("div[data-nt='FB:FEED_TEXT']", first=True)
+                text_elem = elem.find("div[data-nt='FB:FEED_TEXT'] span p", first=True)
+                if text_elem:
+                    text = text_elem.text
+                else:
+                    text = None
                 date_element = elem.find("abbr[data-store*='time']", first=True)
                 time = json.loads(date_element.attrs["data-store"])["time"]
                 yield {
                     "user_url": utils.urljoin(FB_BASE_URL, links[0].attrs["href"]),
                     "username": links[0].text,
                     "profile_picture": elem.find("img", first=True).attrs["src"],
-                    "text": text_elem.find("span p", first=True).text,
+                    "text": text,
                     "time": datetime.fromtimestamp(time),
                     "timestamp": time,
                     "recommends": "</span> recommends <span>" in elem.html,
                     "post_url": utils.urljoin(
-                        FB_BASE_URL, text_elem.find("a[href*='story']", first=True).attrs["href"]
+                        FB_BASE_URL, elem.find("a[href*='story']", first=True).attrs["href"]
                     ),
                 }
 
