@@ -636,6 +636,7 @@ class PostExtractor:
         """Fetch people reacting to an existing post obtained by `get_posts`.
         Note that this method may raise one more http request per post to get all reactors"""
         emoji_class_lookup = {}
+        emoji_style_lookup = {}
         spriteMapCssClass = "sp_JHjFAQ60dv1"
         reaction_icons = self.get_jsmod("UFIReactionIcons")
         if reaction_icons:
@@ -644,12 +645,16 @@ class PostExtractor:
                 for item in v.values():
                     emoji_class_lookup[item["spriteCssClass"]] = name
                     spriteMapCssClass = item["spriteMapCssClass"]
-        else:
-            emoji_style_lookup = {}
-            for sigil in response.html.find("span[data-sigil='reaction_profile_sigil']"):
-                k = str(demjson.decode(sigil.attrs.get("data-store"))["reactionType"])
-                name = reaction_lookup[k]["display_name"].lower()
-                emoji_style_lookup[sigil.find("i", first=True).attrs.get("style")] = name
+        for sigil in response.html.find("span[data-sigil='reaction_profile_sigil']"):
+            single_reaction = demjson.decode(sigil.attrs.get("data-store"))
+            if "reactionType" in single_reaction:
+                k = str(single_reaction["reactionType"])
+            else:
+                k = str(single_reaction["reactionID"])
+            if k == "all":
+                continue
+            name = reaction_lookup[k]["display_name"].lower()
+            emoji_style_lookup[sigil.find("i", first=True).attrs.get("style")] = name
 
         reactors_opt = self.options.get("reactors")
         limit = 1e9
@@ -753,124 +758,10 @@ class PostExtractor:
         """
         reactions = {}
 
-        reaction_lookup = self.get_jsmod("UFIReactionTypes")
-        if reaction_lookup:
-            reaction_lookup = reaction_lookup.get("reactions")
-        else:
-            reaction_lookup = {
-                '1': {
-                    'color': '#2078f4',
-                    'display_name': 'Like',
-                    'is_deprecated': False,
-                    'is_visible': True,
-                    'name': 'like',
-                    'type': 1,
-                },
-                '10': {
-                    'color': '#f0ba15',
-                    'display_name': 'Confused',
-                    'is_deprecated': True,
-                    'is_visible': False,
-                    'name': 'confused',
-                    'type': 10,
-                },
-                '11': {
-                    'color': '#7e64c4',
-                    'display_name': 'Thankful',
-                    'is_deprecated': False,
-                    'is_visible': True,
-                    'name': 'dorothy',
-                    'type': 11,
-                },
-                '12': {
-                    'color': '#ec7ebd',
-                    'display_name': 'Pride',
-                    'is_deprecated': False,
-                    'is_visible': True,
-                    'name': 'toto',
-                    'type': 12,
-                },
-                '13': {
-                    'color': '#f0ba15',
-                    'display_name': 'Selfie',
-                    'is_deprecated': False,
-                    'is_visible': False,
-                    'name': 'selfie',
-                    'type': 13,
-                },
-                '14': {
-                    'color': '#f0ba15',
-                    'display_name': 'React',
-                    'is_deprecated': True,
-                    'is_visible': False,
-                    'name': 'flame',
-                    'type': 14,
-                },
-                '15': {
-                    'color': '#f0ba15',
-                    'display_name': 'React',
-                    'is_deprecated': True,
-                    'is_visible': False,
-                    'name': 'plane',
-                    'type': 15,
-                },
-                '16': {
-                    'color': '#f7b125',
-                    'display_name': 'Care',
-                    'is_deprecated': False,
-                    'is_visible': True,
-                    'name': 'support',
-                    'type': 16,
-                },
-                '2': {
-                    'color': '#f33e58',
-                    'display_name': 'Love',
-                    'is_deprecated': False,
-                    'is_visible': True,
-                    'name': 'love',
-                    'type': 2,
-                },
-                '3': {
-                    'color': '#f7b125',
-                    'display_name': 'Wow',
-                    'is_deprecated': False,
-                    'is_visible': True,
-                    'name': 'wow',
-                    'type': 3,
-                },
-                '4': {
-                    'color': '#f7b125',
-                    'display_name': 'Haha',
-                    'is_deprecated': False,
-                    'is_visible': True,
-                    'name': 'haha',
-                    'type': 4,
-                },
-                '5': {
-                    'color': '#f0ba15',
-                    'display_name': 'Yay',
-                    'is_deprecated': True,
-                    'is_visible': False,
-                    'name': 'yay',
-                    'type': 5,
-                },
-                '7': {
-                    'color': '#f7b125',
-                    'display_name': 'Sad',
-                    'is_deprecated': False,
-                    'is_visible': True,
-                    'name': 'sorry',
-                    'type': 7,
-                },
-                '8': {
-                    'color': '#e9710f',
-                    'display_name': 'Angry',
-                    'is_deprecated': False,
-                    'is_visible': True,
-                    'name': 'anger',
-                    'type': 8,
-                },
-            }
+        reaction_lookup = utils.reaction_lookup
+        reaction_lookup_jsmod = self.get_jsmod("UFIReactionTypes")
+        if reaction_lookup_jsmod:
+            reaction_lookup.update(reaction_lookup_jsmod.get("reactions"))
         for k, v in self.live_data.get("reactioncountmap", {}).items():
             if v["default"]:
                 name = reaction_lookup[k]["display_name"].lower()
@@ -889,66 +780,6 @@ class PostExtractor:
             logger.debug(f"Fetching {reaction_url}")
             response = self.request(reaction_url)
             if not reactions or force_parse_HTML:
-                reaction_lookup.update(
-                    {
-                        '1635855486666999': {
-                            'color': '#2078f4',
-                            'display_name': 'Like',
-                            'is_deprecated': False,
-                            'is_visible': True,
-                            'name': 'like',
-                            'type': 1635855486666999,
-                        },
-                        '613557422527858': {
-                            'color': '#f7b125',
-                            'display_name': 'Care',
-                            'is_deprecated': False,
-                            'is_visible': True,
-                            'name': 'support',
-                            'type': 613557422527858,
-                        },
-                        '1678524932434102': {
-                            'color': '#f33e58',
-                            'display_name': 'Love',
-                            'is_deprecated': False,
-                            'is_visible': True,
-                            'name': 'love',
-                            'type': 1678524932434102,
-                        },
-                        '478547315650144': {
-                            'color': '#f7b125',
-                            'display_name': 'Wow',
-                            'is_deprecated': False,
-                            'is_visible': True,
-                            'name': 'wow',
-                            'type': 478547315650144,
-                        },
-                        '115940658764963': {
-                            'color': '#f7b125',
-                            'display_name': 'Haha',
-                            'is_deprecated': False,
-                            'is_visible': True,
-                            'name': 'haha',
-                            'type': 115940658764963,
-                        },
-                        '908563459236466': {
-                            'color': '#f7b125',
-                            'display_name': 'Sad',
-                            'is_deprecated': False,
-                            'is_visible': True,
-                            'name': 'sorry',
-                            'type': 908563459236466,
-                        },
-                        '444813342392137': {
-                            'color': '#e9710f',
-                            'display_name': 'Angry',
-                            'is_deprecated': False,
-                            'is_visible': True,
-                            'name': 'anger',
-                            'type': 444813342392137,
-                        },
-                    }
-                )
                 reactions = {}
                 reaction_count = 0
                 for sigil in response.html.find("span[data-sigil='reaction_profile_sigil']"):
