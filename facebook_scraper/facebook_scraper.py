@@ -793,6 +793,7 @@ class FacebookScraper:
 
     def get(self, url, **kwargs):
         try:
+            url = str(url)
             if not url.startswith("http"):
                 url = utils.urljoin(FB_MOBILE_BASE_URL, url)
 
