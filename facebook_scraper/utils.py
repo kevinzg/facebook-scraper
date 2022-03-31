@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 from requests.cookies import RequestsCookieJar
 from requests_html import DEFAULT_URL, Element, PyQuery
 import json
+import traceback
 
 from . import exceptions
 import logging
@@ -271,6 +272,7 @@ def safe_consume(generator, sleep=0):
             result.append(item)
             time.sleep(sleep)
     except Exception as e:
+        traceback.print_exc()
         logger.error(f"Exception when consuming {generator}: {type(e)}: {str(e)}")
     return result
 

@@ -671,9 +671,10 @@ class PostExtractor:
                 if not reaction_type:
                     logger.error(f"Don't know {emoji_class}")
             except AttributeError:
-                reaction_type = emoji_style_lookup[
-                    elem.find(f"div>i", first=True).attrs.get("style")
-                ]
+                emoji_style = elem.find(f"div>i[style]", first=True).attrs.get("style")
+                reaction_type = emoji_style_lookup.get(emoji_style)
+                if not reaction_type:
+                    logger.error(f"Don't know {emoji_style}")
             yield {
                 "name": elem.find("strong", first=True).text,
                 "link": utils.urljoin(FB_BASE_URL, elem.find("a", first=True).attrs.get("href")),
