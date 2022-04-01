@@ -59,6 +59,9 @@ def decode_css_url(url: str) -> str:
     url, _ = codecs.unicode_escape_decode(url)
     return url
 
+def get_background_image_url(style):
+    match = re.search(r"url\('(.+)'\)", style)
+    return decode_css_url(match.groups()[0])
 
 def filter_query_params(url, whitelist=None, blacklist=None) -> str:
     def is_valid_param(param):

@@ -636,7 +636,7 @@ class PostExtractor:
         """Fetch people reacting to an existing post obtained by `get_posts`.
         Note that this method may raise one more http request per post to get all reactors"""
         emoji_class_lookup = {}
-        emoji_style_lookup = {}
+        emoji_url_lookup = {}
         spriteMapCssClass = "sp_JHjFAQ60dv1"
         reaction_icons = self.get_jsmod("UFIReactionIcons")
         if reaction_icons:
@@ -654,7 +654,9 @@ class PostExtractor:
             if k == "all":
                 continue
             name = reaction_lookup[k]["display_name"].lower()
-            emoji_style_lookup[sigil.find("i", first=True).attrs.get("style")] = name
+            emoji_style = sigil.find("i", first=True).attrs.get("style")
+            emoji_url = utils.get_background_image_url(emoji_style)
+            emoji_url_lookup[emoji_url] = name
 
         reactors_opt = self.options.get("reactors")
         limit = 1e9
@@ -672,9 +674,10 @@ class PostExtractor:
                     logger.error(f"Don't know {emoji_class}")
             except AttributeError:
                 emoji_style = elem.find(f"div>i[style]", first=True).attrs.get("style")
-                reaction_type = emoji_style_lookup.get(emoji_style)
+                emoji_url = utils.get_background_image_url(emoji_style)
+                reaction_type = emoji_url_lookup.get(emoji_url)
                 if not reaction_type:
-                    logger.error(f"Don't know {emoji_style}")
+                    logger.error(f"Don't know {emoji_url}")
             yield {
                 "name": elem.find("strong", first=True).text,
                 "link": utils.urljoin(FB_BASE_URL, elem.find("a", first=True).attrs.get("href")),
@@ -702,17 +705,25 @@ class PostExtractor:
                         'div#reaction_profile_browser>div,div#reaction_profile_browser1>div'
                     )
                     for elem in elems:
-                        emoji_class = elem.find(
-                            f"div>i.{spriteMapCssClass}", first=True
-                        ).attrs.get("class")[-1]
-                        if not emoji_class_lookup.get(emoji_class):
-                            logger.error(f"Don't know {emoji_class}")
+                        try:
+                            emoji_class = elem.find(f"div>i.{spriteMapCssClass}", first=True).attrs.get(
+                                "class"
+                            )[-1]
+                            reaction_type = emoji_class_lookup.get(emoji_class)
+                            if not reaction_type:
+                                logger.error(f"Don't know {emoji_class}")
+                        except AttributeError:
+                            emoji_style = elem.find(f"div>i[style]", first=True).attrs.get("style")
+                            emoji_url = utils.get_background_image_url(emoji_style)
+                            reaction_type = emoji_url_lookup.get(emoji_url)
+                            if not reaction_type:
+                                logger.error(f"Don't know {emoji_url}")
                         yield {
                             "name": elem.find("strong", first=True).text,
                             "link": utils.urljoin(
                                 FB_BASE_URL, elem.find("a", first=True).attrs.get("href")
                             ),
-                            "type": emoji_class_lookup.get(emoji_class),
+                            "type": reaction_type,
                         }
                 elif action['cmd'] == 'replace':
                     html = utils.make_html_element(
