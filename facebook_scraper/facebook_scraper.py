@@ -794,11 +794,11 @@ class FacebookScraper:
             self.have_checked_locale = True
 
     def get(self, url, **kwargs):
+        t0 = time.time()  
         try:
             url = str(url)
             if not url.startswith("http"):
                 url = utils.urljoin(FB_MOBILE_BASE_URL, url)
-            t0 = time.time()  
             response = self.session.get(url=url, **self.requests_kwargs, **kwargs)
             DEBUG = False
             if DEBUG:
@@ -887,6 +887,7 @@ class FacebookScraper:
             record_event("request_fn", data={"url":url, "status_code": response.status_code, "time": t})
             return response
         except RequestException as ex:
+            t = time.time() - t0
             record_event("exception", data={"url": url, "exception":str(type(ex)), "time": t}, remark=str(ex))
             logger.exception("Exception while requesting URL: %s\nException: %r", url, ex)
             raise
