@@ -1,5 +1,6 @@
 import itertools
 import logging
+import time
 from urllib.parse import urljoin
 import warnings
 import re
@@ -797,7 +798,7 @@ class FacebookScraper:
             url = str(url)
             if not url.startswith("http"):
                 url = utils.urljoin(FB_MOBILE_BASE_URL, url)
-
+            t0 = time.time()  
             response = self.session.get(url=url, **self.requests_kwargs, **kwargs)
             DEBUG = False
             if DEBUG:
@@ -847,24 +848,25 @@ class FacebookScraper:
                 "you can't use this feature right now",
                 "you’re temporarily blocked",
             ]
+            t = time.time() - t0
             if title:
                 if title.text.lower() in not_found_titles:
-                    record_event("exception", data={"url": url, "exception": "NotFound"}, remark=title.text)
+                    record_event("exception", data={"url": url, "exception": "NotFound", "time": t}, remark=title.text)
                     raise exceptions.NotFound(title.text)
                 elif title.text.lower() == "error":
-                    record_event("exception", data={"url": url, "exception": "UnexpectedResponse"}, remark="Your request couldn't be processed")
+                    record_event("exception", data={"url": url, "exception": "UnexpectedResponse", "time": t}, remark="Your request couldn't be processed")
                     raise exceptions.UnexpectedResponse("Your request couldn't be processed")
                 elif title.text.lower() in temp_ban_titles:
-                    record_event("exception", data={"url": url, "exception": "TemporarilyBanned"}, remark=title.text)
+                    record_event("exception", data={"url": url, "exception": "TemporarilyBanned", "time": t}, remark=title.text)
                     raise exceptions.TemporarilyBanned(title.text)
                 elif ">your account has been disabled<" in response.html.html.lower():
-                    record_event("exception", data={"url": url, "exception": "AccountDisabled"}, remark="Your Account Has Been Disabled")
+                    record_event("exception", data={"url": url, "exception": "AccountDisabled", "time": t}, remark="Your Account Has Been Disabled")
                     raise exceptions.AccountDisabled("Your Account Has Been Disabled")
                 elif (
                     ">We saw unusual activity on your account. This may mean that someone has used your account without your knowledge.<"
                     in response.html.html
                 ):
-                    record_event("exception", data={"url": url, "exception": "AccountDisabled"}, remark="Your Account Has Been Locked")
+                    record_event("exception", data={"url": url, "exception": "AccountDisabled", "time": t}, remark="Your Account Has Been Locked")
                     raise exceptions.AccountDisabled("Your Account Has Been Locked")
                 elif (
                     title.text == "Log in to Facebook | Facebook"
@@ -877,14 +879,15 @@ class FacebookScraper:
                         )
                     )
                 ):
-                    record_event("exception", data={"url": url, "exception": "LoginRequired"}, remark="A login (cookies) is required to see this page")
+                    record_event("exception", data={"url": url, "exception": "LoginRequired", "time": t}, remark="A login (cookies) is required to see this page")
                     raise exceptions.LoginRequired(
                         "A login (cookies) is required to see this page"
                     )
-            record_event("request_fn", data={"url":url, "status_code": response.status_code})
+
+            record_event("request_fn", data={"url":url, "status_code": response.status_code, "time": t})
             return response
         except RequestException as ex:
-            record_event("exception", data={"url": url, "exception":str(type(ex))}, remark=str(ex))
+            record_event("exception", data={"url": url, "exception":str(type(ex)), "time": t}, remark=str(ex))
             logger.exception("Exception while requesting URL: %s\nException: %r", url, ex)
             raise
 
