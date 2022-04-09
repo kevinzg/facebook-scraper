@@ -30,7 +30,7 @@ from .extractors import (
     PostExtractor,
     extract_hashtag_post,
 )
-from .fb_types import Post, Profile
+from .fb_types import Post, Profile, RawPost
 from .page_iterators import (
     iter_group_pages,
     iter_pages,
@@ -90,6 +90,18 @@ class FacebookScraper:
         kwargs["scraper"] = self
         iter_pages_fn = partial(iter_pages, account=account, request_fn=self.get, **kwargs)
         return self._generic_get_posts(extract_post, iter_pages_fn, **kwargs)
+
+    def get_posts_fragments(self, account: str, **kwargs) -> Iterator[RawPost]:
+        """Extract the posts fragments from listing page during pagination"""
+        kwargs["scraper"] = self
+        iter_pages_fn = partial(iter_pages, account=account, request_fn=self.get, **kwargs)
+
+        def extract_post_fragment(raw_post: RawPost, *args, **kwargs):
+            return raw_post
+
+        return self._generic_get_posts(
+            extract_post_fragment, iter_pages_fn, remove_source=False, **kwargs
+        )
 
     def get_photos(self, account: str, **kwargs) -> Iterator[Post]:
         iter_pages_fn = partial(iter_photos, account=account, request_fn=self.get, **kwargs)
@@ -781,6 +793,20 @@ class FacebookScraper:
         iter_pages_fn = partial(iter_group_pages, group=group, request_fn=self.get, **kwargs)
         return self._generic_get_posts(extract_group_post, iter_pages_fn, **kwargs)
 
+    def get_group_posts_fragments(self, group: Union[str, int], **kwargs) -> Iterator[RawPost]:
+        """Extract the posts fragments from listing page during pagination"""
+        self.set_user_agent(
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/603.3.8 (KHTML, like Gecko) Version/10.1.2 Safari/603.3.8"
+        )
+
+        def extract_post_fragment(raw_post: RawPost, *args, **kwargs):
+            return raw_post
+
+        iter_pages_fn = partial(iter_group_pages, group=group, request_fn=self.get, **kwargs)
+        return self._generic_get_posts(
+            extract_post_fragment, iter_pages_fn, remove_source=False, **kwargs
+        )
+
     def check_locale(self, response):
         if self.have_checked_locale:
             return
@@ -794,7 +820,7 @@ class FacebookScraper:
             self.have_checked_locale = True
 
     def get(self, url, **kwargs):
-        t0 = time.time()  
+        t0 = time.time()
         try:
             url = str(url)
             if not url.startswith("http"):
@@ -851,22 +877,42 @@ class FacebookScraper:
             t = time.time() - t0
             if title:
                 if title.text.lower() in not_found_titles:
-                    record_event("exception", data={"url": url, "exception": "NotFound", "time": t}, remark=title.text)
+                    record_event(
+                        "exception",
+                        data={"url": url, "exception": "NotFound", "time": t},
+                        remark=title.text,
+                    )
                     raise exceptions.NotFound(title.text)
                 elif title.text.lower() == "error":
-                    record_event("exception", data={"url": url, "exception": "UnexpectedResponse", "time": t}, remark="Your request couldn't be processed")
+                    record_event(
+                        "exception",
+                        data={"url": url, "exception": "UnexpectedResponse", "time": t},
+                        remark="Your request couldn't be processed",
+                    )
                     raise exceptions.UnexpectedResponse("Your request couldn't be processed")
                 elif title.text.lower() in temp_ban_titles:
-                    record_event("exception", data={"url": url, "exception": "TemporarilyBanned", "time": t}, remark=title.text)
+                    record_event(
+                        "exception",
+                        data={"url": url, "exception": "TemporarilyBanned", "time": t},
+                        remark=title.text,
+                    )
                     raise exceptions.TemporarilyBanned(title.text)
                 elif ">your account has been disabled<" in response.html.html.lower():
-                    record_event("exception", data={"url": url, "exception": "AccountDisabled", "time": t}, remark="Your Account Has Been Disabled")
+                    record_event(
+                        "exception",
+                        data={"url": url, "exception": "AccountDisabled", "time": t},
+                        remark="Your Account Has Been Disabled",
+                    )
                     raise exceptions.AccountDisabled("Your Account Has Been Disabled")
                 elif (
                     ">We saw unusual activity on your account. This may mean that someone has used your account without your knowledge.<"
                     in response.html.html
                 ):
-                    record_event("exception", data={"url": url, "exception": "AccountDisabled", "time": t}, remark="Your Account Has Been Locked")
+                    record_event(
+                        "exception",
+                        data={"url": url, "exception": "AccountDisabled", "time": t},
+                        remark="Your Account Has Been Locked",
+                    )
                     raise exceptions.AccountDisabled("Your Account Has Been Locked")
                 elif (
                     title.text == "Log in to Facebook | Facebook"
@@ -879,16 +925,26 @@ class FacebookScraper:
                         )
                     )
                 ):
-                    record_event("exception", data={"url": url, "exception": "LoginRequired", "time": t}, remark="A login (cookies) is required to see this page")
+                    record_event(
+                        "exception",
+                        data={"url": url, "exception": "LoginRequired", "time": t},
+                        remark="A login (cookies) is required to see this page",
+                    )
                     raise exceptions.LoginRequired(
                         "A login (cookies) is required to see this page"
                     )
 
-            record_event("request_fn", data={"url":url, "status_code": response.status_code, "time": t})
+            record_event(
+                "request_fn", data={"url": url, "status_code": response.status_code, "time": t}
+            )
             return response
         except RequestException as ex:
             t = time.time() - t0
-            record_event("exception", data={"url": url, "exception":str(type(ex)), "time": t}, remark=str(ex))
+            record_event(
+                "exception",
+                data={"url": url, "exception": str(type(ex)), "time": t},
+                remark=str(ex),
+            )
             logger.exception("Exception while requesting URL: %s\nException: %r", url, ex)
             raise
 
@@ -1065,4 +1121,8 @@ class FacebookScraper:
                         post.pop('source', None)
                     yield post
                     posts += 1
-                record_event("generic_get_posts", data = {"posts": posts, "page_number": i}, remark="Extracted %s posts from page %s" % (posts, i))
+                record_event(
+                    "generic_get_posts",
+                    data={"posts": posts, "page_number": i},
+                    remark="Extracted %s posts from page %s" % (posts, i),
+                )
