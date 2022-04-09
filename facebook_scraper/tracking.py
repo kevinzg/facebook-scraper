@@ -11,6 +11,8 @@ class EventData(TypedDict):
     retries: Optional[int]
     posts: Optional[int]
     page_number: Optional[int]
+    time: Optional[float]
+    size: Optional[int]
 
 
 class Tracking:

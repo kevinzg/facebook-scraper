@@ -821,11 +821,13 @@ class FacebookScraper:
 
     def get(self, url, **kwargs):
         t0 = time.time()
+        resp_size = 0
         try:
             url = str(url)
             if not url.startswith("http"):
                 url = utils.urljoin(FB_MOBILE_BASE_URL, url)
             response = self.session.get(url=url, **self.requests_kwargs, **kwargs)
+            resp_size += len(response.content)
             DEBUG = False
             if DEBUG:
                 for filename in os.listdir("."):
@@ -848,14 +850,17 @@ class FacebookScraper:
                     post = {"original_request_url": post_url, "post_url": url}
                     logger.debug(f"Requesting page from: {url}")
                     response = self.get(url)
+                    resp_size += len(response.content)
             if "/watch/" in response.url:
                 video_id = parse_qs(urlparse(response.url).query).get("v")[0]
                 url = f"story.php?story_fbid={video_id}&id={video_id}&m_entstream_source=video_home&player_suborigin=entry_point&player_format=permalink"
                 logger.debug(f"Fetching {url}")
                 response = self.get(url)
+                resp_size += len(response.content)
 
             if "cookie/consent-page" in response.url:
                 response = self.submit_form(response)
+                resp_size += len(response.content)
             if (
                 response.url.startswith(FB_MOBILE_BASE_URL)
                 and not response.html.find("script", first=True)
@@ -879,28 +884,43 @@ class FacebookScraper:
                 if title.text.lower() in not_found_titles:
                     record_event(
                         "exception",
-                        data={"url": url, "exception": "NotFound", "time": t},
+                        data={"url": url, "exception": "NotFound", "time": t, "size": resp_size},
                         remark=title.text,
                     )
                     raise exceptions.NotFound(title.text)
                 elif title.text.lower() == "error":
                     record_event(
                         "exception",
-                        data={"url": url, "exception": "UnexpectedResponse", "time": t},
+                        data={
+                            "url": url,
+                            "exception": "UnexpectedResponse",
+                            "time": t,
+                            "size": resp_size,
+                        },
                         remark="Your request couldn't be processed",
                     )
                     raise exceptions.UnexpectedResponse("Your request couldn't be processed")
                 elif title.text.lower() in temp_ban_titles:
                     record_event(
                         "exception",
-                        data={"url": url, "exception": "TemporarilyBanned", "time": t},
+                        data={
+                            "url": url,
+                            "exception": "TemporarilyBanned",
+                            "time": t,
+                            "size": resp_size,
+                        },
                         remark=title.text,
                     )
                     raise exceptions.TemporarilyBanned(title.text)
                 elif ">your account has been disabled<" in response.html.html.lower():
                     record_event(
                         "exception",
-                        data={"url": url, "exception": "AccountDisabled", "time": t},
+                        data={
+                            "url": url,
+                            "exception": "AccountDisabled",
+                            "time": t,
+                            "size": resp_size,
+                        },
                         remark="Your Account Has Been Disabled",
                     )
                     raise exceptions.AccountDisabled("Your Account Has Been Disabled")
@@ -910,7 +930,12 @@ class FacebookScraper:
                 ):
                     record_event(
                         "exception",
-                        data={"url": url, "exception": "AccountDisabled", "time": t},
+                        data={
+                            "url": url,
+                            "exception": "AccountDisabled",
+                            "time": t,
+                            "size": resp_size,
+                        },
                         remark="Your Account Has Been Locked",
                     )
                     raise exceptions.AccountDisabled("Your Account Has Been Locked")
@@ -927,22 +952,32 @@ class FacebookScraper:
                 ):
                     record_event(
                         "exception",
-                        data={"url": url, "exception": "LoginRequired", "time": t},
+                        data={
+                            "url": url,
+                            "exception": "LoginRequired",
+                            "time": t,
+                            "size": resp_size,
+                        },
                         remark="A login (cookies) is required to see this page",
                     )
                     raise exceptions.LoginRequired(
                         "A login (cookies) is required to see this page"
                     )
-
             record_event(
-                "request_fn", data={"url": url, "status_code": response.status_code, "time": t}
+                "request_fn",
+                data={
+                    "url": url,
+                    "status_code": response.status_code,
+                    "time": t,
+                    "size": resp_size,
+                },
             )
             return response
         except RequestException as ex:
             t = time.time() - t0
             record_event(
                 "exception",
-                data={"url": url, "exception": str(type(ex)), "time": t},
+                data={"url": url, "exception": str(type(ex)), "time": t, "size": resp_size},
                 remark=str(ex),
             )
             logger.exception("Exception while requesting URL: %s\nException: %r", url, ex)
