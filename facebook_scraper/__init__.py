@@ -84,6 +84,22 @@ def get_profile(
     return _scraper.get_profile(account, **kwargs)
 
 
+def get_reactors(
+    post_id: Union[str, int],
+    **kwargs,
+) -> Iterator[dict]:
+    """Get reactors for a given post ID
+    Args:
+        post_id(str): The post ID, as returned from get_posts
+        cookies (Union[dict, CookieJar, str]): Cookie jar to use.
+            Can also be a filename to load the cookies from a file (Netscape format).
+    """
+    _scraper.requests_kwargs['timeout'] = kwargs.pop('timeout', DEFAULT_REQUESTS_TIMEOUT)
+    cookies = kwargs.pop('cookies', None)
+    set_cookies(cookies)
+    return _scraper.get_reactors(post_id, **kwargs)
+
+
 def get_friends(
     account: str,
     **kwargs,

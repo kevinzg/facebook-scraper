@@ -59,9 +59,11 @@ def decode_css_url(url: str) -> str:
     url, _ = codecs.unicode_escape_decode(url)
     return url
 
+
 def get_background_image_url(style):
     match = re.search(r"url\('(.+)'\)", style)
     return decode_css_url(match.groups()[0])
+
 
 def filter_query_params(url, whitelist=None, blacklist=None) -> str:
     def is_valid_param(param):
@@ -449,4 +451,21 @@ reaction_lookup = {
         'name': 'anger',
         'type': 444813342392137,
     },
+}
+
+emoji_class_lookup = {
+    'sx_0ae260': 'care',
+    'sx_0e815d': 'haha',
+    'sx_199220': 'angry',
+    'sx_3a00ef': 'like',
+    'sx_3ecf2a': 'sad',
+    'sx_78dbdd': 'angry',
+    'sx_a35dca': 'love',
+    'sx_c3ed6c': 'sad',
+    'sx_ce3068': 'haha',
+    'sx_d80e3a': 'wow',
+    'sx_d8e63d': 'care',
+    'sx_e303cc': 'like',
+    'sx_f21116': 'love',
+    'sx_f75acf': 'wow',
 }
