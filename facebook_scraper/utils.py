@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 from requests.cookies import RequestsCookieJar
 from requests_html import DEFAULT_URL, Element, PyQuery
 import json
+import traceback
 
 from . import exceptions
 import logging
@@ -57,6 +58,11 @@ def decode_css_url(url: str) -> str:
     url, _ = codecs.unicode_escape_decode(url)
     url, _ = codecs.unicode_escape_decode(url)
     return url
+
+
+def get_background_image_url(style):
+    match = re.search(r"url\('(.+)'\)", style)
+    return decode_css_url(match.groups()[0])
 
 
 def filter_query_params(url, whitelist=None, blacklist=None) -> str:
@@ -271,5 +277,195 @@ def safe_consume(generator, sleep=0):
             result.append(item)
             time.sleep(sleep)
     except Exception as e:
+        traceback.print_exc()
         logger.error(f"Exception when consuming {generator}: {type(e)}: {str(e)}")
     return result
+
+
+reaction_lookup = {
+    '1': {
+        'color': '#2078f4',
+        'display_name': 'Like',
+        'is_deprecated': False,
+        'is_visible': True,
+        'name': 'like',
+        'type': 1,
+    },
+    '10': {
+        'color': '#f0ba15',
+        'display_name': 'Confused',
+        'is_deprecated': True,
+        'is_visible': False,
+        'name': 'confused',
+        'type': 10,
+    },
+    '11': {
+        'color': '#7e64c4',
+        'display_name': 'Thankful',
+        'is_deprecated': False,
+        'is_visible': True,
+        'name': 'dorothy',
+        'type': 11,
+    },
+    '12': {
+        'color': '#ec7ebd',
+        'display_name': 'Pride',
+        'is_deprecated': False,
+        'is_visible': True,
+        'name': 'toto',
+        'type': 12,
+    },
+    '13': {
+        'color': '#f0ba15',
+        'display_name': 'Selfie',
+        'is_deprecated': False,
+        'is_visible': False,
+        'name': 'selfie',
+        'type': 13,
+    },
+    '14': {
+        'color': '#f0ba15',
+        'display_name': 'React',
+        'is_deprecated': True,
+        'is_visible': False,
+        'name': 'flame',
+        'type': 14,
+    },
+    '15': {
+        'color': '#f0ba15',
+        'display_name': 'React',
+        'is_deprecated': True,
+        'is_visible': False,
+        'name': 'plane',
+        'type': 15,
+    },
+    '16': {
+        'color': '#f7b125',
+        'display_name': 'Care',
+        'is_deprecated': False,
+        'is_visible': True,
+        'name': 'support',
+        'type': 16,
+    },
+    '2': {
+        'color': '#f33e58',
+        'display_name': 'Love',
+        'is_deprecated': False,
+        'is_visible': True,
+        'name': 'love',
+        'type': 2,
+    },
+    '3': {
+        'color': '#f7b125',
+        'display_name': 'Wow',
+        'is_deprecated': False,
+        'is_visible': True,
+        'name': 'wow',
+        'type': 3,
+    },
+    '4': {
+        'color': '#f7b125',
+        'display_name': 'Haha',
+        'is_deprecated': False,
+        'is_visible': True,
+        'name': 'haha',
+        'type': 4,
+    },
+    '5': {
+        'color': '#f0ba15',
+        'display_name': 'Yay',
+        'is_deprecated': True,
+        'is_visible': False,
+        'name': 'yay',
+        'type': 5,
+    },
+    '7': {
+        'color': '#f7b125',
+        'display_name': 'Sad',
+        'is_deprecated': False,
+        'is_visible': True,
+        'name': 'sorry',
+        'type': 7,
+    },
+    '8': {
+        'color': '#e9710f',
+        'display_name': 'Angry',
+        'is_deprecated': False,
+        'is_visible': True,
+        'name': 'anger',
+        'type': 8,
+    },
+    '1635855486666999': {
+        'color': '#2078f4',
+        'display_name': 'Like',
+        'is_deprecated': False,
+        'is_visible': True,
+        'name': 'like',
+        'type': 1635855486666999,
+    },
+    '613557422527858': {
+        'color': '#f7b125',
+        'display_name': 'Care',
+        'is_deprecated': False,
+        'is_visible': True,
+        'name': 'support',
+        'type': 613557422527858,
+    },
+    '1678524932434102': {
+        'color': '#f33e58',
+        'display_name': 'Love',
+        'is_deprecated': False,
+        'is_visible': True,
+        'name': 'love',
+        'type': 1678524932434102,
+    },
+    '478547315650144': {
+        'color': '#f7b125',
+        'display_name': 'Wow',
+        'is_deprecated': False,
+        'is_visible': True,
+        'name': 'wow',
+        'type': 478547315650144,
+    },
+    '115940658764963': {
+        'color': '#f7b125',
+        'display_name': 'Haha',
+        'is_deprecated': False,
+        'is_visible': True,
+        'name': 'haha',
+        'type': 115940658764963,
+    },
+    '908563459236466': {
+        'color': '#f7b125',
+        'display_name': 'Sad',
+        'is_deprecated': False,
+        'is_visible': True,
+        'name': 'sorry',
+        'type': 908563459236466,
+    },
+    '444813342392137': {
+        'color': '#e9710f',
+        'display_name': 'Angry',
+        'is_deprecated': False,
+        'is_visible': True,
+        'name': 'anger',
+        'type': 444813342392137,
+    },
+}
+
+emoji_class_lookup = {
+    'sx_0ae260': 'care',
+    'sx_0e815d': 'haha',
+    'sx_199220': 'angry',
+    'sx_3a00ef': 'like',
+    'sx_3ecf2a': 'sad',
+    'sx_78dbdd': 'angry',
+    'sx_a35dca': 'love',
+    'sx_c3ed6c': 'sad',
+    'sx_ce3068': 'haha',
+    'sx_d80e3a': 'wow',
+    'sx_d8e63d': 'care',
+    'sx_e303cc': 'like',
+    'sx_f21116': 'love',
+    'sx_f75acf': 'wow',
+}

@@ -89,6 +89,15 @@ class FacebookScraper:
         iter_pages_fn = partial(iter_pages, account=account, request_fn=self.get, **kwargs)
         return self._generic_get_posts(extract_post, iter_pages_fn, **kwargs)
 
+    def get_reactors(self, post_id: int, **kwargs) -> Iterator[dict]:
+        reaction_url = (
+            f'https://m.facebook.com/ufi/reaction/profile/browser/?ft_ent_identifier={post_id}'
+        )
+        logger.debug(f"Fetching {reaction_url}")
+        response = self.get(reaction_url)
+        extractor = PostExtractor(response.html, kwargs, self.get, full_post_html=response.html)
+        return extractor.extract_reactors(response)
+
     def get_photos(self, account: str, **kwargs) -> Iterator[Post]:
         iter_pages_fn = partial(iter_photos, account=account, request_fn=self.get, **kwargs)
         return self._generic_get_posts(extract_post, iter_pages_fn, **kwargs)
@@ -549,22 +558,35 @@ class FacebookScraper:
                     more_url = more_url.group(1)
 
             for elem in elems:
-                links = elem.find("a")
-                if not links:
+                header_elem = elem.find("div[data-nt='FB:TEXT4']:has(span)", first=True)
+                if not header_elem:
                     continue
-                text_elem = elem.find("div[data-nt='FB:FEED_TEXT']", first=True)
+                bits = list(header_elem.element.itertext())
+                username = bits[0].strip()
+                recommends = "recommends" in header_elem.text
+                links = header_elem.find("a")
+                if len(links) == 2:
+                    user_url = utils.urljoin(FB_BASE_URL, links[0].attrs["href"])
+                else:
+                    user_url = None
+                text_elem = elem.find("div[data-nt='FB:FEED_TEXT'] span p", first=True)
+                if text_elem:
+                    text = text_elem.text
+                else:
+                    text = None
                 date_element = elem.find("abbr[data-store*='time']", first=True)
                 time = json.loads(date_element.attrs["data-store"])["time"]
                 yield {
-                    "user_url": utils.urljoin(FB_BASE_URL, links[0].attrs["href"]),
-                    "username": links[0].text,
+                    "user_url": user_url,
+                    "username": username,
                     "profile_picture": elem.find("img", first=True).attrs["src"],
-                    "text": text_elem.find("span p", first=True).text,
+                    "text": text,
+                    "header": header_elem.text,
                     "time": datetime.fromtimestamp(time),
                     "timestamp": time,
-                    "recommends": "</span> recommends <span>" in elem.html,
+                    "recommends": recommends,
                     "post_url": utils.urljoin(
-                        FB_BASE_URL, text_elem.find("a[href*='story']", first=True).attrs["href"]
+                        FB_BASE_URL, elem.find("a[href*='story']", first=True).attrs["href"]
                     ),
                 }
 
@@ -780,6 +802,7 @@ class FacebookScraper:
 
     def get(self, url, **kwargs):
         try:
+            url = str(url)
             if not url.startswith("http"):
                 url = utils.urljoin(FB_MOBILE_BASE_URL, url)
 
@@ -889,7 +912,7 @@ class FacebookScraper:
         if login_error:
             raise exceptions.LoginError(login_error.text)
 
-        if "Enter login code to continue" in response.text:
+        if "enter login code to continue" in response.text.lower():
             token = input("Enter 2FA token: ")
             response = self.submit_form(response, {"approvals_code": token})
             strong = response.html.find("strong", first=True)
@@ -897,19 +920,19 @@ class FacebookScraper:
                 raise exceptions.LoginError(strong.text)
             # Remember Browser
             response = self.submit_form(response, {"name_action_selected": "save_device"})
-            if "Review recent login" in response.text:
+            if "review recent login" in response.text.lower():
                 response = self.submit_form(response)
                 # Login near {location} from {browser} on {OS} ({time}). Unset "This wasn't me", leaving "This was me" set.
                 response = self.submit_form(response, {"submit[This wasn't me]": None})
                 # Remember Browser. Please save the browser that you just verified. You won't have to enter a code when you log in from browsers that you've saved.
                 response = self.submit_form(response, {"name_action_selected": "save_device"})
 
-        if "Login approval needed" in response.text or "checkpoint" in response.url:
+        if "login approval needed" in response.text.lower() or "checkpoint" in response.url:
             input(
                 "Login approval needed. From a browser logged into this account, approve this login from your notifications. Press enter once you've approved it."
             )
             response = self.submit_form(response, {"submit[Continue]": "Continue"})
-        if "The password that you entered is incorrect" in response.text:
+        if "the password that you entered is incorrect" in response.text.lower():
             raise exceptions.LoginError("The password that you entered is incorrect")
         if 'c_user' not in self.session.cookies:
             with open("login_error.html", "w") as f:
