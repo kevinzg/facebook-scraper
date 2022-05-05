@@ -377,9 +377,7 @@ class FacebookScraper:
         about_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/about/')
         logger.debug(f"Requesting page from: {about_url}")
         response = self.get(about_url)
-        match = re.search(r'entity_id:(\d+),', response.html.html)
-        with open("a.html","w",encoding="utf8") as file:
-            file.write(response.html.html)
+        match = re.search(r'entity_id:(\d)+', response.html.html)
         if match:
             result["id"] = match.group(1)
         # Profile name is in the title
