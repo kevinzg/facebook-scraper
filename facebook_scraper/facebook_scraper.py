@@ -297,6 +297,7 @@ class FacebookScraper:
                 request_url_callback(more_url)
 
     def get_profile(self, account, **kwargs) -> Profile:
+        pid = account
         account = account.replace("profile.php?id=", "")
         result = {}
 
@@ -466,6 +467,10 @@ class FacebookScraper:
                     f'/{account}?v=following', limit=kwargs.get("following"), **kwargs
                 )
             )
+
+        
+        if result.get("id") is None:
+           result["id"] = pid
 
         # Likes
         if result["id"] and kwargs.get("likes"):
