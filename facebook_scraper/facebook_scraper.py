@@ -378,6 +378,8 @@ class FacebookScraper:
         logger.debug(f"Requesting page from: {about_url}")
         response = self.get(about_url)
         match = re.search(r'entity_id:(\d+),', response.html.html)
+        with open("a.html","w",encoding="utf8") as file:
+            file.write(response.html.html)
         if match:
             result["id"] = match.group(1)
         # Profile name is in the title
