@@ -632,12 +632,12 @@ class PostExtractor:
             "image_ids": image_ids,
         }
 
-    def extract_reactors(self, response, reaction_lookup):
+    def extract_reactors(self, response, reaction_lookup=utils.reaction_lookup):
         """Fetch people reacting to an existing post obtained by `get_posts`.
         Note that this method may raise one more http request per post to get all reactors"""
-        emoji_class_lookup = {}
         emoji_url_lookup = {}
-        spriteMapCssClass = "sp_JHjFAQ60dv1"
+        spriteMapCssClass = "sp_LdwxfpG67Bn"
+        emoji_class_lookup = utils.emoji_class_lookup
         reaction_icons = self.get_jsmod("UFIReactionIcons")
         if reaction_icons:
             for k, v in reaction_icons.items():
@@ -673,11 +673,15 @@ class PostExtractor:
                 if not reaction_type:
                     logger.error(f"Don't know {emoji_class}")
             except AttributeError:
-                emoji_style = elem.find(f"div>i[style]", first=True).attrs.get("style")
-                emoji_url = utils.get_background_image_url(emoji_style)
-                reaction_type = emoji_url_lookup.get(emoji_url)
-                if not reaction_type:
-                    logger.error(f"Don't know {emoji_url}")
+                try:
+                    emoji_style = elem.find(f"div>i[style]", first=True).attrs.get("style")
+                    emoji_url = utils.get_background_image_url(emoji_style)
+                    reaction_type = emoji_url_lookup.get(emoji_url)
+                    if not reaction_type:
+                        logger.error(f"Don't know {emoji_url}")
+                except AttributeError:
+                    logger.error(f"No div>i[style] elem in: {elem}")
+                    reaction_type = None
             yield {
                 "name": elem.find("strong", first=True).text,
                 "link": utils.urljoin(FB_BASE_URL, elem.find("a", first=True).attrs.get("href")),
@@ -705,19 +709,31 @@ class PostExtractor:
                         'div#reaction_profile_browser>div,div#reaction_profile_browser1>div'
                     )
                     for elem in elems:
+                        if not elem.find(f"div>i.{spriteMapCssClass}", first=True):
+                            # Try update spriteMapCssClass
+                            classes = elem.find("div>i.img", first=True).attrs["class"]
+                            for c in classes:
+                                if c.startswith("sp_"):
+                                    spriteMapCssClass = c
                         try:
-                            emoji_class = elem.find(f"div>i.{spriteMapCssClass}", first=True).attrs.get(
-                                "class"
-                            )[-1]
+                            emoji_class = elem.find(
+                                f"div>i.{spriteMapCssClass}", first=True
+                            ).attrs.get("class")[-1]
                             reaction_type = emoji_class_lookup.get(emoji_class)
                             if not reaction_type:
                                 logger.error(f"Don't know {emoji_class}")
                         except AttributeError:
-                            emoji_style = elem.find(f"div>i[style]", first=True).attrs.get("style")
-                            emoji_url = utils.get_background_image_url(emoji_style)
-                            reaction_type = emoji_url_lookup.get(emoji_url)
-                            if not reaction_type:
-                                logger.error(f"Don't know {emoji_url}")
+                            try:
+                                emoji_style = elem.find(f"div>i[style]", first=True).attrs.get(
+                                    "style"
+                                )
+                                emoji_url = utils.get_background_image_url(emoji_style)
+                                reaction_type = emoji_url_lookup.get(emoji_url)
+                                if not reaction_type:
+                                    logger.error(f"Don't know {emoji_url}")
+                            except AttributeError:
+                                logger.error(f"No div>i[style] elem in: {elem.html}")
+                                reaction_type = None
                         yield {
                             "name": elem.find("strong", first=True).text,
                             "link": utils.urljoin(

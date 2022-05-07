@@ -103,6 +103,15 @@ class FacebookScraper:
             extract_post_fragment, iter_pages_fn, remove_source=False, **kwargs
         )
 
+    def get_reactors(self, post_id: int, **kwargs) -> Iterator[dict]:
+        reaction_url = (
+            f'https://m.facebook.com/ufi/reaction/profile/browser/?ft_ent_identifier={post_id}'
+        )
+        logger.debug(f"Fetching {reaction_url}")
+        response = self.get(reaction_url)
+        extractor = PostExtractor(response.html, kwargs, self.get, full_post_html=response.html)
+        return extractor.extract_reactors(response)
+
     def get_photos(self, account: str, **kwargs) -> Iterator[Post]:
         iter_pages_fn = partial(iter_photos, account=account, request_fn=self.get, **kwargs)
         return self._generic_get_posts(extract_post, iter_pages_fn, **kwargs)
