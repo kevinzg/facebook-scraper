@@ -468,4 +468,5 @@ emoji_class_lookup = {
     'sx_e303cc': 'like',
     'sx_f21116': 'love',
     'sx_f75acf': 'wow',
+    'sx_a70a0c': 'like',
 }

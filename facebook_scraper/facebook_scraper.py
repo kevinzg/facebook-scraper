@@ -317,6 +317,13 @@ class FacebookScraper:
         if kwargs.get("allow_extra_requests", True):
             logger.debug(f"Requesting page from: {account}")
             response = self.get(account)
+            top_post = response.html.find(
+                '[data-ft*="top_level_post_id"]:not([data-sigil="m-see-translate-link"])',
+                first=True,
+            )
+            result["latest_post_id"] = PostExtractor(
+                top_post, kwargs, self.get
+            ).extract_post_id()["post_id"]
 
             try:
                 result["Friend_count"] = utils.parse_int(
@@ -390,7 +397,7 @@ class FacebookScraper:
         about_url = utils.urljoin(FB_MOBILE_BASE_URL, f'/{account}/about/')
         logger.debug(f"Requesting page from: {about_url}")
         response = self.get(about_url)
-        match = re.search(r'entity_id:(\d+),', response.html.html)
+        match = re.search(r'entity_id:(\d+)', response.html.html)
         if match:
             result["id"] = match.group(1)
         # Profile name is in the title
