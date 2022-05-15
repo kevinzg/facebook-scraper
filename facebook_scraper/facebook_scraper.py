@@ -81,10 +81,13 @@ class FacebookScraper:
         self.requests_kwargs.update(
             {'proxies': {'http': proxy, 'https': proxy}, 'verify': verify}
         )
-        ip = self.get(
-            "http://lumtest.com/myip.json", headers={"Accept": "application/json"}
-        ).json()
-        logger.debug(f"Proxy details: {ip}")
+
+        # NOTE: remove this request to reduce proxy quota consumption
+        # ip = self.get(
+        #     "http://lumtest.com/myip.json", headers={"Accept": "application/json"}
+        # ).json()
+        # logger.debug(f"Proxy details: {ip}")
+        logger.debug(f"Proxy set")
 
     def get_posts(self, account: str, **kwargs) -> Iterator[Post]:
         kwargs["scraper"] = self
