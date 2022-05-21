@@ -307,9 +307,9 @@ class FacebookScraper:
                 '[data-ft*="top_level_post_id"]:not([data-sigil="m-see-translate-link"])',
                 first=True,
             )
-            result["latest_post_id"] = PostExtractor(
+            result["top_post"] = PostExtractor(
                 top_post, kwargs, self.get
-            ).extract_post_id()["post_id"]
+            ).extract_post()
 
             try:
                 result["Friend_count"] = utils.parse_int(
