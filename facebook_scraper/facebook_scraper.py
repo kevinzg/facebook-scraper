@@ -605,6 +605,7 @@ class FacebookScraper:
             about_url = f'/{page}/about/'
             logger.debug(f"Requesting page from: {about_url}")
             resp = self.get(about_url)
+            result["name"] = resp.html.find("title", first=True).text.replace(" - About", "")
             desc = resp.html.find("meta[name='description']", first=True)
             result["about"] = resp.html.find(
                 '#pages_msite_body_contents,div.aboutme', first=True
@@ -623,6 +624,7 @@ class FacebookScraper:
             url = f'/{page}/'
             logger.debug(f"Requesting page from: {url}")
             resp = self.get(url)
+            result["name"] = resp.html.find("title", first=True).text.replace(" - Home", "")
             desc = resp.html.find("meta[name='description']", first=True)
             ld_json = None
             try:
