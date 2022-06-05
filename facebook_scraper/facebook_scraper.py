@@ -841,6 +841,10 @@ class FacebookScraper:
     def get(self, url, **kwargs):
         t0 = time.time()
         resp_size = 0
+        proxy_server = None
+        for _, v in self.requests_kwargs.get("proxies", {}).items():
+            proxy_server = f"proxy:{urlparse(v).hostname}"
+
         try:
             url = str(url)
             if not url.startswith("http"):
@@ -904,7 +908,7 @@ class FacebookScraper:
                     record_event(
                         "exception",
                         data={"url": url, "exception": "NotFound", "time": t, "size": resp_size},
-                        remark=title.text,
+                        remark=proxy_server,
                     )
                     raise exceptions.NotFound(title.text)
                 elif title.text.lower() == "error":
@@ -916,7 +920,7 @@ class FacebookScraper:
                             "time": t,
                             "size": resp_size,
                         },
-                        remark="Your request couldn't be processed",
+                        remark=proxy_server,
                     )
                     raise exceptions.UnexpectedResponse("Your request couldn't be processed")
                 elif title.text.lower() in temp_ban_titles:
@@ -928,7 +932,7 @@ class FacebookScraper:
                             "time": t,
                             "size": resp_size,
                         },
-                        remark=title.text,
+                        remark=proxy_server,
                     )
                     raise exceptions.TemporarilyBanned(title.text)
                 elif ">your account has been disabled<" in response.html.html.lower():
@@ -940,7 +944,7 @@ class FacebookScraper:
                             "time": t,
                             "size": resp_size,
                         },
-                        remark="Your Account Has Been Disabled",
+                        remark=proxy_server,
                     )
                     raise exceptions.AccountDisabled("Your Account Has Been Disabled")
                 elif (
@@ -955,7 +959,7 @@ class FacebookScraper:
                             "time": t,
                             "size": resp_size,
                         },
-                        remark="Your Account Has Been Locked",
+                        remark=proxy_server,
                     )
                     raise exceptions.AccountDisabled("Your Account Has Been Locked")
                 elif (
@@ -977,7 +981,7 @@ class FacebookScraper:
                             "time": t,
                             "size": resp_size,
                         },
-                        remark="A login (cookies) is required to see this page",
+                        remark=proxy_server,
                     )
                     raise exceptions.LoginRequired(
                         "A login (cookies) is required to see this page"
@@ -990,6 +994,7 @@ class FacebookScraper:
                     "time": t,
                     "size": resp_size,
                 },
+                remark=proxy_server
             )
             return response
         except RequestException as ex:
@@ -997,7 +1002,7 @@ class FacebookScraper:
             record_event(
                 "exception",
                 data={"url": url, "exception": str(type(ex)), "time": t, "size": resp_size},
-                remark=str(ex),
+                remark=proxy_server,
             )
             logger.exception("Exception while requesting URL: %s\nException: %r", url, ex)
             raise
