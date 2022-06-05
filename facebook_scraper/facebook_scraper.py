@@ -952,8 +952,6 @@ class FacebookScraper:
     def is_logged_in(self) -> bool:
         try:
             self.get('https://m.facebook.com/settings')
-            if "checkpoint" in self.url:
-                return False
             return True
         except exceptions.LoginRequired:
             return False
