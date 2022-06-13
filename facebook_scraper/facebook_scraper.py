@@ -864,6 +864,9 @@ class FacebookScraper:
                 "you can't use this feature right now",
                 "you’re temporarily blocked",
             ]
+            if "checkpoint" in response.url:
+                if response.html.find("h1", containing="We suspended your account"):
+                    raise exceptions.AccountDisabled("Your Account Has Been Disabled")
             if title:
                 if title.text.lower() in not_found_titles:
                     raise exceptions.NotFound(title.text)
