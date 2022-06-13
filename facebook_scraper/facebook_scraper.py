@@ -686,7 +686,10 @@ class FacebookScraper:
             if len(bits) == 3:
                 result["people_talking_about_this"] = utils.parse_int(bits[1])
                 result["checkins"] = utils.parse_int(bits[2])
-        result["reviews"] = utils.safe_consume(self.get_page_reviews(page, **kwargs))
+        if kwargs.get("reviews"):
+            result["reviews"] = self.get_page_reviews(page, **kwargs)
+            if kwargs.get("reviews") != "generator":
+                result["reviews"] = utils.safe_consume(result["reviews"])
 
         return result
 
