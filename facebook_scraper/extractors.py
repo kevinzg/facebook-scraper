@@ -1421,3 +1421,9 @@ class StoryExtractor(PostExtractor):
             if url:
                 url = utils.urljoin(FB_BASE_URL, url)
             return {'username': elem.find("div.overflowText", first=True).text, 'user_url': url}
+
+    def extract_time(self) -> PartialPost:
+        date_element = self.element.find("abbr[data-store*='time']", first=True)
+        time = json.loads(date_element.attrs["data-store"])["time"]
+        logger.debug(f"Got exact timestamp from abbr[data-store]: {datetime.fromtimestamp(time)}")
+        return {'time': datetime.fromtimestamp(time), 'timestamp': time}
