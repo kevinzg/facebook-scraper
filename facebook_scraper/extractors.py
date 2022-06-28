@@ -39,6 +39,12 @@ def extract_group_post(
     return GroupPostExtractor(raw_post, options, request_fn, full_post_html).extract_post()
 
 
+def extract_story_post(
+    raw_post: RawPost, options: Options, request_fn: RequestFunction, full_post_html=None
+) -> Post:
+    return StoryExtractor(raw_post, options, request_fn, full_post_html).extract_post()
+
+
 def extract_photo_post(
     raw_post: RawPost, options: Options, request_fn: RequestFunction, full_post_html
 ) -> Post:
@@ -1405,3 +1411,13 @@ class HashtagPostExtractor(PostExtractor):
         if match:
             return match.groups()[0]
         return None
+
+
+class StoryExtractor(PostExtractor):
+    def extract_username(self) -> PartialPost:
+        elem = self.element.find('#m-stories-card-header', first=True)
+        if elem:
+            url = elem.find("a", first=True).attrs["href"]
+            if url:
+                url = utils.urljoin(FB_BASE_URL, url)
+            return {'username': elem.find("div.overflowText", first=True).text, 'user_url': url}
