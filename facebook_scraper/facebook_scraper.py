@@ -475,7 +475,7 @@ class FacebookScraper:
             )
 
         # Likes
-        if result["id"] and kwargs.get("likes"):
+        if result.get("id") and kwargs.get("likes"):
             likes_url = utils.urljoin(
                 FB_MOBILE_BASE_URL,
                 f'timeline/app_section/?section_token={result["id"]}:2409997254',
