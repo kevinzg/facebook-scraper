@@ -818,7 +818,13 @@ class FacebookScraper:
             if not url.startswith("http"):
                 url = utils.urljoin(FB_MOBILE_BASE_URL, url)
 
-            response = self.session.get(url=url, **self.requests_kwargs, **kwargs)
+            if kwargs.get("post"):
+                kwargs.pop("post")
+                if kwargs.get("params"):
+                    self.requests_kwargs["params"].update(kwargs.pop("params"))
+                response = self.session.post(url=url, **self.requests_kwargs, **kwargs)
+            else:
+                response = self.session.get(url=url, **self.requests_kwargs, **kwargs)
             DEBUG = False
             if DEBUG:
                 for filename in os.listdir("."):

@@ -1098,17 +1098,34 @@ class PostExtractor:
         if not self.options.get("progress"):
             logger.debug(f"Fetching {replies_url}")
         try:
-            response = self.request(replies_url)
+            fb_dtsg = self.full_post_html.find("input[name='fb_dtsg']", first=True).attrs["value"]
+            encryptedAjaxResponseToken = re.search(
+                r'encrypted":"([^"]+)', self.full_post_html.html
+            ).group(1)
+            response = self.request(
+                replies_url,
+                post=True,
+                params={"fb_dtsg": fb_dtsg, "__a": encryptedAjaxResponseToken},
+            )
         except exceptions.TemporarilyBanned:
             raise
         except Exception as e:
             logger.error(e)
             return
-        # Skip first element, as it will be this comment itself
-        reply_selector = 'div[data-sigil="comment"]'
+        prefix_length = len('for (;;);')
+        data = json.loads(response.text[prefix_length:])  # Strip 'for (;;);'
+        for action in data['payload']['actions']:
+            if action["cmd"] == "replace":
+                html = utils.make_html_element(
+                    action['html'],
+                    url=FB_MOBILE_BASE_URL,
+                )
+                break
+
+        reply_selector = 'div[data-sigil="comment inline-reply"]'
         if self.options.get("noscript"):
             reply_selector = '#root div[id]'
-        replies = response.html.find(reply_selector)[1:]
+        replies = html.find(reply_selector)
         try:
             for reply in replies:
                 yield self.parse_comment(reply)
