@@ -1329,6 +1329,8 @@ class PostExtractor:
                 url = self.post.get('post_url').replace(FB_BASE_URL, FB_MOBILE_BASE_URL)
                 logger.debug(f"Fetching {url}")
                 response = self.request(url)
+            if response.text.startswith("for (;;)"):
+                logger.warning("full_post_html startswith for (;;)")
             self._full_post_html = response.html
             return self._full_post_html
         else:

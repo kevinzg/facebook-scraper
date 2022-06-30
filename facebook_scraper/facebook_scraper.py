@@ -835,9 +835,7 @@ class FacebookScraper:
 
             if kwargs.get("post"):
                 kwargs.pop("post")
-                if kwargs.get("params"):
-                    self.requests_kwargs["params"].update(kwargs.pop("params"))
-                response = self.session.post(url=url, **self.requests_kwargs, **kwargs)
+                response = self.session.post(url=url, **kwargs)
             else:
                 response = self.session.get(url=url, **self.requests_kwargs, **kwargs)
             DEBUG = False
