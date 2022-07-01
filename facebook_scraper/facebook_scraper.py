@@ -654,7 +654,7 @@ class FacebookScraper:
                 except:
                     logger.error("No ld+json element")
                     likes_and_follows = community_resp.html.find("#page_suggestions_on_liking+div", first=True).text.split("\n")
-                    result["followers"] = utils.parse_int(likes_and_follows[2])
+                    result["followers"] = utils.convert_numeric_abbr(likes_and_follows[2])
             if ld_json:
                 meta = demjson.decode(ld_json)
                 result.update(meta["author"])
