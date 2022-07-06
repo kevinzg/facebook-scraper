@@ -1104,34 +1104,52 @@ class PostExtractor:
         if not self.options.get("progress"):
             logger.debug(f"Fetching {replies_url}")
         try:
-            fb_dtsg = self.full_post_html.find("input[name='fb_dtsg']", first=True).attrs["value"]
-            encryptedAjaxResponseToken = re.search(
-                r'encrypted":"([^"]+)', self.full_post_html.html
-            ).group(1)
-            response = self.request(
-                replies_url,
-                post=True,
-                params={"fb_dtsg": fb_dtsg, "__a": encryptedAjaxResponseToken},
-            )
+            # Some users have to use an AJAX POST method to get replies.
+            # Check if this is the case by checking for the element that holds the encrypted response token
+            use_ajax_post = self.full_post_html.find("input[name='fb_dtsg']", first=True) is not None
+
+            if use_ajax_post:
+                fb_dtsg = self.full_post_html.find("input[name='fb_dtsg']", first=True).attrs["value"]
+                encryptedAjaxResponseToken = re.search(
+                    r'encrypted":"([^"]+)', self.full_post_html.html
+                ).group(1)
+                response = self.request(
+                    replies_url,
+                    post=True,
+                    params={"fb_dtsg": fb_dtsg, "__a": encryptedAjaxResponseToken},
+                )
+            else:
+                use_ajax_post = False
+                response = self.request(replies_url)
+            
         except exceptions.TemporarilyBanned:
             raise
         except Exception as e:
             logger.error(e)
             return
-        prefix_length = len('for (;;);')
-        data = json.loads(response.text[prefix_length:])  # Strip 'for (;;);'
-        for action in data['payload']['actions']:
-            if action["cmd"] == "replace":
-                html = utils.make_html_element(
-                    action['html'],
-                    url=FB_MOBILE_BASE_URL,
-                )
-                break
 
-        reply_selector = 'div[data-sigil="comment inline-reply"]'
-        if self.options.get("noscript"):
-            reply_selector = '#root div[id]'
-        replies = html.find(reply_selector)
+        if use_ajax_post:
+            prefix_length = len('for (;;);')
+            data = json.loads(response.text[prefix_length:])  # Strip 'for (;;);'
+            for action in data['payload']['actions']:
+                if action["cmd"] == "replace":
+                    html = utils.make_html_element(
+                        action['html'],
+                        url=FB_MOBILE_BASE_URL,
+                    )
+                    break
+
+            reply_selector = 'div[data-sigil="comment inline-reply"]'
+        
+            if self.options.get("noscript"):
+                reply_selector = '#root div[id]'
+            replies = html.find(reply_selector)
+        
+        else:
+            # Skip first element, as it will be this comment itself
+            reply_selector = 'div[data-sigil="comment"]'
+            replies = response.html.find(reply_selector)[1:]
+            
         try:
             for reply in replies:
                 yield self.parse_comment(reply)
@@ -1139,7 +1157,7 @@ class PostExtractor:
             raise
         except Exception as e:
             logger.error(f"Unable to parse comment {replies_url} replies {replies}: {e}")
-
+            
     def extract_comment_with_replies(self, comment):
         try:
             result = self.parse_comment(comment)
