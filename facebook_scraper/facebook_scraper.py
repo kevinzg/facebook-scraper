@@ -648,13 +648,16 @@ class FacebookScraper:
                 logger.debug(f"Requesting page from: {url}")
                 try:
                     community_resp = self.get(url)
-                    ld_json = community_resp.html.find(
-                        "script[type='application/ld+json']", first=True
-                    ).text
+                    try:
+                        ld_json = community_resp.html.find(
+                            "script[type='application/ld+json']", first=True
+                        ).text
+                    except:
+                        logger.error("No ld+json element")
+                        likes_and_follows = community_resp.html.find("#page_suggestions_on_liking+div", first=True).text.split("\n")
+                        result["followers"] = utils.convert_numeric_abbr(likes_and_follows[2])
                 except:
-                    logger.error("No ld+json element")
-                    likes_and_follows = community_resp.html.find("#page_suggestions_on_liking+div", first=True).text.split("\n")
-                    result["followers"] = utils.convert_numeric_abbr(likes_and_follows[2])
+                    pass
             if ld_json:
                 meta = demjson.decode(ld_json)
                 result.update(meta["author"])
