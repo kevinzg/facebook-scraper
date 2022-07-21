@@ -421,7 +421,7 @@ class PostExtractor:
         link = self.link_regex.search(self.element.html)
         if link:
             link = utils.unquote(link.groups()[0])
-        links = self.element.find(".story_body_container div p a")
+        links = self.element.find(".story_body_container>div a:not([href='#'])")
         links = [{"link": a.attrs["href"], "text": a.text} for a in links]
         return {"link": link, "links": links}
 
