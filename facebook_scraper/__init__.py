@@ -299,10 +299,9 @@ def get_posts_by_search(
     **kwargs,
 ) -> Iterator[Post]:
 
-    """Get posts from a Facebook page or group.
+    """Get posts by searching all of Facebook
     Args:
         word (str): The word for searching posts.
-        group (int): The group id.
         credentials (Optional[Tuple[str, str]]): Tuple of email and password to login before scraping.
         timeout (int): Timeout for requests.
         page_limit (int): How many pages of posts to go through.
