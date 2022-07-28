@@ -464,8 +464,8 @@ class PostExtractor:
 
     # TODO: Remove `or 0` from this methods
     def extract_likes(self) -> PartialPost:
-        return {
-            'likes': utils.find_and_search(
+        likes = (
+            utils.find_and_search(
                 self.element, 'footer', self.likes_regex, utils.convert_numeric_abbr
             )
             or self.live_data.get("like_count")
@@ -478,8 +478,10 @@ class PostExtractor:
                 self.element.find(".like_def", first=True)
                 and utils.parse_int(self.element.find(".like_def", first=True).text)
             )
-            or 0,
-        }
+            or 0
+        )
+
+        return {'likes': likes, 'reaction_count': likes}
 
     def extract_comments(self) -> PartialPost:
         return {
