@@ -148,9 +148,7 @@ class PageParser:
 
     def get_page(self) -> Page:
         # Select only elements that have the data-ft attribute
-        return self._get_page(
-            '[data-ft*="top_level_post_id"]:not([data-sigil="m-see-translate-link"])', 'article'
-        )
+        return self._get_page('article[data-ft*="top_level_post_id"]', 'article')
 
     def get_raw_page(self) -> RawPage:
         return self.html
@@ -206,6 +204,16 @@ class PageParser:
     def _get_page(self, selection, selection_name) -> Page:
         raw_page = self.get_raw_page()
         raw_posts = raw_page.find(selection)
+        for post in raw_posts:
+            if not post.find("footer"):
+                # Due to malformed HTML served by Facebook, lxml might misinterpret where the footer should go in article elements
+                # If we limit the parsing just to the section element, it fixes it
+                # Please forgive me for parsing HTML with regex
+                logger.warning(f"No footer in article - reparsing HTML within <section> element")
+                html = re.search(r'<section.+?>(.+)</section>', raw_page.html).group(1)
+                raw_page = utils.make_html_element(html=html)
+                raw_posts = raw_page.find(selection)
+                break
 
         if not raw_posts:
             logger.warning(
