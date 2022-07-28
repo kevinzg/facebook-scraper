@@ -65,6 +65,7 @@ class FacebookScraper:
 
         self.session = session
         self.requests_kwargs = requests_kwargs
+        self.request_count = 0
 
     def set_user_agent(self, user_agent):
         self.session.headers["User-Agent"] = user_agent
@@ -834,6 +835,7 @@ class FacebookScraper:
 
     def get(self, url, **kwargs):
         try:
+            self.request_count += 1
             url = str(url)
             if not url.startswith("http"):
                 url = utils.urljoin(FB_MOBILE_BASE_URL, url)
