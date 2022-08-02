@@ -316,13 +316,17 @@ class FacebookScraper:
         if kwargs.get("allow_extra_requests", True):
             logger.debug(f"Requesting page from: {account}")
             response = self.get(account)
-            top_post = response.html.find(
-                '[data-ft*="top_level_post_id"]:not([data-sigil="m-see-translate-link"])',
-                first=True,
-            )
-            top_post = PostExtractor(top_post, kwargs, self.get).extract_post()
-            top_post.pop("source")
-            result["top_post"] = top_post
+            try:
+                top_post = response.html.find(
+                    '[data-ft*="top_level_post_id"]:not([data-sigil="m-see-translate-link"])',
+                    first=True,
+                )
+                assert top_post is not None
+                top_post = PostExtractor(top_post, kwargs, self.get).extract_post()
+                top_post.pop("source")
+                result["top_post"] = top_post
+            except Exception as e:
+                logger.error(f"Unable to extract top_post {type(e)}:{e}")
 
             try:
                 result["Friend_count"] = utils.parse_int(
@@ -914,12 +918,6 @@ class FacebookScraper:
                     title.text == "Log in to Facebook | Facebook"
                     or response.url.startswith(utils.urljoin(FB_MOBILE_BASE_URL, "login"))
                     or response.url.startswith(utils.urljoin(FB_W3_BASE_URL, "login"))
-                    or (
-                        ", log in to Facebook." in response.text
-                        and not response.html.find(
-                            "article[data-ft],div.async_like[data-ft],div.msg"
-                        )
-                    )
                 ):
                     raise exceptions.LoginRequired(
                         "A login (cookies) is required to see this page"
