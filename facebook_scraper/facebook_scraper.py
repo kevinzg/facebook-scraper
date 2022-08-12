@@ -1098,3 +1098,23 @@ class FacebookScraper:
                     if remove_source:
                         post.pop('source', None)
                     yield post
+
+    def get_groups_by_search(self, word: str, **kwargs):
+        group_search_url = utils.urljoin(FB_MOBILE_BASE_URL, f"search/groups/?q={word}")
+        r = self.get(group_search_url)
+        for group_element in r.html.find('div[role="button"]'):
+            button_id = group_element.attrs["id"]
+            group_id = self.find_group_id(button_id, r.text)
+            try:
+                yield self.get_group_info(group_id)
+            except AttributeError:
+                continue
+
+
+    @staticmethod
+    def find_group_id(button_id, raw_html):
+        """Each group button has an id, which appears later in the script
+        tag followed by the group id."""
+        s = raw_html[raw_html.rfind(button_id) :]
+        group_id = s[s.find("result_id:") :].split(",")[0].split(":")[1]
+        return int(group_id)
