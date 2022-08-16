@@ -497,6 +497,18 @@ def write_posts_to_csv(
     output_file.close()
 
 
+def get_groups_by_search(
+    word: str,
+    **kwargs,
+):
+    """Searches Facebook groups and yields ids for each result
+        on the first page"""
+    _scraper.requests_kwargs['timeout'] = kwargs.pop('timeout', DEFAULT_REQUESTS_TIMEOUT)
+    cookies = kwargs.pop('cookies', None)
+    set_cookies(cookies)
+    return _scraper.get_groups_by_search(word, **kwargs)
+
+
 def enable_logging(level=logging.DEBUG):
     handler = logging.StreamHandler()
     handler.setLevel(level)
