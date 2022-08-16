@@ -18,6 +18,7 @@ import traceback
 import time
 from datetime import datetime, timedelta
 import re
+import os
 
 
 _scraper = FacebookScraper()
@@ -401,6 +402,9 @@ def write_posts_to_csv(
 
     if encoding is None:
         encoding = locale.getpreferredencoding()
+
+    if os.path.isfile(filename):
+        raise FileExistsError(f"{filename} exists")
 
     if filename == "-":
         output_file = sys.stdout
