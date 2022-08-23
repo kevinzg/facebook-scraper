@@ -727,6 +727,7 @@ class FacebookScraper:
         resp = self.get(url).html
         try:
             url = resp.find("a[href*='?view=info']", first=True).attrs["href"]
+            url += "&sfd=1" # Add parameter to get full "about"-text
         except AttributeError:
             raise exceptions.UnexpectedResponse("Unable to resolve view=info URL")
         logger.debug(f"Requesting page from: {url}")
@@ -740,55 +741,72 @@ class FacebookScraper:
             result["members"] = utils.parse_int(members.text)
         except AttributeError:
             raise exceptions.UnexpectedResponse("Unable to get one of name, type, or members")
+
+        # Try to extract the group description
+        try:
+            # Directly tageting the weird generated class names is not optimal, but it's the best i could do.
+            about_div = resp.find("._52jc._55wr", first=True)
+            
+            # Removing the <wbr>-tags that are converted to linebreaks by .text 
+            from requests_html import HTML 
+            no_word_breaks = HTML(html=about_div.html.replace("<wbr/>", ""))
+            
+            result["about"] = no_word_breaks.text
+        except:
+            result["about"] = None
+            
         url = members.find("a", first=True).attrs.get("href")
         logger.debug(f"Requesting page from: {url}")
+        
         try:
             resp = self.get(url).html
             url = resp.find("a[href*='listType=list_admin_moderator']", first=True)
-            if url:
-                url = url.attrs.get("href")
-                logger.debug(f"Requesting page from: {url}")
-                try:
-                    respAdmins = self.get(url).html
-                except:
-                    raise exceptions.UnexpectedResponse("Unable to get admin list")
-            else:
-                respAdmins = resp
-            # Test if we are a member that can add new members
-            if re.match(
-                "/groups/members/search",
-                respAdmins.find(
-                    "div:nth-child(1)>div:nth-child(1) a:not(.touchable)", first=True
-                ).attrs.get('href'),
-            ):
-                admins = respAdmins.find("div:nth-of-type(2)>div.touchable a:not(.touchable)")
-            else:
-                admins = respAdmins.find("div:first-child>div.touchable a:not(.touchable)")
-            result["admins"] = [
-                {
-                    "name": e.text,
-                    "link": utils.filter_query_params(e.attrs["href"], blacklist=["refid"]),
-                }
-                for e in admins
-            ]
+            if kwargs.get("admins", True):
+                if url:
+                    url = url.attrs.get("href")
+                    logger.debug(f"Requesting page from: {url}")
+                    try:
+                        respAdmins = self.get(url).html
+                    except:
+                        raise exceptions.UnexpectedResponse("Unable to get admin list")
+                else:
+                    respAdmins = resp
+                # Test if we are a member that can add new members
+                if re.match(
+                    "/groups/members/search",
+                    respAdmins.find(
+                        "div:nth-child(1)>div:nth-child(1) a:not(.touchable)", first=True
+                    ).attrs.get('href'),
+                ):
+                    admins = respAdmins.find("div:nth-of-type(2)>div.touchable a:not(.touchable)")
+                else:
+                    admins = respAdmins.find("div:first-child>div.touchable a:not(.touchable)")
+                result["admins"] = [
+                    {
+                        "name": e.text,
+                        "link": utils.filter_query_params(e.attrs["href"], blacklist=["refid"]),
+                    }
+                    for e in admins
+                ]
 
             url = resp.find("a[href*='listType=list_nonfriend_nonadmin']", first=True)
-            if url:
-                url = url.attrs["href"]
-                members = []
-                while url:
-                    logger.debug(f"Requesting page from: {url}")
-                    resp = self.get(url).html
-                    elems = resp.find("#root div.touchable a:not(.touchable)")
-                    members.extend([{"name": e.text, "link": e.attrs["href"]} for e in elems])
-                    more = re.search(r'"m_more_item",href:"([^"]+)', resp.text)
-                    if more:
-                        url = more.group(1)
-                    else:
-                        url = None
-                result["other_members"] = [m for m in members if m not in result["admins"]]
-            else:
-                logger.warning("No other members listed")
+            if kwargs.get("members", True):
+                if url:
+                    url = url.attrs["href"]
+                    members = []
+                    while url:
+                        logger.debug(f"Requesting page from: {url}")
+                        resp = self.get(url).html
+                        elems = resp.find("#root div.touchable a:not(.touchable)")
+                        members.extend([{"name": e.text, "link": e.attrs["href"]} for e in elems])
+                        more = re.search(r'"m_more_item",href:"([^"]+)', resp.text)
+                        if more:
+                            url = more.group(1)
+                        else:
+                            url = None
+                    result["other_members"] = [m for m in members if m not in result["admins"]]
+                else:
+                    logger.warning("No other members listed")
         except exceptions.LoginRequired as e:
             pass
         return result
