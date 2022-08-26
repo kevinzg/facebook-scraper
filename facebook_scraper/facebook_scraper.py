@@ -49,10 +49,11 @@ class FacebookScraper:
 
     base_url = FB_MOBILE_BASE_URL
     default_headers = {
-        'Accept-Language': 'en-US,en;q=0.5',
-        "Sec-Fetch-User": "?1",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/603.3.8 (KHTML, like Gecko) Version/10.1.2 Safari/603.3.8",
-    }
+            "Accept": "*/*",
+            "Connection": "keep-alive",
+            "Accept-Encoding": "gzip,deflate",
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/603.3.8 (KHTML, like Gecko) Version/10.1.2 Safari/603.3.8"
+        }
     have_checked_locale = False
 
     def __init__(self, session=None, requests_kwargs=None):
@@ -998,7 +999,7 @@ class FacebookScraper:
 
     def is_logged_in(self) -> bool:
         try:
-            self.get('https://m.facebook.com/settings')
+            self.get('https://facebook.com/settings')
             return True
         except exceptions.LoginRequired:
             return False
