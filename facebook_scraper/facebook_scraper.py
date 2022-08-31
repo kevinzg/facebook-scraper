@@ -49,11 +49,11 @@ class FacebookScraper:
 
     base_url = FB_MOBILE_BASE_URL
     default_headers = {
-            "Accept": "*/*",
-            "Connection": "keep-alive",
-            "Accept-Encoding": "gzip,deflate",
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/603.3.8 (KHTML, like Gecko) Version/10.1.2 Safari/603.3.8"
-        }
+        "Accept": "*/*",
+        "Connection": "keep-alive",
+        "Accept-Encoding": "gzip,deflate",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/603.3.8 (KHTML, like Gecko) Version/10.1.2 Safari/603.3.8",
+    }
     have_checked_locale = False
 
     def __init__(self, session=None, requests_kwargs=None):
@@ -728,7 +728,7 @@ class FacebookScraper:
         resp = self.get(url).html
         try:
             url = resp.find("a[href*='?view=info']", first=True).attrs["href"]
-            url += "&sfd=1" # Add parameter to get full "about"-text
+            url += "&sfd=1"  # Add parameter to get full "about"-text
         except AttributeError:
             raise exceptions.UnexpectedResponse("Unable to resolve view=info URL")
         logger.debug(f"Requesting page from: {url}")
@@ -747,18 +747,19 @@ class FacebookScraper:
         try:
             # Directly tageting the weird generated class names is not optimal, but it's the best i could do.
             about_div = resp.find("._52jc._55wr", first=True)
-            
-            # Removing the <wbr>-tags that are converted to linebreaks by .text 
-            from requests_html import HTML 
+
+            # Removing the <wbr>-tags that are converted to linebreaks by .text
+            from requests_html import HTML
+
             no_word_breaks = HTML(html=about_div.html.replace("<wbr/>", ""))
-            
+
             result["about"] = no_word_breaks.text
         except:
             result["about"] = None
-            
+
         url = members.find("a", first=True).attrs.get("href")
         logger.debug(f"Requesting page from: {url}")
-        
+
         try:
             resp = self.get(url).html
             url = resp.find("a[href*='listType=list_admin_moderator']", first=True)
@@ -1128,7 +1129,6 @@ class FacebookScraper:
                 yield self.get_group_info(group_id)
             except AttributeError:
                 continue
-
 
     @staticmethod
     def find_group_id(button_id, raw_html):
