@@ -186,7 +186,7 @@ Usage:
 
 ```python
 from facebook_scraper import get_group_info
-get_group_info("latesthairstyles") # or get_group_info("latesthairstyles", cookies="cookies.txt")
+get_group_info("makeupartistsgroup") # or get_group_info("makeupartistsgroup", cookies="cookies.txt")
 ```
 
 Output:
