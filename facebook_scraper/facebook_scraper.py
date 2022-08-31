@@ -642,7 +642,7 @@ class FacebookScraper:
             url = f'/{page}/'
             logger.debug(f"Requesting page from: {url}")
             resp = self.get(url)
-            result["id"] = re.search(r'pageID:"(\d+)"', resp.html.html).group(1)
+            result["id"] = re.search(r'pages/transparency/(\d+)', resp.html.html).group(1)
             result["name"] = resp.html.find("title", first=True).text.replace(" - Home", "")
             desc = resp.html.find("meta[name='description']", first=True)
             ld_json = None
