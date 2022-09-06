@@ -545,7 +545,8 @@ def use_persistent_session(email: str, password: str, cookies_file_path=DEFAULT_
         logger.debug("Successfully logged in with cookies")
     except exceptions.InvalidCookies:
         logger.exception("Invalid cookies, trying to login with credentials")
-        cookies = _scraper.login(email, password)
+        _scraper.login(email, password)
+        cookies = _scraper.session.cookies
         with open(cookies_file_path, "wb") as f:
             pickle.dump(cookies, f)
         set_cookies(cookies)
