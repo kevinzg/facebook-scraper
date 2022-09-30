@@ -138,6 +138,7 @@ class PostExtractor:
             'shared_time': None,
             'shared_user_id': None,
             'shared_username': None,
+            'shared_user_url': None,
             'shared_post_url': None,
             'available': None,
             'comments_full': None,
@@ -1000,11 +1001,13 @@ class PostExtractor:
         )
         # We can re-use the existing parsers, as a one level deep recursion
         shared_post = PostExtractor(raw_post, self.options, self.request)
+        shared_user_info = shared_post.extract_username()
         return {
             'shared_post_id': self.data_ft["original_content_id"],
             'shared_time': shared_post.extract_time().get("time"),
             'shared_user_id': self.data_ft["original_content_owner_id"],
-            'shared_username': shared_post.extract_username().get("username"),
+            'shared_username': shared_user_info.get("username"),
+            'shared_user_url': shared_user_info.get("user_url"),
             'shared_post_url': shared_post.extract_post_url().get("post_url"),
         }
 
