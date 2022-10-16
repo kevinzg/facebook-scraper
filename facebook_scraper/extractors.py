@@ -274,6 +274,9 @@ class PostExtractor:
         has_more = self.more_url_regex.search(element.html)
         if has_more and self.full_post_html:
             element = self.full_post_html.find('.story_body_container', first=True)
+            if not element and self.full_post_html.find("div.msg", first=True):
+                text = self.full_post_html.find("div.msg", first=True).text
+                return {"text": text, "post_text": text}
 
         nodes = element.find('p, header, span[role=presentation]')
         if nodes and len(nodes) > 1:
