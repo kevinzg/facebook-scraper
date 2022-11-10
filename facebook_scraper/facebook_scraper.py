@@ -757,10 +757,10 @@ class FacebookScraper:
         except:
             result["about"] = None
 
-        url = members.find("a", first=True).attrs.get("href")
-        logger.debug(f"Requesting page from: {url}")
-
         try:
+            url = members.find("a", first=True).attrs.get("href")
+            logger.debug(f"Requesting page from: {url}")
+
             resp = self.get(url).html
             url = resp.find("a[href*='listType=list_admin_moderator']", first=True)
             if kwargs.get("admins", True):
