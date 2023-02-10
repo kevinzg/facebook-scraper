@@ -65,16 +65,49 @@ Set `options={"progress": True}` to get a `tqdm` progress bar while extracting c
 Set `options={"allow_extra_requests": False}` to disable making extra requests when extracting post data (required for some things like full text and image links).
 Set `options={"posts_per_page": 200}` to request 200 posts per page. The default is 4.
 
-## CLI usage
-
-```sh
-$ facebook-scraper --filename nintendo_page_posts.csv --pages 10 nintendo
-```
-
 Run `facebook-scraper --help` for more details on CLI usage.
 
 **Note:** If you get a `UnicodeEncodeError` try adding `--encoding utf-8`.
 
+### Practical example: donwload comments of a post
+
+```python
+"""
+Download comments for a public Facebook post.
+"""
+
+import facebook_scraper as fs
+
+# get POST_ID from the URL of the post which can have the following structure:
+# https://www.facebook.com/USER/posts/POST_ID
+# https://www.facebook.com/groups/GROUP_ID/posts/POST_ID
+POST_ID = "pfbid02NsuAiBU9o1ouwBrw1vYAQ7khcVXvz8F8zMvkVat9UJ6uiwdgojgddQRLpXcVBqYbl"
+
+# number of comments to download -- set this to True to download all comments
+MAX_COMMENTS = 100
+
+# get the post (this gives a generator)
+gen = fs.get_posts(
+    post_urls=[POST_ID],
+    options={"comments": MAX_COMMENTS, "progress": True}
+)
+
+# take 1st element of the generator which is the post we requested
+post = next(gen)
+
+# extract the comments part
+comments = post['comments_full']
+
+# process comments as you want...
+for comment in comments:
+
+    # e.g. ...print them
+    print(comment)
+
+    # e.g. ...get the replies for them
+    for reply in comment['replies']:
+        print(' ', reply)
+```
 
 ## Post example
 
