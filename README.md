@@ -10,9 +10,7 @@
 
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-
 Scrape Facebook public pages without an API key. Inspired by [twitter-scraper](https://github.com/kennethreitz/twitter-scraper).
-
 
 ## Install
 
@@ -41,7 +39,6 @@ Send the unique **page name, profile name, or ID** as the first parameter and yo
 The final step on the road to the Super Smash Bros
 We’re headed to PAX East 3/28-3/31 with new games
 ```
-
 
 ### Optional parameters
 
@@ -158,26 +155,27 @@ for comment in comments:
  'w3_fb_url': 'https://www.facebook.com/Nintendo/posts/2257188721032235'}
 ```
 
-
 ### Notes
 
 - There is no guarantee that every field will be extracted (they might be `None`).
 - Group posts may be missing some fields like `time` and `post_url`.
 - Group scraping may return only one page and not work on private groups.
 - If you scrape too much, Facebook might temporarily ban your IP.
-- The vast majority of unique IDs on facebook (post IDs, video IDs, photo IDs, comment IDs, profile IDs, etc) can be appended to https://www.facebook.com/ to result in a redirect to the corresponding object.
+- The vast majority of unique IDs on facebook (post IDs, video IDs, photo IDs, comment IDs, profile IDs, etc) can be appended to "https://www.facebook.com/" to result in a redirect to the corresponding object.
 - Some functions (such as extracting reactions) require you to be logged into Facebook (pass cookies). If something isn't working as expected, try pass cookies and see if that fixes it.
 
 ## Profiles
 
-The `get_profile` function can extract information from a profile's about section. Pass in the account name or ID as the first parameter.  
+The `get_profile` function can extract information from a profile's about section. Pass in the account name or ID as the first parameter.
 Note that Facebook serves different information depending on whether you're logged in (cookies parameter), such as Date of birth and Gender. Usage:
 
 ```python
 from facebook_scraper import get_profile
 get_profile("zuck") # Or get_profile("zuck", cookies="cookies.txt")
 ```
+
 Outputs:
+
 ```python
 {'About': "I'm trying to make the world a more open place.",
  'Education': 'Harvard University\n'
@@ -218,7 +216,7 @@ To extract friends, pass the argument `friends=True`, or to limit the amount of 
 
 ## Group info
 
-The `get_group_info` function can extract info about a group. Pass in the group name or ID as the first parameter.  
+The `get_group_info` function can extract info about a group. Pass in the group name or ID as the first parameter.
 Note that in order to see the list of admins, you need to be logged in (cookies parameter).
 
 Usage:
@@ -243,13 +241,45 @@ Output:
  'type': 'Public group'}
 ```
 
+## Write to a CSV file directly
+
+The library also provides a `write_posts_to_csv()` function that writes posts directly to the disk and is able to resume scraping from the address of the last page. It is very useful when scraping large pages as the data is saved continuously and scraping can be resumed in case of an error. Here is an example to fetch the posts of a group 100 pages at a time and save them in separate files.
+
+```python
+import facebook_scraper as fs
+
+# Saves the first 100 pages
+for i in range(1, 101):
+    fs.write_posts_to_csv(
+        group=GROUP_ID, # The method uses get_posts internally so you can use the same arguments and they will be passed along
+        page_limit=100,
+        timeout=60,
+        options={
+            'allow_extra_requests': False
+        },
+        filename=f'./data/messages_{i}.csv', # Will throw an error if the file already exists
+        resume_file='next_page.txt', # Will save a link to the next page in this file after fetching it and use it when starting.
+        matching='.+', # A regex can be used to filter all the posts matching a certain pattern (here, we accept anything)
+        not_matching='^Warning', # And likewise those that don't fit a pattern (here, we filter out all posts starting with "Warning")
+        keys=[
+            'post_id',
+            'text',
+            'timestamp',
+            'time',
+            'user_id'
+        ], # List of the keys that should be saved for each post, will save all keys if not set
+        format='csv', # Output file format, can be csv or json, defaults to csv
+        days_limit=3650 # Number of days for the oldest post to fetch, defaults to 3650
+    )
+
+```
+
 ## To-Do
 
 - Async support
 - ~~Image galleries~~ (`images` entry)
 - ~~Profiles or post authors~~ (`get_profile()`)
 - ~~Comments~~ (with `options={'comments': True}`)
-
 
 ## Alternatives and related projects
 
@@ -259,6 +289,6 @@ Output:
 - [Unofficial APIs](https://github.com/Rolstenhouse/unofficial-apis). List of unofficial APIs for various services, none for Facebook for now, but might be worth to check in the future.
 - [major-scrapy-spiders](https://github.com/talhashraf/major-scrapy-spiders). Has a profile spider for Scrapy.
 - [facebook-page-post-scraper](https://github.com/minimaxir/facebook-page-post-scraper). Seems abandoned.
-    - [FBLYZE](https://github.com/isaacmg/fb_scraper). Fork (?).
+- [FBLYZE](https://github.com/isaacmg/fb_scraper). Fork (?).
 - [RSSHub](https://github.com/DIYgod/RSSHub/blob/master/lib/routes/facebook/page.js). Generates an RSS feed from Facebook pages.
 - [RSS-Bridge](https://github.com/RSS-Bridge/rss-bridge/blob/master/bridges/FacebookBridge.php). Also generates RSS feeds from Facebook pages.
