@@ -865,8 +865,8 @@ class FacebookScraper:
         try:
             self.request_count += 1
 
+            # if sleep is True, sleep every sleep_time_frequency-th request
             if kwargs.get("sleep") and self.request_count % self.sleep_time_frequency == 0:
-                # sleep every sleep_time_frequency-th request
                 time.sleep(self.sleep_time)
 
             url = str(url)
@@ -1025,7 +1025,7 @@ class FacebookScraper:
         start_date=None,
         end_date=None,
         max_past_limit=5,
-        raise_if_temporary_banned=False,
+        raise_if_banned=False,
         **kwargs,
     ):
 
@@ -1057,7 +1057,8 @@ class FacebookScraper:
             recurrent_past_posts = 0
             show_every = 50
             done = False
-            account_is_temporary_banned = False
+            account_is_banned = False
+            account_is_disabled = False
 
             for page in iter_pages_fn():
 
@@ -1118,10 +1119,17 @@ class FacebookScraper:
                                 post["time"],
                             )
 
-                    except exceptions.TemporarilyBanned as e:
-                        account_is_temporary_banned = True
+                    except exceptions.AccountDisabled as e:
+                        account_is_disabled = True
                         logger.exception(e)
-                        if raise_if_temporary_banned is True:
+                        if raise_if_banned:
+                            done = True
+                            break
+
+                    except exceptions.TemporarilyBanned as e:
+                        account_is_banned = True
+                        logger.exception(e)
+                        if raise_if_banned:
                             done = True
                             break
 
@@ -1131,9 +1139,13 @@ class FacebookScraper:
                             e,
                         )
 
-                # if temporary_banned_errors, raise
-                if done and account_is_temporary_banned:
+                # if account is temporary banned, raise
+                if done and account_is_banned:
                     raise exceptions.TemporarilyBanned()
+
+                # if account is disabled, raise
+                if done and account_is_disabled:
+                    raise exceptions.AccountDisabled()
 
                 if done:
                     break
