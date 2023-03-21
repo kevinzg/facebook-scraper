@@ -57,6 +57,7 @@ class FacebookScraper:
     }
     have_checked_locale = False
 
+    sleep_between_requests = False
     sleep_time = 5
     sleep_time_frequency = 5
 
@@ -866,8 +867,7 @@ class FacebookScraper:
             self.request_count += 1
 
             # if sleep_between_requests is True, sleep every sleep_time_frequency-th request
-            if self.requests_kwargs.get("sleep_between_requests") and \
-                    self.request_count % self.sleep_time_frequency == 0:
+            if self.sleep_between_requests and self.request_count % self.sleep_time_frequency == 0:
                 logger.info('Sleeping....')
                 time.sleep(self.sleep_time)
 
