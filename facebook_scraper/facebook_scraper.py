@@ -865,8 +865,10 @@ class FacebookScraper:
         try:
             self.request_count += 1
 
-            # if sleep is True, sleep every sleep_time_frequency-th request
-            if kwargs.get("sleep") and self.request_count % self.sleep_time_frequency == 0:
+            # if sleep_between_requests is True, sleep every sleep_time_frequency-th request
+            if self.requests_kwargs.get("sleep_between_requests") and \
+                    self.request_count % self.sleep_time_frequency == 0:
+                logger.info('Sleeping....')
                 time.sleep(self.sleep_time)
 
             url = str(url)
