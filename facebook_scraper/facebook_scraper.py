@@ -865,7 +865,7 @@ class FacebookScraper:
         try:
             self.request_count += 1
 
-            if self.request_count % self.sleep_time_frequency == 0:
+            if kwargs.get("sleep") and self.request_count % self.sleep_time_frequency == 0:
                 # sleep every sleep_time_frequency-th request
                 time.sleep(self.sleep_time)
 
@@ -1025,7 +1025,7 @@ class FacebookScraper:
         start_date=None,
         end_date=None,
         max_past_limit=5,
-        max_temp_banned=3,
+        raise_if_temporary_banned=False,
         **kwargs,
     ):
 
@@ -1055,9 +1055,9 @@ class FacebookScraper:
 
             # Helpers
             recurrent_past_posts = 0
-            temporary_banned_errors = 0
             show_every = 50
             done = False
+            account_is_temporary_banned = False
 
             for page in iter_pages_fn():
 
@@ -1079,17 +1079,17 @@ class FacebookScraper:
                         if partial_post['time'] > start_date:
                             recurrent_past_posts = 0
 
+                        # extract only relevant posts
+                        post = extract_post_fn(post_element, options=options, request_fn=self.get)
+
+                        if remove_source:
+                            post.pop("source", None)
+
                         # if any of above, yield the post and continue
                         if partial_post["time"] is None or partial_post['time'] > start_date:
                             total_scraped_posts += 1
                             if total_scraped_posts % show_every == 0:
                                 logger.info("Posts scraped: %s", total_scraped_posts)
-
-                            # extract only relevant posts
-                            post = extract_post_fn(post_element, options=options, request_fn=self.get)
-
-                            if remove_source:
-                                post.pop("source", None)
 
                             yield post
                             continue
@@ -1109,13 +1109,21 @@ class FacebookScraper:
                             )
                             break
 
-                    except exceptions.TemporarilyBanned:
-                        temporary_banned_errors += 1
-                        if temporary_banned_errors < max_temp_banned:
-                            continue
-                        done = True
-                        logger.exception("Your account was temporary banned.")
-                        break
+                        # or the text is not banned (repeated)
+                        if post["text"] is not None and post["text"] not in pinned_posts:
+                            pinned_posts.append(post["text"])
+                            logger.warning(
+                                "Sequential post #%s behind the date limit: %s. Ignored (in logs) from now on.",
+                                recurrent_past_posts,
+                                post["time"],
+                            )
+
+                    except exceptions.TemporarilyBanned as e:
+                        account_is_temporary_banned = True
+                        logger.exception(e)
+                        if raise_if_temporary_banned is True:
+                            done = True
+                            break
 
                     except Exception as e:
                         logger.exception(
@@ -1124,7 +1132,7 @@ class FacebookScraper:
                         )
 
                 # if temporary_banned_errors, raise
-                if done and temporary_banned_errors:
+                if done and account_is_temporary_banned:
                     raise exceptions.TemporarilyBanned()
 
                 if done:
