@@ -1134,6 +1134,7 @@ class FacebookScraper:
                             e,
                         )
 
+                # if max_past_limit, stop
                 if done:
                     break
 
