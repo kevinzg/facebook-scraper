@@ -73,6 +73,8 @@ class FacebookScraper:
         self.requests_kwargs = requests_kwargs
         self.request_count = 0
 
+        self.account_is_disabled = None
+
     def set_user_agent(self, user_agent):
         self.session.headers["User-Agent"] = user_agent
 
@@ -1027,7 +1029,6 @@ class FacebookScraper:
         start_date=None,
         end_date=None,
         max_past_limit=5,
-        raise_if_banned=False,
         **kwargs,
     ):
 
@@ -1045,6 +1046,8 @@ class FacebookScraper:
                 stacklevel=3,
             )
 
+        self.account_is_disabled = False
+
         # if start_date is specified, iterate until the date is reached n times in a row (recurrent_past_posts)
         if start_date is not None:
 
@@ -1059,8 +1062,6 @@ class FacebookScraper:
             recurrent_past_posts = 0
             show_every = 50
             done = False
-            account_is_banned = False
-            account_is_disabled = False
 
             for page in iter_pages_fn():
 
@@ -1121,33 +1122,17 @@ class FacebookScraper:
                                 post["time"],
                             )
 
-                    except exceptions.AccountDisabled as e:
-                        account_is_disabled = True
+                    except (exceptions.AccountDisabled, exceptions.TemporarilyBanned) as e:
+                        self.account_is_disabled = True
                         logger.exception(e)
-                        if raise_if_banned:
-                            done = True
-                            break
-
-                    except exceptions.TemporarilyBanned as e:
-                        account_is_banned = True
-                        logger.exception(e)
-                        if raise_if_banned:
-                            done = True
-                            break
+                        done = True
+                        break
 
                     except Exception as e:
                         logger.exception(
                             "An exception has occured during scraping: %s. Omitting the post...",
                             e,
                         )
-
-                # if account is temporary banned, raise
-                if done and account_is_banned:
-                    raise exceptions.TemporarilyBanned()
-
-                # if account is disabled, raise
-                if done and account_is_disabled:
-                    raise exceptions.AccountDisabled()
 
                 if done:
                     break
