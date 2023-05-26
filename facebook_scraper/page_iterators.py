@@ -143,7 +143,7 @@ class PageParser:
 
     def get_page(self) -> Page:
         # Select only elements that have the data-ft attribute
-        return self._get_page('article[data-ft*="top_level_post_id"]', 'article')
+        return self._get_page('article[data-ft*="top_level_post_id"], div[data-ft*="top_level_post_id"]', 'article')
 
     def get_raw_page(self) -> RawPage:
         return self.html
@@ -272,6 +272,9 @@ class PhotosPageParser(PageParser):
 class SearchPageParser(PageParser):
     cursor_regex = re.compile(r'href[:=]"[^"]+(/search/[^"]+)"')
     cursor_regex_2 = re.compile(r'href":"[^"]+(/search/[^"]+)"')
+
+    def get_page(self) -> Page: 
+            return super()._get_page('div[data-module-role="TOP_PUBLIC_POSTS"]', 'article')
 
     def get_next_page(self) -> Optional[URL]:
         if self.cursor_blob is not None:
