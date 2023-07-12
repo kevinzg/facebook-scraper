@@ -283,6 +283,8 @@ class SearchPageParser(PageParser):
             if match:
                 value = match.groups()[0]
                 return value.encode('utf-8').decode('unicode_escape').replace('\\/', '/')
+    def get_page(self) -> Page:
+        return super()._get_page('div._5rgr._5gh8._3-hy.async_like', 'article')
 
 
 class HashtagPageParser(PageParser):
