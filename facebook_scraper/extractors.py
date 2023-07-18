@@ -8,7 +8,6 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 from urllib.parse import parse_qs, urlparse
 from tqdm.auto import tqdm
-from collections import defaultdict
 
 from . import utils, exceptions
 from .constants import FB_BASE_URL, FB_MOBILE_BASE_URL, FB_W3_BASE_URL
@@ -87,7 +86,6 @@ class PostExtractor:
     bad_json_key_regex = re.compile(r'(?P<prefix>[{,])(?P<key>\w+):')
 
     more_url_regex = re.compile(r'(?<=…\s)<a')
-    has_translation_regex = re.compile(r'<span.*>Rate Translation</span>')
     post_story_regex = re.compile(r'href="(\/story[^"]+)" aria')
 
     def __init__(self, element, options, request_fn, full_post_html=None):
@@ -140,7 +138,6 @@ class PostExtractor:
             'shared_time': None,
             'shared_user_id': None,
             'shared_username': None,
-            'shared_user_url': None,
             'shared_post_url': None,
             'available': None,
             'comments_full': None,
@@ -273,93 +270,65 @@ class PostExtractor:
 
         element = self.element
 
-        story_containers = element.find(".story_body_container")  
-
         has_more = self.more_url_regex.search(element.html)
         if has_more and self.full_post_html:
             element = self.full_post_html.find('.story_body_container', first=True)
-            if not element and self.full_post_html.find("div.msg", first=True):
-                text = self.full_post_html.find("div.msg", first=True).text
-                return {"text": text, "post_text": text}
 
-        
-        texts = defaultdict(str)
+        nodes = element.find('p, header, span[role=presentation]')
+        if nodes and len(nodes) > 1:
+            post_text = []
+            shared_text = []
+            ended = False
+            index_non_header = next(
+                (i for i, node in enumerate(nodes) if node.tag != 'header'), 1
+            )
+            for node in nodes[index_non_header:]:
+                if node.tag == 'header':
+                    ended = True
 
-        for container_index, container in enumerate(story_containers):
-            
-            has_translation = self.has_translation_regex.search(container.html)
-            if has_translation:
-                original = container.find('div[style="display:none"]', first=True)
-                translation = utils.make_html_element(
-                    html=container.html.replace(original.html, "")
-                )
-                content_versions = [("hidden_original", original), ("translation", translation)]
-            else:
-                content_versions = [("original", container)]
+                # Remove '... More'
+                # This button is meant to display the hidden text that is already loaded
+                # Not to be confused with the 'More' that opens the article in a new page
+                if node.tag == 'p':
+                    node = utils.make_html_element(
+                        html=node.html.replace('>… <', '><', 1).replace('>More<', '', 1)
+                    )
+
+                if not ended:
+                    post_text.append(node.text)
+                else:
+                    shared_text.append(node.text)
 
             # Separation between paragraphs
             paragraph_separator = '\n\n'
 
-            for version, content in content_versions: 
-                post_text = []
-                shared_text = []
-                nodes = content.find('p, header, span[role=presentation]')
+            text = paragraph_separator.join(itertools.chain(post_text, shared_text))
+            post_text = paragraph_separator.join(post_text)
+            shared_text = paragraph_separator.join(shared_text)
 
-                if version == "hidden_original":
-                    if container_index == 0:
-                        post_text.append(content.text)
-                    else:
-                        shared_text.append(content.text)
-                
-                elif nodes:
-                    ended = False
-                    index_non_header = next(
-                        (i for i, node in enumerate(nodes) if node.tag != 'header'), 1
+            original_text = None
+            hidden_div = element.find('div[style="display:none"]', first=True)
+            if hidden_div:
+                original_text = []
+                for node in hidden_div.find("p,span[role=presentation]"):
+                    node = utils.make_html_element(
+                        html=node.html.replace('>… <', '><', 1).replace('>More<', '', 1)
                     )
-                    for node in nodes[index_non_header:]:
-                        if node.tag == 'header' or container_index > 0:
-                            ended = True
+                    original_text.append(node.text)
+                original_text = paragraph_separator.join(original_text)
 
-                        # Remove '... More'
-                        # This button is meant to display the hidden text that is already loaded
-                        # Not to be confused with the 'More' that opens the article in a new page
-                        if node.tag == 'p':
-                            node = utils.make_html_element(
-                                html=node.html.replace('>… <', '><', 1).replace('>More<', '', 1)
-                            )
-
-                        if not ended:
-                            post_text.append(node.text)
-                        else:
-                            shared_text.append(node.text)
-
-                text = paragraph_separator.join(itertools.chain(post_text, shared_text))
-                post_text = paragraph_separator.join(post_text)
-                shared_text = paragraph_separator.join(shared_text)
-                
-                if version in ["original", "hidden_original"]:
-                    texts["text"] += text
-                    texts["post_text"] += post_text
-                    texts["shared_text"] += shared_text
-                if version == "translation":
-                    texts["translated_text"] += text
-                    texts["translated_post_text"] += post_text
-                    texts["translated_shared_text"] += shared_text
-            
-        if texts:
-            if texts["translated_text"]:
-                texts["original_text"] = texts["text"]
-            return dict(texts)
-
+            return {
+                'text': text,
+                'post_text': post_text,
+                'shared_text': shared_text,
+                'original_text': original_text,
+            }
         elif element.find(".story_body_container>div", first=True):
             text = element.find(".story_body_container>div", first=True).text
             return {'text': text, 'post_text': text}
         elif len(nodes) == 1:
             text = nodes[0].text
             return {'text': text, 'post_text': text}
-
-
-                
 
         return None
 
@@ -1031,13 +1000,11 @@ class PostExtractor:
         )
         # We can re-use the existing parsers, as a one level deep recursion
         shared_post = PostExtractor(raw_post, self.options, self.request)
-        shared_user_info = shared_post.extract_username()
         return {
             'shared_post_id': self.data_ft["original_content_id"],
             'shared_time': shared_post.extract_time().get("time"),
             'shared_user_id': self.data_ft["original_content_owner_id"],
-            'shared_username': shared_user_info.get("username"),
-            'shared_user_url': shared_user_info.get("user_url"),
+            'shared_username': shared_post.extract_username().get("username"),
             'shared_post_url': shared_post.extract_post_url().get("post_url"),
         }
 
@@ -1119,13 +1086,6 @@ class PostExtractor:
                 reactions = self.extract_reactions(comment_id, force_parse_HTML=True)
                 if comment_reactors_opt != "generator":
                     reactions["reactors"] = utils.safe_consume(reactions.get("reactors", []))
-        else:
-            reactions_count = comment.find('span._14va', first=True)
-            if reactions_count and len(reactions_count.text) > 0:
-                reactions_count = reactions_count.text
-            else:
-                reactions_count = None
-            reactions.update({"reaction_count": reactions_count})
 
         return {
             "comment_id": comment_id,
