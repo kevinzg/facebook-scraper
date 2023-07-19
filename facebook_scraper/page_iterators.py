@@ -284,10 +284,10 @@ class SearchPageParser(PageParser):
                 value = match.groups()[0]
                 return value.encode('utf-8').decode('unicode_escape').replace('\\/', '/')
     def get_page(self) -> Page:
-            try:
-                return super()._get_page('div._5rgr._5gh8._3-hy.async_like', 'article')
-            except:
-                return super()._get_page('article[data-ft*="top_level_post_id"]', 'article')
+        try:
+            return super()._get_page('div._5rgr._5gh8._3-hy.async_like', 'article')
+        except:
+            return super()._get_page('article[data-ft*="top_level_post_id"]', 'article')
 
 
 class HashtagPageParser(PageParser):
