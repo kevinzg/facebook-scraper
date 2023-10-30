@@ -1,5 +1,6 @@
 import itertools
 import logging
+import time
 from urllib.parse import urljoin
 import warnings
 import re
@@ -56,6 +57,10 @@ class FacebookScraper:
     }
     have_checked_locale = False
 
+    sleep_between_requests = False
+    sleep_time = 5
+    sleep_time_frequency = 5
+
     def __init__(self, session=None, requests_kwargs=None):
         if session is None:
             session = HTMLSession()
@@ -67,6 +72,8 @@ class FacebookScraper:
         self.session = session
         self.requests_kwargs = requests_kwargs
         self.request_count = 0
+
+        self.account_is_disabled = None
 
     def set_user_agent(self, user_agent):
         self.session.headers["User-Agent"] = user_agent
@@ -860,6 +867,12 @@ class FacebookScraper:
     def get(self, url, **kwargs):
         try:
             self.request_count += 1
+
+            # if sleep_between_requests is True, sleep every sleep_time_frequency-th request
+            if self.sleep_between_requests and self.request_count % self.sleep_time_frequency == 0:
+                logger.info('Sleeping....')
+                time.sleep(self.sleep_time)
+
             url = str(url)
             if not url.startswith("http"):
                 url = utils.urljoin(FB_MOBILE_BASE_URL, url)
@@ -1013,7 +1026,8 @@ class FacebookScraper:
         page_limit=DEFAULT_PAGE_LIMIT,
         options=None,
         remove_source=True,
-        latest_date=None,
+        start_date=None,
+        end_date=None,
         max_past_limit=5,
         **kwargs,
     ):
@@ -1032,8 +1046,10 @@ class FacebookScraper:
                 stacklevel=3,
             )
 
-        # if latest_date is specified, iterate until the date is reached n times in a row (recurrent_past_posts)
-        if latest_date is not None:
+        self.account_is_disabled = False
+
+        # if start_date is specified, iterate until the date is reached n times in a row (recurrent_past_posts)
+        if start_date is not None:
 
             # Pinned posts repeat themselves over time, so ignore them
             pinned_posts = []
@@ -1051,21 +1067,30 @@ class FacebookScraper:
 
                 for post_element in page:
                     try:
+                        # get only time of post
+                        partial_post = PostExtractor(post_element, kwargs, self.get).extract_time()
+
+                        # date is None, no way to check start_date, yield it
+                        if partial_post["time"] is None:
+                            null_date_posts += 1
+
+                        # check if greater than end_date if end_date is not None
+                        if partial_post["time"] is not None and end_date is not None and \
+                                partial_post['time'] > end_date:
+                            continue
+
+                        # date is above start_date, yield it
+                        if partial_post['time'] > start_date:
+                            recurrent_past_posts = 0
+
+                        # extract only relevant posts
                         post = extract_post_fn(post_element, options=options, request_fn=self.get)
 
                         if remove_source:
                             post.pop("source", None)
 
-                        # date is None, no way to check latest_date, yield it
-                        if post["time"] is None:
-                            null_date_posts += 1
-
-                        # date is above latest_date, yield it
-                        if post["time"] > latest_date:
-                            recurrent_past_posts = 0
-
                         # if any of above, yield the post and continue
-                        if post["time"] is None or post["time"] > latest_date:
+                        if partial_post["time"] is None or partial_post['time'] > start_date:
                             total_scraped_posts += 1
                             if total_scraped_posts % show_every == 0:
                                 logger.info("Posts scraped: %s", total_scraped_posts)
@@ -1096,6 +1121,12 @@ class FacebookScraper:
                                 recurrent_past_posts,
                                 post["time"],
                             )
+
+                    except (exceptions.AccountDisabled, exceptions.TemporarilyBanned) as e:
+                        self.account_is_disabled = True
+                        logger.exception(e)
+                        done = True
+                        break
 
                     except Exception as e:
                         logger.exception(
