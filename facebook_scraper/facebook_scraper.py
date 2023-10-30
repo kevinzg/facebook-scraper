@@ -52,7 +52,7 @@ class FacebookScraper:
         "Accept": "*/*",
         "Connection": "keep-alive",
         "Accept-Encoding": "gzip,deflate",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/603.3.8 (KHTML, like Gecko) Version/10.1.2 Safari/603.3.8",
     }
     have_checked_locale = False
 
@@ -757,10 +757,10 @@ class FacebookScraper:
         except:
             result["about"] = None
 
-        try:
-            url = members.find("a", first=True).attrs.get("href")
-            logger.debug(f"Requesting page from: {url}")
+        url = members.find("a", first=True).attrs.get("href")
+        logger.debug(f"Requesting page from: {url}")
 
+        try:
             resp = self.get(url).html
             url = resp.find("a[href*='listType=list_admin_moderator']", first=True)
             if kwargs.get("admins", True):
@@ -959,10 +959,9 @@ class FacebookScraper:
     def login(self, email: str, password: str):
         response = self.get(self.base_url)
 
-        datr_cookie = re.search('(?<=_js_datr",")[^"]+', response.html.html)
-        if datr_cookie:
-            cookie_value = datr_cookie.group()
-            self.session.cookies.set('datr', cookie_value)
+        cookies_values = re.findall(r'js_datr","([^"]+)', response.html.html)
+        if len(cookies_values) == 1:
+            self.session.cookies.set("datr", cookies_values[0])
 
         response = self.submit_form(
             response, {"email": email, "pass": password, "_fb_noscript": None}
