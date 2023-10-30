@@ -163,6 +163,41 @@ for comment in comments:
 - If you scrape too much, Facebook might temporarily ban your IP.
 - The vast majority of unique IDs on facebook (post IDs, video IDs, photo IDs, comment IDs, profile IDs, etc) can be appended to "https://www.facebook.com/" to result in a redirect to the corresponding object.
 - Some functions (such as extracting reactions) require you to be logged into Facebook (pass cookies). If something isn't working as expected, try pass cookies and see if that fixes it.
+- Reaction Categories (EN): [`like`, `love`, `haha`, `sorry`, `wow`, `angry`, `care`]
+
+## Comment & Reply example
+```python
+{'comment_id': '1417925635669547', 
+ 'comment_url': 'https://facebook.com/1417925635669547', 
+ 'commenter_id': '100009665948953', 
+ 'commenter_url': 'https://facebook.com/tw0311?eav=AfZuEAOAat6KRX5WFplL0SNA4ZW78Z2O7W_sjwMApq67hZxXDwXh2WF2ezhICX1LCT4&fref=nf&rc=p&refid=52&__tn__=R&paipv=0', 
+ 'commenter_name': 'someone', 
+ 'commenter_meta': None, 
+ 'comment_text': 'something', 
+ 'comment_time': datetime.datetime(2023, 6, 23, 0, 0), 
+ 'comment_image': 'https://scontent.ftpe8-2.fna.fbcdn.net/m1/v/t6/An_UvxJXg9tdnLU3Y5qjPi0200MLilhzPXUgxzGjQzUMaNcmjdZA6anyrngvkdub33NZzZhd51fpCAEzNHFhko5aKRFP5fS1w_lKwYrzcNLupv27.png?ccb=10-5&oh=00_AfCdlpCwAg-SHhniMQ16uElFHh-OG8kGGmLAzvOY5_WZgw&oe=64BE3279&_nc_sid=7da55a', 
+ 'comment_reactors': [
+   {'name': 'Tom', 'link': 'https://facebook.com/ryan.dwayne?eav=AfaxdKIITTXyZj4H-eanXQgoxzOa8Vag6XkGXXDisGzh_W74RYZSXxlFZBofR4jUIOg&fref=pb&paipv=0', 'type': 'like'}, 
+   {'name': 'Macy', 'link': 'https://facebook.com/profile.php?id=100000112053053&eav=AfZ5iWlNN-EjjSwVNQl7E2HiVp25AUZMqfoPvLRZGnbUAQxuLeN8nl6xnnQTJB3uxDM&fref=pb&paipv=0', 'type': 'like'}],
+ 'comment_reactions': {'like': 2}, 
+ 'comment_reaction_count': 2, 
+ 'replies': [
+   {'comment_id': '793761608817229', 
+    'comment_url': 'https://facebook.com/793761608817229', 
+    'commenter_id': '100022377272712', 
+    'commenter_url': 'https://facebook.com/brizanne.torres?eav=Afab9uP4ByIMn1xaYK0UDd1SRU8e5Zu7faKEx6qTzLKD2vp_bB1xLDGvTwEd6u8A7jY&fref=nf&rc=p&__tn__=R&paipv=0', 
+    'commenter_name': 'David', 
+    'commenter_meta': None, 
+    'comment_text': 'something', 
+    'comment_time': datetime.datetime(2023, 6, 23, 18, 0), 
+    'comment_image': None, 
+    'comment_reactors': [], 
+    'comment_reactions': {'love': 2}, 
+    'comment_reaction_count': None}
+ ]
+}
+```
+
 
 ## Profiles
 
