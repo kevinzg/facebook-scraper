@@ -466,7 +466,7 @@ def write_posts_to_csv(
                     output_file.write(",")
             match = None
             if post["text"]:
-                match = re.search(kwargs.get("matching"), post["text"], flags=re.IGNORECASE)
+                match = re.search(kwargs.get("matching", '.+'), post["text"], flags=re.IGNORECASE)
                 if kwargs.get("not_matching") and re.search(
                     kwargs.get("not_matching"), post["text"], flags=re.IGNORECASE
                 ):
