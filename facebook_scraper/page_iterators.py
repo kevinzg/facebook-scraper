@@ -127,6 +127,8 @@ class PageParser:
 
     cursor_regex = re.compile(r'href[:=]"(/page_content[^"]+)"')  # First request
     cursor_regex_2 = re.compile(r'href"[:=]"(\\/page_content[^"]+)"')  # Other requests
+
+
     cursor_regex_3 = re.compile(
         r'href:"(/profile/timeline/stream/\?cursor[^"]+)"'
     )  # scroll/cursor based, first request
@@ -143,13 +145,14 @@ class PageParser:
 
     def get_page(self) -> Page:
         # Select only elements that have the data-ft attribute
-        return self._get_page('article[data-ft*="top_level_post_id"]', 'article')
+        #return self._get_page('article[data-ft*="top_level_post_id"]', 'article')
+        return self._get_page('div[data-module-role="TOP_PUBLIC_POSTS"]', 'article')
 
     def get_raw_page(self) -> RawPage:
         return self.html
 
     def get_next_page(self) -> Optional[URL]:
-        assert self.cursor_blob is not None
+        """assert self.cursor_blob is not None
 
         match = self.cursor_regex.search(self.cursor_blob)
         if match:
@@ -171,8 +174,15 @@ class PageParser:
             value = match.groups()[0]
             return re.sub(r'\\+/', '/', value)
 
-        return None
-
+        return None"""
+        if self.cursor_blob is not None:
+            match = self.cursor_regex.search(self.cursor_blob)
+            if match:
+                return match.groups()[0]
+            match = self.cursor_regex_2.search(self.cursor_blob)
+            if match:
+                value = match.groups()[0]
+                return value.encode('utf-8').decode('unicode_escape').replace('\\/', '/')
     def _parse(self):
         if self.response.text.startswith(self.json_prefix):
             self._parse_json()
@@ -286,7 +296,7 @@ class SearchPageParser(PageParser):
 
 
 class HashtagPageParser(PageParser):
-    cursor_regex = re.compile(r'(\/hashtag\/[a-z]+\/\?cursor=[^"]+).*$')
+    cursor_regex = re.compile(r'(\/hashtag\/[a-z]+\/\?locale=[a-z_A-Z]+&amp;cursor=[^"]+).*$')
 
     def get_page(self) -> Page:
         return super()._get_page('article', 'article')
