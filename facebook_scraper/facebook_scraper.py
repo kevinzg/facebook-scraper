@@ -3,6 +3,9 @@ import logging
 from urllib.parse import urljoin
 import warnings
 import re
+import html
+
+from urllib.parse import unquote
 from functools import partial
 from typing import Iterator, Union
 import json
@@ -52,7 +55,7 @@ class FacebookScraper:
         "Accept": "*/*",
         "Connection": "keep-alive",
         "Accept-Encoding": "gzip,deflate",
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15",
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/603.3.8 (KHTML, like Gecko) Version/10.1.2 Safari/603.3.8",
     }
     have_checked_locale = False
 
@@ -359,10 +362,25 @@ class FacebookScraper:
                 logger.error(f"Following_count extraction failed: {e}")
 
             photo_links = response.html.find("a[href^='/photo.php']")
+            # Define the regular expression pattern to find meta tags with property="og:image"
+            pattern = r'<meta\s+property="og:image"\s+content="([^"]+)"'
+            html_content = response.html.html
+            # Search for the pattern in the HTML content
+            match = re.search(pattern, html_content)
+            # Extract the value of the content attribute if a match is found
+            if match:
+                og_image_url = match.group(1)
+                og_image_url = html.unescape(og_image_url)
+                result["big_picture"] = og_image_url
+            else:
+                result["big_picture"] = ''
+
+            # print(response.html.html)
             if len(photo_links) == 1:
                 profile_photo = photo_links[0]
                 response = self.get(profile_photo.attrs.get("href"))
                 extractor = PostExtractor(response.html, kwargs, self.get)
+              
                 result["profile_picture"] = extractor.extract_photo_link_HQ(response.html.html)
             elif len(photo_links) >= 2:
                 cover_photo = photo_links[0]
@@ -757,10 +775,10 @@ class FacebookScraper:
         except:
             result["about"] = None
 
-        try:
-            url = members.find("a", first=True).attrs.get("href")
-            logger.debug(f"Requesting page from: {url}")
+        url = members.find("a", first=True).attrs.get("href")
+        logger.debug(f"Requesting page from: {url}")
 
+        try:
             resp = self.get(url).html
             url = resp.find("a[href*='listType=list_admin_moderator']", first=True)
             if kwargs.get("admins", True):
@@ -959,10 +977,9 @@ class FacebookScraper:
     def login(self, email: str, password: str):
         response = self.get(self.base_url)
 
-        datr_cookie = re.search('(?<=_js_datr",")[^"]+', response.html.html)
-        if datr_cookie:
-            cookie_value = datr_cookie.group()
-            self.session.cookies.set('datr', cookie_value)
+        cookies_values = re.findall(r'js_datr","([^"]+)', response.html.html)
+        if len(cookies_values) == 1:
+            self.session.cookies.set("datr", cookies_values[0])
 
         response = self.submit_form(
             response, {"email": email, "pass": password, "_fb_noscript": None}
