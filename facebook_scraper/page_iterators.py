@@ -143,7 +143,7 @@ class PageParser:
 
     def get_page(self) -> Page:
         # Select only elements that have the data-ft attribute
-        return self._get_page('article[data-ft*="top_level_post_id"]', 'article')
+        return self._get_page('article.async_like', 'article')
 
     def get_raw_page(self) -> RawPage:
         return self.html
