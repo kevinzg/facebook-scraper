@@ -289,7 +289,7 @@ class HashtagPageParser(PageParser):
     cursor_regex = re.compile(r'(\/hashtag\/[a-z]+\/\?cursor=[^"]+).*$')
 
     def get_page(self) -> Page:
-        return super()._get_page('article', 'article')
+        return super()._get_page('article.async_like', 'article')
 
     def get_next_page(self) -> Optional[URL]:
         assert self.cursor_blob is not None
